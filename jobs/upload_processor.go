@@ -55,6 +55,7 @@ func (r *UploadToEstuaryProcessor) Run() {
 		// call the api to upload cid
 		// update bucket cid and status
 		for _, content := range contents {
+
 			requestBody := IpfsPin{
 				CID:  content.Cid,
 				Name: content.Name,

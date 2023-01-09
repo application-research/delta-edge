@@ -36,6 +36,7 @@ type Content struct {
 	BucketUuid       string `json:"bucket_uuid"`
 	RequestingApiKey string `json:"requesting_api_key"`
 	EstuaryContentId string `json:"estuary_content_id"`
+	Status           string `json:"status"`
 	Created_at       time.Time
 	Updated_at       time.Time
 }

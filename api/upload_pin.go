@@ -12,6 +12,12 @@ type CidRequest struct {
 	Cids []string `json:"cids"`
 }
 
+type UploadResponse struct {
+	Status  string       `json:"status"`
+	Message string       `json:"message"`
+	Content core.Content `json:"content"`
+}
+
 func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 
 	content := e.Group("/content")
@@ -36,6 +42,7 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 			Size:             file.Size,
 			Cid:              addNode.Cid().String(),
 			RequestingApiKey: authParts[1],
+			Status:           "pinned",
 			Created_at:       time.Now(),
 			Updated_at:       time.Now(),
 		}
@@ -45,7 +52,11 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 		if err != nil {
 			return err
 		}
-		c.Response().Write([]byte(addNode.Cid().String()))
+
+		c.JSON(200, UploadResponse{
+			Status:  "success",
+			Message: "Car uploaded and pinned successfully to the network.",
+		})
 		return nil
 	})
 
@@ -70,6 +81,7 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 			Size:             file.Size,
 			Cid:              addNode.Cid().String(),
 			RequestingApiKey: authParts[1],
+			Status:           "pinned",
 			Created_at:       time.Now(),
 			Updated_at:       time.Now(),
 		}
@@ -77,9 +89,16 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 		node.DB.Create(&content)
 
 		if err != nil {
-			return err
+			c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error pinning the file" + err.Error(),
+			})
 		}
-		c.Response().Write([]byte(addNode.Cid().String()))
+
+		c.JSON(200, UploadResponse{
+			Status:  "success",
+			Message: "File uploaded and pinned successfully",
+		})
 		return nil
 	})
 
@@ -104,11 +123,24 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 			Size:             int64(size),
 			Cid:              addNode.Cid().String(),
 			RequestingApiKey: authParts[1],
+			Status:           "pinned",
 			Created_at:       time.Now(),
 			Updated_at:       time.Now(),
 		}
 
 		node.DB.Create(&content)
+
+		if err != nil {
+			c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error pinning the cid" + err.Error(),
+			})
+		}
+
+		c.JSON(200, UploadResponse{
+			Status:  "success",
+			Message: "CID uploaded and pinned successfully",
+		})
 		return nil
 	})
 
@@ -135,6 +167,7 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 				Size:             int64(size),
 				Cid:              addNode.Cid().String(),
 				RequestingApiKey: authParts[1],
+				Status:           "pinned",
 				Created_at:       time.Now(),
 				Updated_at:       time.Now(),
 			}

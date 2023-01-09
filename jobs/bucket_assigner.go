@@ -40,7 +40,8 @@ func (r *BucketAssignProcessor) Run() {
 		r.LightNode.DB.Create(&bucket)
 
 		// assign bucket to contents
-		r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid is ''").Update("bucket_uuid", bucket.UUID)
+		r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid is ''").Update("bucket_uuid", bucket.UUID).Update("status", "bucket-assigned")
+
 	}
 
 }
