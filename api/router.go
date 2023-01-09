@@ -82,8 +82,6 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 				})
 			}
 
-			// if result.validated == true then continue
-			// else return error
 			authResp, err := GetAuthResponse(response)
 			if err != nil {
 				log.Errorf("handler error: %s", err)

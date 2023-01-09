@@ -92,6 +92,7 @@ func (r *UploadToEstuaryProcessor) Run() {
 				}
 				json.Unmarshal(body, &addIpfsResponse)
 				content.Updated_at = time.Now()
+				content.Status = "uploaded-to-estuary"
 				content.EstuaryContentId = addIpfsResponse.RequestID
 				r.LightNode.DB.Updates(&content)
 			}
@@ -99,7 +100,7 @@ func (r *UploadToEstuaryProcessor) Run() {
 
 		// keep it open until every content is uploaded
 		bucket.Updated_at = time.Now()
-		bucket.Status = "content-id-assigned"
+		bucket.Status = "completed"
 		r.LightNode.DB.Save(&bucket)
 	}
 }
