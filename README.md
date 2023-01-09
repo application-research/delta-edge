@@ -18,7 +18,7 @@ go build -tags netgo -ldflags '-s -w' -o edge-ur
 ## Create the `.env` file
 ```
 DB_NAME=edge-ur
-UPLOAD_ENDPOINT=https://api.estuary.tech/content/add-ipfs
+UPLOAD_ENDPOINT=https://api.estuary.tech/pinning/pins
 ```
 
 ## Running the daemon
