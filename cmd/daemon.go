@@ -50,7 +50,7 @@ func DaemonCmd() []*cli.Command {
 func runJobs(ln *core.LightNode) {
 	// run the job every 10 seconds.
 	tick10 := time.NewTicker(10 * time.Second)
-	tick30 := time.NewTicker(10 * time.Second)
+	tick30 := time.NewTicker(30 * time.Second)
 	for {
 		select {
 		case <-tick10.C:

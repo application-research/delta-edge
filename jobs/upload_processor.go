@@ -59,8 +59,14 @@ func (r *UploadToEstuaryProcessor) Run() {
 			requestBody := IpfsPin{
 				CID:  content.Cid,
 				Name: content.Name,
+				Origins: func() []string {
+					var origins []string
+					for _, origin := range r.LightNode.GetOrigins() {
+						return append(origins, origin.String())
+					}
+					return origins
+				}(),
 			}
-
 			uploadEndpoint := viper.Get("UPLOAD_ENDPOINT").(string)
 			payloadBuf := new(bytes.Buffer)
 			json.NewEncoder(payloadBuf).Encode(requestBody)

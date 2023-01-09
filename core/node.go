@@ -125,3 +125,7 @@ func NewGatewayHandler(node *whypfs.Node) (*GatewayHandler, error) {
 		node:     node,
 	}, nil
 }
+
+func (ln *LightNode) GetOrigins() []multiaddr.Multiaddr {
+	return ln.Node.Host.Addrs()
+}
