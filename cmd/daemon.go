@@ -5,7 +5,6 @@ import (
 	"edge-ur/api"
 	"edge-ur/core"
 	"edge-ur/jobs"
-	"fmt"
 	"github.com/urfave/cli/v2"
 	"time"
 )
@@ -49,13 +48,12 @@ func DaemonCmd() []*cli.Command {
 }
 
 func runJobs(ln *core.LightNode) {
-
-	fmt.Println("run jobs")
 	// run the job every 10 seconds.
-	tick := time.NewTicker(10 * time.Second)
+	tick10 := time.NewTicker(10 * time.Second)
+	tick30 := time.NewTicker(10 * time.Second)
 	for {
 		select {
-		case <-tick.C:
+		case <-tick10.C:
 			// run the job.
 
 			go func() {
@@ -68,7 +66,12 @@ func runJobs(ln *core.LightNode) {
 				uploadToEstuaryRun.Run()
 			}()
 
+		case <-tick30.C:
+			go func() {
+				uploadToEstuaryRun := jobs.NewUploadToEstuaryProcessor(ln)
+				uploadToEstuaryRun.Run()
+			}()
+
 		}
 	}
-
 }

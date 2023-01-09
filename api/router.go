@@ -84,7 +84,7 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 
 			// if result.validated == true then continue
 			// else return error
-			authResp, err := GetJSONRawBody(response)
+			authResp, err := GetAuthResponse(response)
 			if err != nil {
 				log.Errorf("handler error: %s", err)
 				return c.JSON(http.StatusInternalServerError, HttpErrorResponse{
@@ -118,7 +118,7 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 	e.Logger.Fatal(e.Start("0.0.0.0:1313")) // configuration
 }
 
-func GetJSONRawBody(resp *http.Response) (AuthResponse, error) {
+func GetAuthResponse(resp *http.Response) (AuthResponse, error) {
 
 	jsonBody := AuthResponse{}
 	err := json.NewDecoder(resp.Body).Decode(&jsonBody)

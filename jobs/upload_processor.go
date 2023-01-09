@@ -2,10 +2,10 @@ package jobs
 
 import (
 	"bytes"
-	"edge-ur/api"
 	"edge-ur/core"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -15,6 +15,16 @@ type IpfsPin struct {
 	Name    string                 `json:"name"`
 	Origins []string               `json:"origins"`
 	Meta    map[string]interface{} `json:"meta"`
+}
+type PinningStatus string
+
+type IpfsPinStatusResponse struct {
+	RequestID string                 `json:"requestid"`
+	Status    PinningStatus          `json:"status"`
+	Created   time.Time              `json:"created"`
+	Delegates []string               `json:"delegates"`
+	Info      map[string]interface{} `json:"info"`
+	Pin       IpfsPin                `json:"pin"`
 }
 
 type UploadToEstuaryProcessor struct {
@@ -29,6 +39,7 @@ func NewUploadToEstuaryProcessor(ln *core.LightNode) UploadToEstuaryProcessor {
 	}
 }
 
+// will improve to worker
 func (r *UploadToEstuaryProcessor) Run() {
 	// get open buckets and create a car for each content cid
 	var buckets []core.Bucket
@@ -60,7 +71,13 @@ func (r *UploadToEstuaryProcessor) Run() {
 				return
 			}
 			defer res.Body.Close()
-			fmt.Println(api.GetJSONRawBody(res))
+			var addIpfsResponse IpfsPinStatusResponse
+			body, err := ioutil.ReadAll(res.Body)
+			json.Unmarshal(body, &addIpfsResponse)
+
+			content.Updated_at = time.Now()
+			content.EstuaryContentId = addIpfsResponse.RequestID
+			r.LightNode.DB.Updates(&content)
 
 		}
 		bucket.Updated_at = time.Now()
