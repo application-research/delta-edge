@@ -5,7 +5,8 @@ To allow the customer to have a better UX using estuary, we need to give a dedic
 
 By decoupling this to a light node, we achieve the following:
 - dedicated node assignment for each customer. The customer or user can now launch an edge node and use it for both uploading to Estuary and retrieval using the same API keys issued from Estuary.
-- offload the Estuary API node with request and get it to focus more on deal-making process.
+- offload the Estuary API node and get it to focus on deal-making process rather than consuming massive, concurrent HTTP uploads
+- switches the upload protocol. The user still needs to upload via HTTP but the edge node will use bitswap to transfer the files over to Estuary.
 
 ![image](https://user-images.githubusercontent.com/4479171/211375766-09c3d322-06eb-494d-94dd-a94e4110645b.png)
 
