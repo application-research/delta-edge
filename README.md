@@ -27,9 +27,16 @@ View the gateway using:
 - https://localhost:1313/dashboard
 - https://localhost:1313/gw/ipfs/:cid
 
-# Pin your files to Estuary
+# Pin and make a storage deal for your file(s) on Estuary
 ```
 curl --location --request POST 'http://localhost:1313/api/v1/content/add' \
---header 'Authorization: Bearer [YOUR API KEY]' \
+--header 'Authorization: Bearer [ESTUARY_API_KEY]' \
 --form 'data=@"/path/to/file"'
+```
+
+# Pin make a storage deal for your cid(s) on Estuary
+```
+curl --location --request POST 'http://localhost:1313/api/v1/content/cid?cid=bafybeihxodfkobqiovfgui6ipealoabr2u3bhor765z47wxdthrgn7rvyq' \
+--header 'Authorization: Bearer [ESTUARY_API_KEY]'
+```
 ```

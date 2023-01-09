@@ -1,5 +1,5 @@
 .env
-.idea
+.idea/*
 .whypfs
 edge-ur
 libp2p.key

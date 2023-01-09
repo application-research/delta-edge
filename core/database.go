@@ -9,9 +9,6 @@ import (
 
 func OpenDatabase() (*gorm.DB, error) {
 
-	viper.SetConfigFile(".env")
-	err := viper.ReadInConfig()
-
 	dbName, okHost := viper.Get("DB_NAME").(string)
 	if !okHost {
 		panic("DB_NAME not set")

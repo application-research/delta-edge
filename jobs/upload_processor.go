@@ -5,6 +5,7 @@ import (
 	"edge-ur/core"
 	"encoding/json"
 	"fmt"
+	"github.com/spf13/viper"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -47,6 +48,7 @@ func (r *UploadToEstuaryProcessor) Run() {
 
 	//	for each bucket, get the contents and all estuary add-ipfs endpoint
 	for _, bucket := range buckets {
+
 		var contents []core.Content
 		r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid = ?", bucket.UUID).Find(&contents)
 
@@ -57,30 +59,44 @@ func (r *UploadToEstuaryProcessor) Run() {
 				CID:  content.Cid,
 				Name: content.Name,
 			}
+
+			uploadEndpoint := viper.Get("UPLOAD_ENDPOINT").(string)
 			payloadBuf := new(bytes.Buffer)
 			json.NewEncoder(payloadBuf).Encode(requestBody)
 			req, _ := http.NewRequest("POST",
-				"https://api.estuary.tech/content/add-ipfs",
+				uploadEndpoint,
 				payloadBuf)
 
 			client := &http.Client{}
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("Authorization", "Bearer "+content.RequestingApiKey)
 			res, err := client.Do(req)
+			defer res.Body.Close()
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
-			defer res.Body.Close()
-			var addIpfsResponse IpfsPinStatusResponse
-			body, err := ioutil.ReadAll(res.Body)
-			json.Unmarshal(body, &addIpfsResponse)
 
-			content.Updated_at = time.Now()
-			content.EstuaryContentId = addIpfsResponse.RequestID
-			r.LightNode.DB.Updates(&content)
+			if res.StatusCode != 202 {
+				fmt.Println("error uploading to estuary", res.StatusCode)
+				return
+			}
 
+			if res.StatusCode == 202 {
+				var addIpfsResponse IpfsPinStatusResponse
+				body, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				json.Unmarshal(body, &addIpfsResponse)
+				content.Updated_at = time.Now()
+				content.EstuaryContentId = addIpfsResponse.RequestID
+				r.LightNode.DB.Updates(&content)
+			}
 		}
+
+		// keep it open until every content is uploaded
 		bucket.Updated_at = time.Now()
 		bucket.Status = "completed"
 		r.LightNode.DB.Save(&bucket)
