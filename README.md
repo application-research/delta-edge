@@ -5,6 +5,8 @@
 - Save the data on local sqlite DB
 - Process each files and call estuary add-ipfs endpoint to make deals for the CID
 
+![image](https://user-images.githubusercontent.com/4479171/211347885-8f8f2218-e7b6-4b5a-bdc1-0a6e0faa4b73.png)
+
 
 # Build
 ## `go build`
