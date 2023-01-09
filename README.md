@@ -4,6 +4,7 @@
 - Stores the CID and content on the local blockstore using whypfs
 - Save the data on local sqlite DB
 - Process each files and call estuary add-ipfs endpoint to make deals for the CID
+- uses estuary api (`content/add-ipfs`) endpoint to pin files on estuary
 
 ![image](https://user-images.githubusercontent.com/4479171/211354164-2df9b2be-ff77-4749-871b-3a5932e0b857.png)
 
@@ -13,9 +14,14 @@
 go build -tags netgo -ldflags '-s -w' -o edge-ur
 ```
 
+# Running 
+## Create the `.env` file
+```
+DB_NAME=edge-ur
+UPLOAD_ENDPOINT=https://api.estuary.tech/content/add-ipfs
+```
 
-# Running the daemon
-Running the daemon will initialize the node configuration and the gateway at port 1313
+## Running the daemon
 ```
 ./edge-ur daemon
 ```
