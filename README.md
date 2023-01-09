@@ -4,7 +4,7 @@
 - Stores the CID and content on the local blockstore using whypfs
 - Save the data on local sqlite DB
 - Process each files and call estuary add-ipfs endpoint to make deals for the CID
-- uses estuary api (`content/add-ipfs`) endpoint to pin files on estuary
+- uses estuary api (`pinning/pins`) endpoint to pin files on estuary
 
 ![image](https://user-images.githubusercontent.com/4479171/211354164-2df9b2be-ff77-4749-871b-3a5932e0b857.png)
 
