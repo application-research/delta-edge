@@ -13,9 +13,9 @@ type CidRequest struct {
 }
 
 type UploadResponse struct {
-	Status  string       `json:"status"`
-	Message string       `json:"message"`
-	Content core.Content `json:"content"`
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	ID      uint   `json:"id,omitempty"`
 }
 
 func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
@@ -56,6 +56,7 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 		c.JSON(200, UploadResponse{
 			Status:  "success",
 			Message: "Car uploaded and pinned successfully to the network.",
+			ID:      content.ID,
 		})
 		return nil
 	})
@@ -98,6 +99,7 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 		c.JSON(200, UploadResponse{
 			Status:  "success",
 			Message: "File uploaded and pinned successfully",
+			ID:      content.ID,
 		})
 		return nil
 	})
@@ -140,6 +142,7 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 		c.JSON(200, UploadResponse{
 			Status:  "success",
 			Message: "CID uploaded and pinned successfully",
+			ID:      content.ID,
 		})
 		return nil
 	})

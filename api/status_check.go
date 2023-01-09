@@ -7,13 +7,12 @@ import (
 )
 
 type StatusCheckResponse struct {
-	Status  string `json:"status"`
 	Content struct {
 		ID               uint   `json:"id"`
-		EstuaryContentId string `json:"estuary_content_id"`
+		EstuaryContentId string `json:"estuary_content_id,omitempty"`
 		Status           string `json:"status"`
-		Message          string `json:"message"`
-	}
+		Message          string `json:"message,omitempty"`
+	} `json:"content"`
 }
 
 func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
@@ -26,13 +25,12 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		node.DB.Raw("select c.id, c.estuary_content_id, b.status from contents as c, buckets as b where c.bucket_uuid = b.uuid and c.id = ? and requesting_api_key = ?", c.Param("id"), authParts[1]).Scan(&content)
 
 		return c.JSON(200, StatusCheckResponse{
-			Status: "success",
 			Content: struct {
 				ID               uint   `json:"id"`
-				EstuaryContentId string `json:"estuary_content_id"`
+				EstuaryContentId string `json:"estuary_content_id,omitempty"`
 				Status           string `json:"status"`
-				Message          string `json:"message"`
-			}{ID: content.ID, EstuaryContentId: content.EstuaryContentId, Status: content.Status, Message: "Content is now being processed by Estuary."},
+				Message          string `json:"message,omitempty"`
+			}{ID: content.ID, EstuaryContentId: content.EstuaryContentId, Status: content.Status},
 		})
 
 		return nil

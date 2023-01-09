@@ -99,7 +99,7 @@ func (r *UploadToEstuaryProcessor) Run() {
 
 		// keep it open until every content is uploaded
 		bucket.Updated_at = time.Now()
-		bucket.Status = "completed"
+		bucket.Status = "content-id-assigned"
 		r.LightNode.DB.Save(&bucket)
 	}
 }

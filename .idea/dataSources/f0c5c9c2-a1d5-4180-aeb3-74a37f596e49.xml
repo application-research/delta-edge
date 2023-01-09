@@ -1374,35 +1374,39 @@
       <DataType>TEXT|0s</DataType>
       <Position>7</Position>
     </column>
-    <column id="499" parent="483" name="created_at">
-      <DataType>datetime|0s</DataType>
+    <column id="499" parent="483" name="status">
+      <DataType>TEXT|0s</DataType>
       <Position>8</Position>
     </column>
-    <column id="500" parent="483" name="updated_at">
+    <column id="500" parent="483" name="created_at">
       <DataType>datetime|0s</DataType>
       <Position>9</Position>
     </column>
-    <key id="501" parent="483">
+    <column id="501" parent="483" name="updated_at">
+      <DataType>datetime|0s</DataType>
+      <Position>10</Position>
+    </column>
+    <key id="502" parent="483">
       <ColNames>id</ColNames>
       <Primary>1</Primary>
     </key>
-    <column id="502" parent="484" name="type">
+    <column id="503" parent="484" name="type">
       <DataType>TEXT|0s</DataType>
       <Position>1</Position>
     </column>
-    <column id="503" parent="484" name="name">
+    <column id="504" parent="484" name="name">
       <DataType>TEXT|0s</DataType>
       <Position>2</Position>
     </column>
-    <column id="504" parent="484" name="tbl_name">
+    <column id="505" parent="484" name="tbl_name">
       <DataType>TEXT|0s</DataType>
       <Position>3</Position>
     </column>
-    <column id="505" parent="484" name="rootpage">
+    <column id="506" parent="484" name="rootpage">
       <DataType>INT|0s</DataType>
       <Position>4</Position>
     </column>
-    <column id="506" parent="484" name="sql">
+    <column id="507" parent="484" name="sql">
       <DataType>TEXT|0s</DataType>
       <Position>5</Position>
     </column>

@@ -44,6 +44,8 @@ curl --location --request POST 'http://localhost:1313/api/v1/content/cid/bafybei
 
 
 ## Status check
+This will return the status of the file(s) or cid(s) on edge-ur. It'll also return the estuary content_id.
 ```
-
+curl --location --request GET 'http://localhost:1313/api/v1/status/5' \
+--header 'Authorization: Bearer [ESTUARY_API_KEY]'
 ```
