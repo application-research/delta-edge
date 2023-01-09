@@ -54,7 +54,8 @@ func (r *UploadToEstuaryProcessor) Run() {
 		// update bucket cid and status
 		for _, content := range contents {
 			requestBody := IpfsPin{
-				CID: content.Cid,
+				CID:  content.Cid,
+				Name: content.Name,
 			}
 			payloadBuf := new(bytes.Buffer)
 			json.NewEncoder(payloadBuf).Encode(requestBody)
