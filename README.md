@@ -1,11 +1,22 @@
 # Uploader Job to Estuary
 
+## Goal/Purpose
+To allow the customer to have a better UX using estuary, we need to give a dedicate light node for them to upload and retrieve their CIDs. To do this, we decoupled the upload and retrieval aspect from the Estuary API node so we can create a node that can live on the "edge" closer to the customer.
+
+By decoupling this to a light node, we achieve the following:
+- dedicated node assignment for each customer. The customer or user can now launch an edge node and use it for both uploading to Estuary and retrieval using the same API keys issued from Estuary.
+- offload the Estuary API node with request and get it to focus more on deal-making process.
+
+![image](https://user-images.githubusercontent.com/4479171/211375766-09c3d322-06eb-494d-94dd-a94e4110645b.png)
+
+## Features
 - Accepts concurrent uploads (small to large)
 - Stores the CID and content on the local blockstore using whypfs
 - Save the data on local sqlite DB
 - Process each files and call estuary add-ipfs endpoint to make deals for the CID
 - uses estuary api (`pinning/pins`) endpoint to pin files on estuary
 
+## HL Architecture/Process flow
 ![image](https://user-images.githubusercontent.com/4479171/211354164-2df9b2be-ff77-4749-871b-3a5932e0b857.png)
 
 # Build
