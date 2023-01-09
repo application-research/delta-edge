@@ -41,4 +41,9 @@ curl --location --request POST 'http://localhost:1313/api/v1/content/add' \
 curl --location --request POST 'http://localhost:1313/api/v1/content/cid/bafybeihxodfkobqiovfgui6ipealoabr2u3bhor765z47wxdthrgn7rvyq' \
 --header 'Authorization: Bearer [ESTUARY_API_KEY]'
 ```
+
+
+## Status check
+```
+
 ```

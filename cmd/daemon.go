@@ -61,11 +61,6 @@ func runJobs(ln *core.LightNode) {
 				bucketAssignRun.Run()
 			}()
 
-			go func() {
-				uploadToEstuaryRun := jobs.NewUploadToEstuaryProcessor(ln)
-				uploadToEstuaryRun.Run()
-			}()
-
 		case <-tick30.C:
 			go func() {
 				uploadToEstuaryRun := jobs.NewUploadToEstuaryProcessor(ln)
