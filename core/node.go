@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"github.com/application-research/whypfs-core"
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/lotus/chain/types"
@@ -20,6 +21,10 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"gorm.io/gorm"
+	"io/ioutil"
+	"log"
+	"net"
+	"net/http"
 	"net/url"
 	"sync"
 )
@@ -84,15 +89,29 @@ func NewLightNode(ctx context.Context) (*LightNode, error) {
 
 	db, err := OpenDatabase()
 	// node
-	whypfsPeer, err := whypfs.NewNode(whypfs.NewNodeParams{
+	publicIp, err := GetPublicIP()
+	newConfig := &whypfs.Config{
+		ListenAddrs: []string{
+			"/ip4/127.0.0.1/tcp/0",
+			"/ip4/" + publicIp + "/tcp/0"},
+		AnnounceAddrs: []string{
+			"/ip4/127.0.0.1/tcp/0",
+			"/ip4/" + publicIp + "/tcp/0"},
+	}
+	params := whypfs.NewNodeParams{
 		Ctx:       context.Background(),
 		Datastore: whypfs.NewInMemoryDatastore(),
-	})
+	}
+
+	params.Config = params.ConfigurationBuilder(newConfig)
+	whypfsPeer, err := whypfs.NewNode(params)
 	if err != nil {
 		panic(err)
 	}
 
 	whypfsPeer.BootstrapPeers(BootstrapEstuaryPeers())
+
+	fmt.Println(whypfsPeer.Config.AnnounceAddrs)
 
 	// gateway
 	gw, err := NewGatewayHandler(whypfsPeer)
@@ -126,6 +145,74 @@ func NewGatewayHandler(node *whypfs.Node) (*GatewayHandler, error) {
 	}, nil
 }
 
-func (ln *LightNode) GetOrigins() []multiaddr.Multiaddr {
-	return ln.Node.Host.Addrs()
+func (ln *LightNode) GetLocalhostOrigins() []string {
+	var origins []string
+	for _, origin := range ln.Node.Config.AnnounceAddrs {
+		peerInfo, err := peer.AddrInfoFromString(origin)
+		if err != nil {
+			continue
+		}
+		origins = append(origins, peerInfo.ID.String())
+	}
+
+	publicIp, err := GetPublicIP()
+	if err != nil {
+		panic(err)
+	}
+	origins = append(origins, "/ip4/"+publicIp+"/tcp/6745/p2p/"+ln.Node.Host.ID().String())
+	fmt.Println("origins", origins)
+	return origins
+}
+
+func GetOutboundIP() net.IP {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Println(err)
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddr.IP
+}
+
+func GetIpNet() net.IP {
+
+	ifaces, err := net.Interfaces()
+	// handle err
+	if err != nil {
+		panic(err)
+	}
+
+	//
+	var ip net.IP
+	for _, i := range ifaces {
+		addrs, err := i.Addrs()
+		if err != nil {
+			panic(err)
+		}
+		// handle err
+		for _, addr := range addrs {
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+		}
+	}
+	return ip
+}
+
+func GetPublicIP() (string, error) {
+	resp, err := http.Get("https://ifconfig.me")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(body), nil
 }

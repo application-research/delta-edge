@@ -3,7 +3,7 @@ module edge-ur
 go 1.19
 
 require (
-	github.com/application-research/whypfs-core v0.1.1-0.20221202192558-1782fa637898
+	github.com/application-research/whypfs-core v0.1.1
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/lotus v1.18.0
 	github.com/gabriel-vasile/mimetype v1.4.1
@@ -127,7 +127,7 @@ require (
 	github.com/ipfs/go-peertaskqueue v0.8.0 // indirect
 	github.com/ipfs/go-verifcid v0.0.1 // indirect
 	github.com/ipfs/interface-go-ipfs-core v0.7.0 // indirect
-	github.com/ipld/go-car v0.4.1-0.20220707083113-89de8134e58e // indirect
+	github.com/ipld/go-car v0.5.0 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/jbenet/go-temp-err-catcher v0.1.0 // indirect
 	github.com/jbenet/goprocess v0.1.4 // indirect

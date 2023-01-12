@@ -1,7 +1,7 @@
 # Uploader Job to Estuary
 
 ## Goal/Purpose
-To allow the customer to have a better UX using estuary, we need to give a dedicate light node for them to upload and retrieve their CIDs. To do this, we decoupled the upload and retrieval aspect from the Estuary API node so we can create a node that can live on the "edge" closer to the customer.
+To allow the customer to have a better UX using estuary, we need to give a dedicated light node for them to upload and retrieve their CIDs. To do this, we decoupled the upload and retrieval aspect from the Estuary API node so we can create a node that can live on the "edge" closer to the customer.
 
 By decoupling this to a light node, we achieve the following:
 - dedicated node assignment for each customer. The customer or user can now launch an edge node and use it for both uploading to Estuary and retrieval using the same API keys issued from Estuary.
