@@ -18,6 +18,7 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	ipldbasicnode "github.com/ipld/go-ipld-prime/node/basic"
 	"github.com/ipld/go-ipld-prime/schema"
+	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/urfave/cli/v2"
@@ -28,6 +29,7 @@ import (
 	"net/http"
 	"net/url"
 	"sync"
+	"time"
 )
 
 type LightNode struct {
@@ -255,4 +257,32 @@ func GetPublicIP() (string, error) {
 		return "", err
 	}
 	return string(body), nil
+}
+
+func (ln *LightNode) ConnectToDelegates(ctx context.Context, delegates []string) error {
+	peers := make(map[peer.ID][]multiaddr.Multiaddr)
+	for _, d := range delegates {
+		ai, err := peer.AddrInfoFromString(d)
+		if err != nil {
+			return err
+		}
+
+		peers[ai.ID] = append(peers[ai.ID], ai.Addrs...)
+	}
+
+	for p, addrs := range peers {
+		ln.Node.Host.Peerstore().AddAddrs(p, addrs, time.Hour)
+
+		if ln.Node.Host.Network().Connectedness(p) != network.Connected {
+			if err := ln.Node.Host.Connect(ctx, peer.AddrInfo{
+				ID: p,
+			}); err != nil {
+				return err
+			}
+
+			ln.Node.Host.ConnManager().Protect(p, "pinning")
+		}
+	}
+
+	return nil
 }

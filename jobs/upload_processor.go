@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"bytes"
+	"context"
 	"edge-ur/core"
 	"encoding/json"
 	"fmt"
@@ -99,6 +100,9 @@ func (r *UploadToEstuaryProcessor) Run() {
 						return
 					}
 					json.Unmarshal(body, &addIpfsResponse)
+
+					// connect to delegates
+					r.LightNode.ConnectToDelegates(context.Background(), addIpfsResponse.Pin.Origins)
 					content.Updated_at = time.Now()
 					content.Status = "uploaded-to-estuary"
 					content.EstuaryContentId = addIpfsResponse.RequestID
