@@ -42,7 +42,6 @@ UPLOAD_ENDPOINT=https://api.estuary.tech/pinning/pins
 ## Running the CLI
 While running the daemon, the user can run the following commands to add file or dir to local instance
 ```
-./edge-ur pin <path>
 ./edge-ur pin-file <path>
 ./edge-ur pin-dir <path>
 ```

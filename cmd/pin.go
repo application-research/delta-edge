@@ -14,9 +14,9 @@ import (
 func PinCmd() []*cli.Command {
 	var pinCommands []*cli.Command
 
-	pinCmd := &cli.Command{
-		Name:  "pin",
-		Usage: "Pin a File.",
+	pinFileCmd := &cli.Command{
+		Name:  "pin-file",
+		Usage: "Pin a file on the Filecoin network.",
 		Action: func(c *cli.Context) error {
 			lightNode, _ := core.NewCliNode(c) // light node now
 			value := c.Args().Get(0)
@@ -34,30 +34,6 @@ func PinCmd() []*cli.Command {
 				RequestingApiKey: viper.Get("API_KEY").(string),
 				Created_at:       time.Now(),
 				Updated_at:       time.Now(),
-			}
-			lightNode.DB.Create(&content)
-			return nil
-		},
-	}
-	pinFileCmd := &cli.Command{
-		Name:  "pin-file",
-		Usage: "Pin a file on the Filecoin network.",
-		Action: func(c *cli.Context) error {
-			lightNode, _ := core.NewCliNode(c) // light node now
-			value := c.Args().Get(0)
-			r, err := os.Open(value)
-			if err != nil {
-				return nil
-			}
-
-			fileNode, err := lightNode.Node.AddPinFile(context.Background(), r, nil)
-			size, err := fileNode.Size()
-			content := core.Content{
-				Name:       r.Name(),
-				Size:       int64(size),
-				Cid:        fileNode.Cid().String(),
-				Created_at: time.Now(),
-				Updated_at: time.Now(),
 			}
 			lightNode.DB.Create(&content)
 			return nil
@@ -89,6 +65,6 @@ func PinCmd() []*cli.Command {
 		},
 	}
 
-	pinCommands = append(pinCommands, pinCmd, pinFileCmd, pinDirCmd)
+	pinCommands = append(pinCommands, pinFileCmd, pinDirCmd)
 	return pinCommands
 }
