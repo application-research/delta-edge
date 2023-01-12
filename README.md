@@ -30,7 +30,15 @@ go build -tags netgo -ldflags '-s -w' -o edge-ur
 ## Create the `.env` file
 ```
 DB_NAME=edge-ur
-UPLOAD_ENDPOINT=https://api.estuary.tech/pinning/pins
+MODE=remote-pin
+REMOTE_PIN_ENDPOINT=https://api.estuary.tech/pinning/pins
+
+## For local CLI only
+API_KEY=[REDACTED]
+
+# JOB Frequency
+BUCKET_ASSIGN=10
+UPLOAD_PROCESS=30
 ```
 
 ## Running the daemon
