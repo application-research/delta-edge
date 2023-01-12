@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"fmt"
 	"github.com/application-research/whypfs-core"
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/lotus/chain/types"
@@ -202,7 +201,6 @@ func (ln *LightNode) GetLocalhostOrigins() []string {
 		panic(err)
 	}
 	origins = append(origins, "/ip4/"+publicIp+"/tcp/6745/p2p/"+ln.Node.Host.ID().String())
-	fmt.Println("origins", origins)
 	return origins
 }
 

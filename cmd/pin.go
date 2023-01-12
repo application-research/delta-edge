@@ -4,7 +4,6 @@ import (
 	"context"
 	"edge-ur/core"
 	"fmt"
-	cid2 "github.com/ipfs/go-cid"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
 	"os"
@@ -72,34 +71,12 @@ func PinCmd() []*cli.Command {
 			lightNode, _ := core.NewCliNode(c) // light node now
 			valuePath := c.Args().Get(0)
 			fileNode, _ := lightNode.Node.AddPinDirectory(context.Background(), valuePath)
-			fmt.Println(fileNode.Cid().String())
-			return nil
-		},
-	}
-
-	pinCarCmd := &cli.Command{
-		Name:  "pin-car",
-		Usage: "Pin a car file on the Filecoin network.",
-		Action: func(c *cli.Context) error {
-			lightNode, _ := core.NewCliNode(c) // light node now
-			fmt.Println(&lightNode.Node.Host)
-			return nil
-		},
-	}
-
-	pinCidCmd := &cli.Command{
-		Name:  "pin-cid",
-		Usage: "Pull a CID and store a CID on this light estuary node",
-		Action: func(c *cli.Context) error {
-			lightNode, _ := core.NewCliNode(c) // light node now
-			cid, err := cid2.Decode(c.Args().Get(0))
-			if err != nil {
-				return nil
-			}
-			fileNode, err := lightNode.Node.Get(context.Background(), cid)
 			size, err := fileNode.Size()
+			if err != nil {
+				return err
+			}
 			content := core.Content{
-				Name:             fileNode.Cid().String(),
+				Name:             valuePath,
 				Size:             int64(size),
 				Cid:              fileNode.Cid().String(),
 				RequestingApiKey: viper.Get("API_KEY").(string),
@@ -107,10 +84,11 @@ func PinCmd() []*cli.Command {
 				Updated_at:       time.Now(),
 			}
 			lightNode.DB.Create(&content)
+			fmt.Println(fileNode.Cid().String())
 			return nil
 		},
 	}
 
-	pinCommands = append(pinCommands, pinCmd, pinFileCmd, pinDirCmd, pinCarCmd, pinCidCmd)
+	pinCommands = append(pinCommands, pinCmd, pinFileCmd, pinDirCmd)
 	return pinCommands
 }

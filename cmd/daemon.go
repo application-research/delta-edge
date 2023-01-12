@@ -5,7 +5,9 @@ import (
 	"edge-ur/api"
 	"edge-ur/core"
 	"edge-ur/jobs"
+	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
+	"strconv"
 	"time"
 )
 
@@ -49,8 +51,16 @@ func DaemonCmd() []*cli.Command {
 
 func runJobs(ln *core.LightNode) {
 	// run the job every 10 seconds.
-	tick10 := time.NewTicker(10 * time.Second)
-	tick30 := time.NewTicker(30 * time.Second)
+	bucketAssignFreq, err := strconv.Atoi(viper.Get("BUCKET_ASSIGN").(string))
+	uploadFreq, err := strconv.Atoi(viper.Get("UPLOAD_PROCESS").(string))
+
+	if err != nil {
+		bucketAssignFreq = 10
+		uploadFreq = 10
+	}
+
+	tick10 := time.NewTicker(time.Duration(bucketAssignFreq) * time.Second)
+	tick30 := time.NewTicker(time.Duration(uploadFreq) * time.Second)
 	for {
 		select {
 		case <-tick10.C:
