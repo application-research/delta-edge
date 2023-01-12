@@ -38,6 +38,17 @@ UPLOAD_ENDPOINT=https://api.estuary.tech/pinning/pins
 ./edge-ur daemon
 ```
 
+
+## Running the CLI
+While running the daemon, the user can run the following commands to add file or dir to local instance
+```
+./edge-ur pin <path>
+./edge-ur pin-file <path>
+./edge-ur pin-dir <path>
+```
+
+This will create an entry on the contents table, assigned to a bucket which will then be pushed to Estuary and the delegates.
+
 # Gateway
 This node comes with it's own gateway to serve directories and files.
 
