@@ -46,7 +46,7 @@ func NewUploadToEstuaryProcessor(ln *core.LightNode) UploadToEstuaryProcessor {
 	}
 }
 
-// will improve to worker
+// TODO: WORKER GROUPS!!!!!
 func (r *UploadToEstuaryProcessor) Run() {
 	// get open buckets and create a car for each content cid
 	var buckets []core.Bucket

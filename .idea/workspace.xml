@@ -8,7 +8,7 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmd/pin.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/pin.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/core/node.go" beforeDir="false" afterPath="$PROJECT_DIR$/core/node.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jobs/upload_processor.go" beforeDir="false" afterPath="$PROJECT_DIR$/jobs/upload_processor.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

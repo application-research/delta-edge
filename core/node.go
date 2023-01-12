@@ -91,11 +91,13 @@ func NewCliNode(ctx *cli.Context) (*LightNode, error) {
 	publicIp, err := GetPublicIP()
 	newConfig := &whypfs.Config{
 		ListenAddrs: []string{
-			"/ip4/127.0.0.1/tcp/0",
-			"/ip4/" + publicIp + "/tcp/0"},
+			"/ip4/0.0.0.0/tcp/6745",
+			"/ip4/" + publicIp + "/tcp/6745",
+		},
 		AnnounceAddrs: []string{
-			"/ip4/127.0.0.1/tcp/0",
-			"/ip4/" + publicIp + "/tcp/0"},
+			"/ip4/0.0.0.0/tcp/6745",
+			"/ip4/" + publicIp + "/tcp/6745",
+		},
 	}
 	params := whypfs.NewNodeParams{
 		Ctx:       context.Background(),
@@ -130,11 +132,13 @@ func NewLightNode(ctx context.Context) (*LightNode, error) {
 	publicIp, err := GetPublicIP()
 	newConfig := &whypfs.Config{
 		ListenAddrs: []string{
-			"/ip4/127.0.0.1/tcp/0",
-			"/ip4/" + publicIp + "/tcp/0"},
+			"/ip4/0.0.0.0/tcp/6745",
+			"/ip4/" + publicIp + "/tcp/6745",
+		},
 		AnnounceAddrs: []string{
-			"/ip4/127.0.0.1/tcp/0",
-			"/ip4/" + publicIp + "/tcp/0"},
+			"/ip4/0.0.0.0/tcp/6745",
+			"/ip4/" + publicIp + "/tcp/6745",
+		},
 	}
 	params := whypfs.NewNodeParams{
 		Ctx:       context.Background(),
