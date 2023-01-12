@@ -71,7 +71,7 @@ curl --location --request POST 'http://localhost:1313/api/v1/content/add' \
 --form 'data=@"/path/to/file"'
 ```
 
-# Pin make a storage deal for your cid(s) on Estuary
+# Pin and make a storage deal for your cid(s) on Estuary
 ```
 curl --location --request POST 'http://localhost:1313/api/v1/content/cid/bafybeihxodfkobqiovfgui6ipealoabr2u3bhor765z47wxdthrgn7rvyq' \
 --header 'Authorization: Bearer [ESTUARY_API_KEY]'
