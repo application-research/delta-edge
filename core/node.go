@@ -20,6 +20,7 @@ import (
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
+	"github.com/urfave/cli/v2"
 	"gorm.io/gorm"
 	"io/ioutil"
 	"log"
@@ -81,6 +82,43 @@ func BootstrapEstuaryPeers() []peer.AddrInfo {
 
 	peers, _ := peer.AddrInfosFromP2pAddrs(defaultTestBootstrapPeers...)
 	return peers
+}
+
+func NewCliNode(ctx *cli.Context) (*LightNode, error) {
+
+	db, err := OpenDatabase()
+	// node
+	publicIp, err := GetPublicIP()
+	newConfig := &whypfs.Config{
+		ListenAddrs: []string{
+			"/ip4/127.0.0.1/tcp/0",
+			"/ip4/" + publicIp + "/tcp/0"},
+		AnnounceAddrs: []string{
+			"/ip4/127.0.0.1/tcp/0",
+			"/ip4/" + publicIp + "/tcp/0"},
+	}
+	params := whypfs.NewNodeParams{
+		Ctx:       context.Background(),
+		Datastore: whypfs.NewInMemoryDatastore(),
+	}
+
+	params.Config = params.ConfigurationBuilder(newConfig)
+	whypfsPeer, err := whypfs.NewNode(params)
+	if err != nil {
+		panic(err)
+	}
+
+	whypfsPeer.BootstrapPeers(BootstrapEstuaryPeers())
+
+	// gateway
+	gw, err := NewGatewayHandler(whypfsPeer)
+
+	// create the global light node.
+	return &LightNode{
+		Node: whypfsPeer,
+		Gw:   gw,
+		DB:   db,
+	}, nil
 }
 
 // Add a config to enable gateway or not.

@@ -18,7 +18,7 @@ func PinCmd() []*cli.Command {
 		Name:  "pin",
 		Usage: "Pin a File.",
 		Action: func(c *cli.Context) error {
-			lightNode, _ := core.NewLightNode(c) // light node now
+			lightNode, _ := core.NewCliNode(c) // light node now
 			value := c.Args().Get(0)
 			r, err := os.Open(value)
 			if err != nil {
@@ -42,7 +42,7 @@ func PinCmd() []*cli.Command {
 		Name:  "pin-file",
 		Usage: "Pin a file on the Filecoin network.",
 		Action: func(c *cli.Context) error {
-			lightNode, _ := core.NewLightNode(c) // light node now
+			lightNode, _ := core.NewCliNode(c) // light node now
 			value := c.Args().Get(0)
 			r, err := os.Open(value)
 			if err != nil {
@@ -67,7 +67,7 @@ func PinCmd() []*cli.Command {
 		Name:  "pin-dir",
 		Usage: "Pin a directory on the Filecoin network.",
 		Action: func(c *cli.Context) error {
-			lightNode, _ := core.NewLightNode(c) // light node now
+			lightNode, _ := core.NewCliNode(c) // light node now
 			valuePath := c.Args().Get(0)
 			fileNode, _ := lightNode.Node.AddPinDirectory(context.Background(), valuePath)
 			fmt.Println(fileNode.Cid().String())
@@ -79,7 +79,7 @@ func PinCmd() []*cli.Command {
 		Name:  "pin-car",
 		Usage: "Pin a car file on the Filecoin network.",
 		Action: func(c *cli.Context) error {
-			lightNode, _ := core.NewLightNode(c) // light node now
+			lightNode, _ := core.NewCliNode(c) // light node now
 			fmt.Println(&lightNode.Node.Host)
 			return nil
 		},
@@ -89,7 +89,7 @@ func PinCmd() []*cli.Command {
 		Name:  "pin-cid",
 		Usage: "Pull a CID and store a CID on this light estuary node",
 		Action: func(c *cli.Context) error {
-			lightNode, _ := core.NewLightNode(c) // light node now
+			lightNode, _ := core.NewCliNode(c) // light node now
 			cid, err := cid2.Decode(c.Args().Get(0))
 			if err != nil {
 				return nil
@@ -108,6 +108,6 @@ func PinCmd() []*cli.Command {
 		},
 	}
 
-	pinCommands = append(pinCommands, pinCmd, pinFileCmd, pinDirCmd, pinCarCmd, pinCidCmd, pinDealCmd)
+	pinCommands = append(pinCommands, pinCmd, pinFileCmd, pinDirCmd, pinCarCmd, pinCidCmd)
 	return pinCommands
 }
