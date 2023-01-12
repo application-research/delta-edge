@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"edge-ur/core"
-	"fmt"
+	format "github.com/ipfs/go-ipld-format"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
 	"os"
@@ -46,25 +46,37 @@ func PinCmd() []*cli.Command {
 		Action: func(c *cli.Context) error {
 			lightNode, _ := core.NewCliNode(c) // light node now
 			valuePath := c.Args().Get(0)
-			fileNode, _ := lightNode.Node.AddPinDirectory(context.Background(), valuePath)
-			size, err := fileNode.Size()
-			if err != nil {
-				return err
-			}
-			content := core.Content{
-				Name:             valuePath,
-				Size:             int64(size),
-				Cid:              fileNode.Cid().String(),
-				RequestingApiKey: viper.Get("API_KEY").(string),
-				Created_at:       time.Now(),
-				Updated_at:       time.Now(),
-			}
-			lightNode.DB.Create(&content)
-			fmt.Println(fileNode.Cid().String())
+			dirNode, _ := lightNode.Node.AddPinDirectory(context.Background(), valuePath)
+			createContentEntryForEach(context.Background(), lightNode, dirNode)
 			return nil
 		},
 	}
 
 	pinCommands = append(pinCommands, pinFileCmd, pinDirCmd)
 	return pinCommands
+}
+
+// traverse node
+// function to traverse all links
+func createContentEntryForEach(ctx context.Context, ln *core.LightNode, nd format.Node) {
+	for _, link := range nd.Links() {
+		node, err := link.GetNode(ctx, ln.Node.DAGService)
+		if err != nil {
+			panic(err)
+		}
+		size, err := node.Size()
+		if err != nil {
+			panic(err)
+		}
+		content := core.Content{
+			Name:             node.Cid().String(),
+			Size:             int64(size),
+			Cid:              node.Cid().String(),
+			RequestingApiKey: viper.Get("API_KEY").(string),
+			Created_at:       time.Now(),
+			Updated_at:       time.Now(),
+		}
+		ln.DB.Create(&content)
+		createContentEntryForEach(ctx, ln, node)
+	}
 }

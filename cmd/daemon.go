@@ -23,9 +23,11 @@ func DaemonCmd() []*cli.Command {
 			&cli.StringFlag{
 				Name: "enable-api",
 			},
+			&cli.StringFlag{
+				Name: "mount",
+			},
 		},
 		Action: func(c *cli.Context) error {
-
 			ln, err := core.NewLightNode(context.Background())
 			if err != nil {
 				return err
@@ -53,30 +55,34 @@ func runJobs(ln *core.LightNode) {
 	// run the job every 10 seconds.
 	bucketAssignFreq, err := strconv.Atoi(viper.Get("BUCKET_ASSIGN").(string))
 	uploadFreq, err := strconv.Atoi(viper.Get("UPLOAD_PROCESS").(string))
+	dealCheckFreq, err := strconv.Atoi(viper.Get("DEAL_CHECK").(string))
 
 	if err != nil {
 		bucketAssignFreq = 10
 		uploadFreq = 10
 	}
 
-	tick10 := time.NewTicker(time.Duration(bucketAssignFreq) * time.Second)
-	tick30 := time.NewTicker(time.Duration(uploadFreq) * time.Second)
+	bucketAssignFreqTick := time.NewTicker(time.Duration(bucketAssignFreq) * time.Second)
+	uploadFreqTick := time.NewTicker(time.Duration(uploadFreq) * time.Second)
+	dealCheckFreqTick := time.NewTicker(time.Duration(dealCheckFreq) * time.Second)
 	for {
 		select {
-		case <-tick10.C:
-			// run the job.
-
+		case <-bucketAssignFreqTick.C:
 			go func() {
 				bucketAssignRun := jobs.NewBucketAssignProcessor(ln)
 				bucketAssignRun.Run()
 			}()
 
-		case <-tick30.C:
+		case <-uploadFreqTick.C:
 			go func() {
 				uploadToEstuaryRun := jobs.NewUploadToEstuaryProcessor(ln)
 				uploadToEstuaryRun.Run()
 			}()
-
+		case <-dealCheckFreqTick.C:
+			go func() {
+				dealCheck := jobs.NewDealCheckProcessor(ln)
+				dealCheck.Run()
+			}()
 		}
 	}
 }
