@@ -111,8 +111,6 @@ func NewLightNode(ctx context.Context) (*LightNode, error) {
 
 	whypfsPeer.BootstrapPeers(BootstrapEstuaryPeers())
 
-	fmt.Println(whypfsPeer.Config.AnnounceAddrs)
-
 	// gateway
 	gw, err := NewGatewayHandler(whypfsPeer)
 

@@ -104,8 +104,6 @@ func (r *UploadToEstuaryProcessor) Run() {
 					content.EstuaryContentId = addIpfsResponse.RequestID
 					r.LightNode.DB.Updates(&content)
 				}
-			} else if MODE == "remote-upload" {
-
 			}
 		}
 
