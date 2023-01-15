@@ -26,6 +26,9 @@ func DaemonCmd() []*cli.Command {
 			&cli.StringFlag{
 				Name: "mount",
 			},
+			&cli.BoolFlag{
+				Name: "auto-delete",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			ln, err := core.NewLightNode(context.Background())
@@ -34,7 +37,7 @@ func DaemonCmd() []*cli.Command {
 			}
 
 			//	launch the jobs
-			go runJobs(ln)
+			go runProcessors(ln)
 
 			// launch the API node
 			api.InitializeEchoRouterConfig(ln)
@@ -51,7 +54,8 @@ func DaemonCmd() []*cli.Command {
 
 }
 
-func runJobs(ln *core.LightNode) {
+func runProcessors(ln *core.LightNode) {
+
 	// run the job every 10 seconds.
 	bucketAssignFreq, err := strconv.Atoi(viper.Get("BUCKET_ASSIGN").(string))
 	uploadFreq, err := strconv.Atoi(viper.Get("UPLOAD_PROCESS").(string))

@@ -44,4 +44,9 @@ func (r *BucketAssignProcessor) Run() {
 
 	}
 
+	//	 check if there are any content with bucket_uuid, completed but without estuary_content_id
+	// if there are contents, create a new bucket and assign it to the contents
+	var contents2 []core.Content
+	r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid is not ''").Where("status = ?", "uploaded-to-estuary").Where("estuary_content_id = ''").Find(&contents2)
+
 }

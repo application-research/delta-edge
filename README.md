@@ -39,6 +39,10 @@ API_KEY=[REDACTED]
 # JOB Frequency
 BUCKET_ASSIGN=10
 UPLOAD_PROCESS=30
+DEAL_CHECK=86400
+
+# Deal config
+DELETE_AFTER_DEAL_MADE=false
 ```
 
 ## Running the daemon

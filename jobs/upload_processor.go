@@ -12,10 +12,6 @@ import (
 	"time"
 )
 
-var MODE = "remote-pin"
-var UPLOAD_ENDPOINT = ""
-var API_KEY = ""
-
 type IpfsPin struct {
 	CID     string                 `json:"cid"`
 	Name    string                 `json:"name"`
@@ -49,6 +45,10 @@ func NewUploadToEstuaryProcessor(ln *core.LightNode) UploadToEstuaryProcessor {
 
 // TODO: WORKER GROUPS!!!!!
 func (r *UploadToEstuaryProcessor) Run() {
+
+	// create a worker group.
+	// run the content processor.
+
 	// get open buckets and create a car for each content cid
 	var buckets []core.Bucket
 	r.LightNode.DB.Model(&core.Bucket{}).Where("status = ?", "open").Find(&buckets)

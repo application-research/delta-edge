@@ -35,7 +35,6 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 
 		addNode, err := node.Node.AddPinFile(c.Request().Context(), src, nil)
 
-		// get availabel staging buckets.
 		// save the file to the database.
 		content := core.Content{
 			Name:             file.Filename,
