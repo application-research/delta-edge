@@ -126,7 +126,7 @@ func NewCliNode(ctx *cli.Context) (*LightNode, error) {
 
 // Add a config to enable gateway or not.
 // Add a config to enable content, bucket, commp, replication verifier processor
-func NewLightNode(ctx context.Context) (*LightNode, error) {
+func NewLightNode(ctx context.Context, repo string) (*LightNode, error) {
 
 	db, err := OpenDatabase()
 	// node
@@ -142,8 +142,9 @@ func NewLightNode(ctx context.Context) (*LightNode, error) {
 		},
 	}
 	params := whypfs.NewNodeParams{
-		Ctx:       context.Background(),
+		Ctx:       ctx,
 		Datastore: whypfs.NewInMemoryDatastore(),
+		Repo:      repo,
 	}
 
 	params.Config = params.ConfigurationBuilder(newConfig)
@@ -245,7 +246,7 @@ func GetIpNet() net.IP {
 }
 
 func GetPublicIP() (string, error) {
-	resp, err := http.Get("https://ifconfig.me")
+	resp, err := http.Get("https://ifconfig.me") // important to get the public ip if possible.
 	if err != nil {
 		return "", err
 	}

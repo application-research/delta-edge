@@ -16,6 +16,8 @@ By decoupling this to a light node, we achieve the following:
 - Save the data on local sqlite DB
 - Process each files and call estuary add-ipfs endpoint to make deals for the CID
 - uses estuary api (`pinning/pins`) endpoint to pin files on estuary
+- periodically checks the status of the deals and update the sqlite DB
+- option to delete the cid from the local blockstore if a deal is made
 
 ## HL Architecture/Process flow
 ![image](https://user-images.githubusercontent.com/4479171/211354164-2df9b2be-ff77-4749-871b-3a5932e0b857.png)
@@ -47,7 +49,7 @@ DELETE_AFTER_DEAL_MADE=false
 
 ## Running the daemon
 ```
-./edge-ur daemon
+./edge-ur daemon --repo=/tmp/edge-ur (optional --repo)
 ```
 
 

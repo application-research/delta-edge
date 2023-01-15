@@ -21,17 +21,21 @@ func DaemonCmd() []*cli.Command {
 
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name: "enable-api",
+				Name: "repo",
 			},
 			&cli.StringFlag{
-				Name: "mount",
-			},
-			&cli.BoolFlag{
-				Name: "auto-delete",
+				Name: "db-location",
 			},
 		},
 		Action: func(c *cli.Context) error {
-			ln, err := core.NewLightNode(context.Background())
+
+			repo := c.String("repo")
+
+			if repo == "" {
+				repo = "."
+			}
+
+			ln, err := core.NewLightNode(context.Background(), repo)
 			if err != nil {
 				return err
 			}

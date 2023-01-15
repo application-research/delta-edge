@@ -81,7 +81,7 @@ func (r *UploadToEstuaryProcessor) Run() {
 				req.Header.Set("Content-Type", "application/json")
 				req.Header.Set("Authorization", "Bearer "+content.RequestingApiKey)
 				res, err := client.Do(req)
-				defer res.Body.Close()
+
 				if err != nil {
 					fmt.Println(err)
 					return
