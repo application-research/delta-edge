@@ -5,6 +5,7 @@ import (
 	"edge-ur/api"
 	"edge-ur/core"
 	"edge-ur/jobs"
+	"fmt"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
 	"strconv"
@@ -77,19 +78,47 @@ func runProcessors(ln *core.LightNode) {
 		select {
 		case <-bucketAssignFreqTick.C:
 			go func() {
+
 				bucketAssignRun := jobs.NewBucketAssignProcessor(ln)
-				bucketAssignRun.Run()
+				d := jobs.CreateNewDispatcher()
+				d.AddJob(bucketAssignRun)
+				d.Start(10)
+
+				for {
+					if d.Finished() {
+						fmt.Printf("All jobs finished.\n")
+						break
+					}
+				}
 			}()
 
 		case <-uploadFreqTick.C:
 			go func() {
 				uploadToEstuaryRun := jobs.NewUploadToEstuaryProcessor(ln)
-				uploadToEstuaryRun.Run()
+				d := jobs.CreateNewDispatcher() // dispatch uploads
+				d.AddJob(uploadToEstuaryRun)
+				d.Start(10)
+
+				for {
+					if d.Finished() {
+						fmt.Printf("All jobs finished.\n")
+						break
+					}
+				}
 			}()
 		case <-dealCheckFreqTick.C:
 			go func() {
 				dealCheck := jobs.NewDealCheckProcessor(ln)
-				dealCheck.Run()
+				d := jobs.CreateNewDispatcher() // dispatch jobs
+				d.AddJob(dealCheck)
+				d.Start(10)
+
+				for {
+					if d.Finished() {
+						fmt.Printf("All jobs finished.\n")
+						break
+					}
+				}
 			}()
 		}
 	}

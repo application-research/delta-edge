@@ -1,4 +1,6 @@
 #!/bin/bash
+
+# This script is used to spam the edge with 50kb files
 while :
 do
   ms=$(date +%s%N)

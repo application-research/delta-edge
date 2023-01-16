@@ -75,19 +75,19 @@ type ContentStatus struct {
 	FailuresCount int `json:"failuresCount"`
 }
 
-func NewDealCheckProcessor(ln *core.LightNode) DealCheckProcessor {
+func NewDealCheckProcessor(ln *core.LightNode) IProcessor {
 	MODE = viper.Get("MODE").(string)
 	UPLOAD_ENDPOINT = viper.Get("REMOTE_PIN_ENDPOINT").(string)
 	DELETE_AFTER_DEAL_MADE = viper.Get("DELETE_AFTER_DEAL_MADE").(string)
 	CONTENT_STATUS_CHECK_ENDPOINT = viper.Get("CONTENT_STATUS_CHECK_ENDPOINT").(string)
-	return DealCheckProcessor{
+	return &DealCheckProcessor{
 		Processor{
 			LightNode: ln,
 		},
 	}
 }
 
-func (r *DealCheckProcessor) Run() {
+func (r *DealCheckProcessor) Run() error {
 	// get the deal of the contents and update
 
 	// get the contents that has estuary_request_id from the DB
@@ -108,7 +108,7 @@ func (r *DealCheckProcessor) Run() {
 		err = json.NewDecoder(res.Body).Decode(&contentStatus)
 		if err != nil {
 			fmt.Println(err)
-			return
+			return err
 		}
 
 		if res.StatusCode != 202 {
@@ -116,6 +116,7 @@ func (r *DealCheckProcessor) Run() {
 			continue
 		}
 	}
+	return nil
 }
 func (r *DealCheckProcessor) deleteCidOnLocalNode(cidParam string) {
 	// delete the cid on the local node

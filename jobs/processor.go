@@ -12,15 +12,11 @@ var API_KEY = ""
 var DELETE_AFTER_DEAL_MADE = "false"
 var CONTENT_STATUS_CHECK_ENDPOINT = ""
 
+type JobExecutable func() error
+type IProcessor interface {
+	Run() error
+}
 type Processor struct {
-	ProcessorInterface
 	context   *context.Context
 	LightNode *core.LightNode
-}
-
-type ProcessorInterface interface {
-	PreProcess() Processor
-	PostProcess() Processor
-	Run() Processor
-	Verify() Processor
 }

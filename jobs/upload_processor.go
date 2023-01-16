@@ -33,18 +33,18 @@ type UploadToEstuaryProcessor struct {
 	Processor
 }
 
-func NewUploadToEstuaryProcessor(ln *core.LightNode) UploadToEstuaryProcessor {
+func NewUploadToEstuaryProcessor(ln *core.LightNode) IProcessor {
 	MODE = viper.Get("MODE").(string)
 	UPLOAD_ENDPOINT = viper.Get("REMOTE_PIN_ENDPOINT").(string)
-	return UploadToEstuaryProcessor{
+	return &UploadToEstuaryProcessor{
 		Processor{
 			LightNode: ln,
 		},
 	}
 }
 
-// TODO: WORKER GROUPS!!!!!
-func (r *UploadToEstuaryProcessor) Run() {
+// TODO: WORKER GROUPS so we can configure burst uploads.
+func (r *UploadToEstuaryProcessor) Run() error {
 
 	// create a worker group.
 	// run the content processor.
@@ -84,12 +84,12 @@ func (r *UploadToEstuaryProcessor) Run() {
 
 				if err != nil {
 					fmt.Println(err)
-					return
+					return nil
 				}
 
 				if res.StatusCode != 202 {
 					fmt.Println("error uploading to estuary", res.StatusCode)
-					return
+					return nil
 				}
 
 				if res.StatusCode == 202 {
@@ -97,7 +97,7 @@ func (r *UploadToEstuaryProcessor) Run() {
 					body, err := ioutil.ReadAll(res.Body)
 					if err != nil {
 						fmt.Println(err)
-						return
+						return nil
 					}
 					json.Unmarshal(body, &addIpfsResponse)
 
@@ -116,4 +116,6 @@ func (r *UploadToEstuaryProcessor) Run() {
 		bucket.Status = "completed"
 		r.LightNode.DB.Save(&bucket)
 	}
+
+	return nil
 }

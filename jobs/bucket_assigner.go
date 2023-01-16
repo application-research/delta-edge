@@ -10,15 +10,15 @@ type BucketAssignProcessor struct {
 	Processor
 }
 
-func NewBucketAssignProcessor(ln *core.LightNode) BucketAssignProcessor {
-	return BucketAssignProcessor{
+func NewBucketAssignProcessor(ln *core.LightNode) IProcessor {
+	return &BucketAssignProcessor{
 		Processor{
 			LightNode: ln,
 		},
 	}
 }
 
-func (r *BucketAssignProcessor) Run() {
+func (r *BucketAssignProcessor) Run() error {
 	// run the content processor.
 	var contents []core.Content
 	r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid is ''").Find(&contents)
@@ -49,4 +49,5 @@ func (r *BucketAssignProcessor) Run() {
 	var contents2 []core.Content
 	r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid is not ''").Where("status = ?", "uploaded-to-estuary").Where("estuary_content_id = ''").Find(&contents2)
 
+	return nil
 }
