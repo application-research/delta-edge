@@ -14,7 +14,12 @@ var CONTENT_STATUS_CHECK_ENDPOINT = ""
 
 type JobExecutable func() error
 type IProcessor interface {
+	Info() error
 	Run() error
+}
+
+type ProcessorInfo struct {
+	Name string
 }
 type Processor struct {
 	context   *context.Context

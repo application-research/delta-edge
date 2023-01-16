@@ -34,6 +34,8 @@ go build -tags netgo -ldflags '-s -w' -o edge-ur
 DB_NAME=edge-ur
 MODE=remote-pin
 REMOTE_PIN_ENDPOINT=https://api.estuary.tech/pinning/pins
+REMOTE_UPLOAD_ENDPOINT=https://api.estuary.tech/content/add
+CONTENT_STATUS_CHECK_ENDPOINT=https://api.estuary.tech/content/status
 
 ## For local CLI only
 API_KEY=[REDACTED]

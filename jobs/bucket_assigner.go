@@ -18,6 +18,10 @@ func NewBucketAssignProcessor(ln *core.LightNode) IProcessor {
 	}
 }
 
+func (r *BucketAssignProcessor) Info() error {
+	panic("implement me")
+}
+
 func (r *BucketAssignProcessor) Run() error {
 	// run the content processor.
 	var contents []core.Content

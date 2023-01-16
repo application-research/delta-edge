@@ -87,6 +87,11 @@ func NewDealCheckProcessor(ln *core.LightNode) IProcessor {
 	}
 }
 
+func (r *DealCheckProcessor) Info() error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (r *DealCheckProcessor) Run() error {
 	// get the deal of the contents and update
 

@@ -43,7 +43,11 @@ func NewUploadToEstuaryProcessor(ln *core.LightNode) IProcessor {
 	}
 }
 
-// TODO: WORKER GROUPS so we can configure burst uploads.
+func (r *UploadToEstuaryProcessor) Info() error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (r *UploadToEstuaryProcessor) Run() error {
 
 	// create a worker group.
