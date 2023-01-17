@@ -2,7 +2,8 @@ package jobs
 
 import (
 	"context"
-	"edge-ur/core"
+
+	"github.com/application-research/edge-ur/core"
 )
 
 var workerPool = make(chan struct{}, 10)

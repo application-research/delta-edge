@@ -1,7 +1,7 @@
 package api
 
 import (
-	"edge-ur/core"
+	"github.com/application-research/edge-ur/core"
 	"github.com/labstack/echo/v4"
 )
 

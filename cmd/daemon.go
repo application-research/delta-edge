@@ -2,14 +2,15 @@ package cmd
 
 import (
 	"context"
-	"edge-ur/api"
-	"edge-ur/core"
-	"edge-ur/jobs"
 	"fmt"
-	"github.com/spf13/viper"
-	"github.com/urfave/cli/v2"
 	"strconv"
 	"time"
+
+	"github.com/application-research/edge-ur/api"
+	"github.com/application-research/edge-ur/core"
+	"github.com/application-research/edge-ur/jobs"
+	"github.com/spf13/viper"
+	"github.com/urfave/cli/v2"
 )
 
 func DaemonCmd() []*cli.Command {

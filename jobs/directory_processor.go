@@ -1,7 +1,7 @@
 package jobs
 
 import (
-	"edge-ur/core"
+	"github.com/application-research/edge-ur/core"
 )
 
 type DirectoryProcessor struct {

@@ -1,13 +1,14 @@
 package jobs
 
 import (
-	"edge-ur/core"
 	"encoding/json"
 	"fmt"
-	cid2 "github.com/ipfs/go-cid"
-	"github.com/spf13/viper"
 	"net/http"
 	"time"
+
+	"github.com/application-research/edge-ur/core"
+	cid2 "github.com/ipfs/go-cid"
+	"github.com/spf13/viper"
 )
 
 type DealCheckProcessor struct {

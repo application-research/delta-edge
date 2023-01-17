@@ -3,13 +3,14 @@ package jobs
 import (
 	"bytes"
 	"context"
-	"edge-ur/core"
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/viper"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/application-research/edge-ur/core"
+	"github.com/spf13/viper"
 )
 
 type IpfsPin struct {

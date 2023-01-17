@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"context"
-	"edge-ur/core"
+	"os"
+	"time"
+
+	"github.com/application-research/edge-ur/core"
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
-	"os"
-	"time"
 )
 
 // call the local APIs instead.
