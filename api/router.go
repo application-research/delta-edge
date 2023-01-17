@@ -111,6 +111,7 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 	})
 	ConfigurePinningRouter(apiGroup, ln)
 	ConfigureStatusCheckRouter(apiGroup, ln)
+	ConfigureStatsRouter(apiGroup, ln)
 
 	// Start server
 	e.Logger.Fatal(e.Start("0.0.0.0:1313")) // configuration
