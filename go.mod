@@ -1,4 +1,4 @@
-module edge-ur
+module github.com/application-research/edge-ur
 
 go 1.19
 
