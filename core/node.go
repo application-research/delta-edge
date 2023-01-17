@@ -2,6 +2,14 @@ package core
 
 import (
 	"context"
+	"io/ioutil"
+	"log"
+	"net"
+	"net/http"
+	"net/url"
+	"sync"
+	"time"
+
 	"github.com/application-research/whypfs-core"
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/lotus/chain/types"
@@ -20,15 +28,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
-	"github.com/urfave/cli/v2"
 	"gorm.io/gorm"
-	"io/ioutil"
-	"log"
-	"net"
-	"net/http"
-	"net/url"
-	"sync"
-	"time"
 )
 
 type LightNode struct {
@@ -85,7 +85,7 @@ func BootstrapEstuaryPeers() []peer.AddrInfo {
 	return peers
 }
 
-func NewCliNode(ctx *cli.Context) (*LightNode, error) {
+func NewCliNode(ctx *context.Context) (*LightNode, error) {
 
 	db, err := OpenDatabase()
 	// node
