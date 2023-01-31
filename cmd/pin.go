@@ -2,23 +2,25 @@ package cmd
 
 import (
 	"context"
-	"edge-ur/core"
+	"os"
+	"time"
+
+	"github.com/application-research/edge-ur/core"
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
-	"os"
-	"time"
 )
 
 // call the local APIs instead.
 func PinCmd() []*cli.Command {
 	var pinCommands []*cli.Command
 
+	ctx := context.Background()
 	pinFileCmd := &cli.Command{
 		Name:  "pin-file",
 		Usage: "Pin a file on the Filecoin network.",
 		Action: func(c *cli.Context) error {
-			lightNode, _ := core.NewCliNode(c) // light node now
+			lightNode, _ := core.NewCliNode(&ctx) // light node now
 			value := c.Args().Get(0)
 			r, err := os.Open(value)
 			if err != nil {
@@ -44,7 +46,7 @@ func PinCmd() []*cli.Command {
 		Name:  "pin-dir",
 		Usage: "Pin a directory on the Filecoin network.",
 		Action: func(c *cli.Context) error {
-			lightNode, _ := core.NewCliNode(c) // light node now
+			lightNode, _ := core.NewCliNode(&ctx) // light node now
 			valuePath := c.Args().Get(0)
 			dirNode, _ := lightNode.Node.AddPinDirectory(context.Background(), valuePath)
 			createContentEntryForEach(context.Background(), lightNode, dirNode)

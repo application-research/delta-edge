@@ -1,9 +1,10 @@
 package jobs
 
 import (
-	"edge-ur/core"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/application-research/edge-ur/core"
+	"github.com/google/uuid"
 )
 
 type BucketAssignProcessor struct {

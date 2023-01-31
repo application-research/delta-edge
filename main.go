@@ -3,12 +3,13 @@
 package main
 
 import (
-	"edge-ur/cmd"
+	_ "net/http"
+	"os"
+
+	"github.com/application-research/edge-ur/cmd"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
-	_ "net/http"
-	"os"
 )
 
 var (
