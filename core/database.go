@@ -43,10 +43,12 @@ type Content struct {
 }
 
 type Bucket struct {
-	ID         uint   `gorm:"primaryKey"`
-	Name       string `json:"name"`
-	UUID       string `json:"uuid"`
-	Status     string `json:"status"`
-	Created_at time.Time
-	Updated_at time.Time
+	ID               uint   `gorm:"primaryKey"`
+	Name             string `json:"name"`
+	UUID             string `json:"uuid"`
+	Status           string `json:"status"`
+	Cid              string `json:"cid"`
+	EstuaryContentId string `json:"estuary_content_id"`
+	Created_at       time.Time
+	Updated_at       time.Time
 }

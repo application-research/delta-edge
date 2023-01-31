@@ -32,7 +32,7 @@ func (w *Worker) Start() {
 		for {
 			select {
 			case job := <-w.jobs:
-				fmt.Printf("Worker[%d] executing job[%d].\n", w.ID, job.ID)
+				//fmt.Printf("Worker[%d] executing job[%d].\n", w.ID, job.ID)
 				job.Processor.Run()
 				w.dispatchStatus <- &DispatchStatus{Type: "worker", ID: w.ID, Status: "quit"}
 				w.Quit <- true
@@ -80,11 +80,11 @@ func (d *Dispatcher) Start(numWorkers int) {
 		for {
 			select {
 			case job := <-d.jobQueue:
-				fmt.Printf("Got a job in the queue to dispatch: %d\n", job.ID)
+				//fmt.Printf("Got a job in the queue to dispatch: %d\n", job.ID)
 				// Sending it off;
 				d.workQueue <- job
 			case ds := <-d.dispatchStatus:
-				fmt.Printf("Got a dispatch status:\n\tType[%s] - ID[%d] - Status[%s]\n", ds.Type, ds.ID, ds.Status)
+				//fmt.Printf("Got a dispatch status:\n\tType[%s] - ID[%d] - Status[%s]\n", ds.Type, ds.ID, ds.Status)
 				if ds.Type == "worker" {
 					if ds.Status == "quit" {
 						d.jobCounter--
