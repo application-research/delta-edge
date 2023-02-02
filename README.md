@@ -25,7 +25,7 @@ By decoupling this to a light node, we achieve the following:
 # Build
 ## `go build`
 ```
-go build -tags netgo -ldflags '-s -w' -o edge-ur
+    go build -tags netgo -ldflags '-s -w' -o edge-ur
 ```
 
 # Running 

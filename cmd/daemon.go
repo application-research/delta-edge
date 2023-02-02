@@ -34,7 +34,7 @@ func DaemonCmd() []*cli.Command {
 			repo := c.String("repo")
 
 			if repo == "" {
-				repo = "."
+				repo = ".whypfs"
 			}
 
 			ln, err := core.NewLightNode(context.Background(), repo)

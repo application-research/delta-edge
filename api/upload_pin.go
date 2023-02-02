@@ -16,7 +16,7 @@ type CidRequest struct {
 type UploadResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
-	ID      uint   `json:"id,omitempty"`
+	ID      int64  `json:"id,omitempty"`
 }
 
 func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {

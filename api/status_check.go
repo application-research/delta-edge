@@ -9,9 +9,9 @@ import (
 
 type StatusCheckResponse struct {
 	Content struct {
-		ID               uint   `json:"id"`
+		ID               int64  `json:"id"`
 		Name             string `json:"name"`
-		EstuaryContentId string `json:"estuary_content_id,omitempty"`
+		EstuaryContentId int64  `json:"estuary_content_id,omitempty"`
 		Status           string `json:"status"`
 		Message          string `json:"message,omitempty"`
 	} `json:"content"`
@@ -28,9 +28,9 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 
 		return c.JSON(200, StatusCheckResponse{
 			Content: struct {
-				ID               uint   `json:"id"`
+				ID               int64  `json:"id"`
 				Name             string `json:"name"`
-				EstuaryContentId string `json:"estuary_content_id,omitempty"`
+				EstuaryContentId int64  `json:"estuary_content_id,omitempty"`
 				Status           string `json:"status"`
 				Message          string `json:"message,omitempty"`
 			}{ID: content.ID, Name: content.Name, EstuaryContentId: content.EstuaryContentId, Status: content.Status},
@@ -49,9 +49,9 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 
 		return c.JSON(200, StatusCheckResponse{
 			Content: struct {
-				ID               uint   `json:"id"`
+				ID               int64  `json:"id"`
 				Name             string `json:"name"`
-				EstuaryContentId string `json:"estuary_content_id,omitempty"`
+				EstuaryContentId int64  `json:"estuary_content_id,omitempty"`
 				Status           string `json:"status"`
 				Message          string `json:"message,omitempty"`
 			}{ID: content.ID, Name: content.Name, EstuaryContentId: content.EstuaryContentId, Status: content.Status},

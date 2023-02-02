@@ -32,7 +32,7 @@ func (w *Worker) Start() {
 		for {
 			select {
 			case job := <-w.jobs:
-				//fmt.Printf("Worker[%d] executing job[%d].\n", w.ID, job.ID)
+				fmt.Printf("Worker[%d] executing job[%d].\n", w.ID, job.ID)
 				job.Processor.Run()
 				w.dispatchStatus <- &DispatchStatus{Type: "worker", ID: w.ID, Status: "quit"}
 				w.Quit <- true

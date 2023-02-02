@@ -5,8 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ipfs/go-cid"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/application-research/edge-ur/core"
@@ -22,12 +26,20 @@ type IpfsPin struct {
 type PinningStatus string
 
 type IpfsPinStatusResponse struct {
-	RequestID string                 `json:"requestid"`
+	RequestID int64                  `json:"requestid"`
 	Status    PinningStatus          `json:"status"`
 	Created   time.Time              `json:"created"`
 	Delegates []string               `json:"delegates"`
 	Info      map[string]interface{} `json:"info"`
 	Pin       IpfsPin                `json:"pin"`
+}
+
+type IpfsUploadStatusResponse struct {
+	Cid                 string   `json:"cid"`
+	RetrievalURL        string   `json:"retrieval_url"`
+	EstuaryRetrievalURL string   `json:"estuary_retrieval_url"`
+	EstuaryID           int64    `json:"estuaryId"`
+	Providers           []string `json:"providers"`
 }
 
 type UploadToEstuaryProcessor struct {
@@ -36,7 +48,8 @@ type UploadToEstuaryProcessor struct {
 
 func NewUploadToEstuaryProcessor(ln *core.LightNode) IProcessor {
 	MODE = viper.Get("MODE").(string)
-	UPLOAD_ENDPOINT = viper.Get("REMOTE_PIN_ENDPOINT").(string)
+	PinEndpoint = viper.Get("REMOTE_PIN_ENDPOINT").(string)
+	UploadEndpoint = viper.Get("REMOTE_UPLOAD_ENDPOINT").(string)
 	return &UploadToEstuaryProcessor{
 		Processor{
 			LightNode: ln,
@@ -51,6 +64,7 @@ func (r *UploadToEstuaryProcessor) Info() error {
 
 func (r *UploadToEstuaryProcessor) Run() error {
 
+	fmt.Println(MODE)
 	// create a worker group.
 	// run the content processor.
 
@@ -79,7 +93,7 @@ func (r *UploadToEstuaryProcessor) Run() error {
 
 				json.NewEncoder(payloadBuf).Encode(requestBody)
 				req, _ := http.NewRequest("POST",
-					UPLOAD_ENDPOINT,
+					PinEndpoint,
 					payloadBuf)
 
 				client := &http.Client{}
@@ -97,6 +111,7 @@ func (r *UploadToEstuaryProcessor) Run() error {
 					return nil
 				}
 
+				fmt.Println(res.StatusCode)
 				if res.StatusCode == 202 {
 					var addIpfsResponse IpfsPinStatusResponse
 					body, err := ioutil.ReadAll(res.Body)
@@ -111,6 +126,68 @@ func (r *UploadToEstuaryProcessor) Run() error {
 					content.Updated_at = time.Now()
 					content.Status = "uploaded-to-estuary"
 					content.EstuaryContentId = addIpfsResponse.RequestID
+					r.LightNode.DB.Updates(&content)
+				}
+			}
+
+			if MODE == "remote-upload" {
+				decodedCid, err := cid.Decode(content.Cid)
+				if err != nil {
+					fmt.Println(err)
+					return nil
+				}
+				fileNd, err := r.LightNode.Node.GetFile(context.Background(), decodedCid)
+				if err != nil {
+					fmt.Println(err)
+					return nil
+				}
+
+				file, err := os.Create(content.Name)
+				fileNd.WriteTo(file)
+
+				payload := &bytes.Buffer{}
+				writer := multipart.NewWriter(payload)
+				partFile, err := writer.CreateFormFile("data", content.Name)
+				if err != nil {
+					fmt.Println(err)
+					return nil
+				}
+				io.Copy(partFile, file)
+				err = writer.Close()
+				if err != nil {
+					fmt.Println(err)
+					return nil
+				}
+				req, _ := http.NewRequest("POST",
+					UploadEndpoint,
+					payload)
+
+				client := &http.Client{}
+				req.Header.Add("content-type", "multipart/form-data")
+				req.Header.Set("Content-Type", writer.FormDataContentType())
+				req.Header.Set("Authorization", "Bearer "+content.RequestingApiKey)
+				res, err := client.Do(req)
+
+				if err != nil {
+					fmt.Println(err)
+					return nil
+				}
+
+				if res.StatusCode == 200 {
+					var uploadIpfsStatusResponse IpfsUploadStatusResponse
+					body, err := ioutil.ReadAll(res.Body)
+					if err != nil {
+						fmt.Println(err)
+						return nil
+					}
+					json.Unmarshal(body, &uploadIpfsStatusResponse)
+
+					fmt.Println(uploadIpfsStatusResponse)
+
+					// connect to delegates
+					content.Updated_at = time.Now()
+					content.Status = "uploaded-to-estuary"
+					content.EstuaryContentId = uploadIpfsStatusResponse.EstuaryID
 					r.LightNode.DB.Updates(&content)
 				}
 			}

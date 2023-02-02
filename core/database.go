@@ -29,13 +29,13 @@ func ConfigureModels(db *gorm.DB) {
 }
 
 type Content struct {
-	ID               uint   `gorm:"primaryKey"`
+	ID               int64  `gorm:"primaryKey"`
 	Name             string `json:"name"`
 	Size             int64  `json:"size"`
 	Cid              string `json:"cid"`
 	BucketUuid       string `json:"bucket_uuid"`
 	RequestingApiKey string `json:"requesting_api_key"`
-	EstuaryContentId string `json:"estuary_content_id"`
+	EstuaryContentId int64  `json:"estuary_content_id"`
 	DealId           string `json:"deal_id"`
 	Status           string `json:"status"`
 	Created_at       time.Time
@@ -43,12 +43,12 @@ type Content struct {
 }
 
 type Bucket struct {
-	ID               uint   `gorm:"primaryKey"`
+	ID               int64  `gorm:"primaryKey"`
 	Name             string `json:"name"`
 	UUID             string `json:"uuid"`
 	Status           string `json:"status"`
 	Cid              string `json:"cid"`
-	EstuaryContentId string `json:"estuary_content_id"`
+	EstuaryContentId int64  `json:"estuary_content_id"`
 	Created_at       time.Time
 	Updated_at       time.Time
 }

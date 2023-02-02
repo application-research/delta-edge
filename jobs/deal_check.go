@@ -78,7 +78,7 @@ type ContentStatus struct {
 
 func NewDealCheckProcessor(ln *core.LightNode) IProcessor {
 	MODE = viper.Get("MODE").(string)
-	UPLOAD_ENDPOINT = viper.Get("REMOTE_PIN_ENDPOINT").(string)
+	UploadEndpoint = viper.Get("REMOTE_PIN_ENDPOINT").(string)
 	DELETE_AFTER_DEAL_MADE = viper.Get("DELETE_AFTER_DEAL_MADE").(string)
 	CONTENT_STATUS_CHECK_ENDPOINT = viper.Get("CONTENT_STATUS_CHECK_ENDPOINT").(string)
 	return &DealCheckProcessor{
@@ -103,7 +103,7 @@ func (r *DealCheckProcessor) Run() error {
 	for _, content := range contents {
 
 		req, _ := http.NewRequest("GET",
-			CONTENT_STATUS_CHECK_ENDPOINT+"/"+content.EstuaryContentId, nil)
+			CONTENT_STATUS_CHECK_ENDPOINT+"/"+string(content.EstuaryContentId), nil)
 
 		client := &http.Client{}
 		req.Header.Set("Content-Type", "application/json")

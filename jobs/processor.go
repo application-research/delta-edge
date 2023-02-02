@@ -8,7 +8,8 @@ import (
 
 var workerPool = make(chan struct{}, 10)
 var MODE = "remote-pin"
-var UPLOAD_ENDPOINT = ""
+var PinEndpoint = ""
+var UploadEndpoint = ""
 var API_KEY = ""
 var DELETE_AFTER_DEAL_MADE = "false"
 var CONTENT_STATUS_CHECK_ENDPOINT = ""
