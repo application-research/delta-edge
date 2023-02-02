@@ -1,8 +1,6 @@
 package jobs
 
-import (
-	"edge-ur/core"
-)
+import "github.com/application-research/edge-ur/core"
 
 type CarGeneratorProcessor struct {
 	Processor
