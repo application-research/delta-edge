@@ -104,3 +104,7 @@ This will return the status of the file(s) or cid(s) on edge-ur. It'll also retu
 curl --location --request GET 'http://localhost:1313/api/v1/status/5' \
 --header 'Authorization: Bearer [ESTUARY_API_KEY]'
 ```
+
+## Postman
+[EdgeURAPI.postman_collection.json.zip](https://github.com/application-research/edge-ur/files/10573682/EdgeURAPI.postman_collection.json.zip)
+
