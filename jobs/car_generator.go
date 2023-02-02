@@ -1,14 +1,18 @@
 package jobs
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/application-research/edge-ur/core"
 	"github.com/ipfs/go-cid"
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-merkledag"
+	"github.com/ipld/go-car"
 	"time"
 )
+
+var MiniBucketThresholdSize = 1000000000
 
 type CarGeneratorProcessor struct {
 	Processor
@@ -39,8 +43,6 @@ func (c CarGeneratorProcessor) Run() error {
 		var contents []core.Content
 		c.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid = ?", bucket.UUID).Or("estuary_content_id = ''").Find(&contents)
 
-		// call the api to upload cid
-		// update bucket cid and status
 		rootCarCid, err := c.buildCarForListOfContents(bucket.UUID, contents)
 		if err != nil {
 			panic(err)
@@ -73,7 +75,7 @@ func (c *CarGeneratorProcessor) buildCarForListOfContents(bucketUuid string, con
 	baseNode := merkledag.NewRawNode([]byte(bucketUuid))
 	//var nodes []merkledag.ProtoNode
 	for i, content := range contents {
-		node := merkledag.ProtoNode{}
+		node := &merkledag.ProtoNode{}
 		nodeFromCid, err := c.getNodeForCid(content)
 		if err != nil {
 			return cid.Undef, err
@@ -82,26 +84,44 @@ func (c *CarGeneratorProcessor) buildCarForListOfContents(bucketUuid string, con
 		// link the first record to baseNode
 		if i == 0 {
 			node.AddNodeLink(nodeFromCid.String(), baseNode)
+
+			data, err := c.LightNode.Node.Get(context.Background(), nodeFromCid.Cid())
+			node.SetData(data.RawData())
+
 			if err != nil {
 				return cid.Undef, err
 			}
 		}
 
 		node.AddNodeLink(nodeFromCid.String(), nodeFromCid)
+		data, err := c.LightNode.Node.Get(context.Background(), nodeFromCid.Cid())
+		node.SetData(data.RawData())
 
 		// when last index
 		if i == len(contents)-1 {
 			rootCid = node.Cid()
 		}
 
-		c.addToBlockstore(c.LightNode.Node.DAGService, &node)
+		c.addToBlockstore(c.LightNode.Node.DAGService, node)
 	}
 	rootNodeFromP, err := c.LightNode.Node.Get(context.Background(), rootCid)
 	if err != nil {
+		return cid.Undef, err
+	}
 
+	buf := new(bytes.Buffer)
+	if err := car.WriteCar(context.Background(), c.LightNode.Node, []cid.Cid{rootCid}, buf); err != nil {
+		panic(err)
+	}
+	fmt.Println("CAR file size: ", buf.Len())
+	_, err = car.LoadCar(context.Background(), c.LightNode.Node.Blockstore, buf)
+	if err != nil {
+		panic(err)
 	}
 
 	c.traverseLinks(context.Background(), c.LightNode.Node.DAGService, rootNodeFromP)
+
+	fmt.Println("Root CID: ", rootCid.String())
 	return rootCid, nil
 }
 

@@ -13,6 +13,7 @@ var UploadEndpoint = ""
 var API_KEY = ""
 var DELETE_AFTER_DEAL_MADE = "false"
 var CONTENT_STATUS_CHECK_ENDPOINT = ""
+var CarGenSize = "1000000000"
 
 type JobExecutable func() error
 type IProcessor interface {

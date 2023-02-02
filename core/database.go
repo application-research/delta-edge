@@ -48,6 +48,7 @@ type Bucket struct {
 	UUID             string `json:"uuid"`
 	Status           string `json:"status"`
 	Cid              string `json:"cid"`
+	RequestingApiKey string `json:"requesting_api_key"`
 	EstuaryContentId int64  `json:"estuary_content_id"`
 	Created_at       time.Time
 	Updated_at       time.Time

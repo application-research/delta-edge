@@ -1,17 +1,24 @@
 package jobs
 
 import (
+	"fmt"
+	"github.com/spf13/viper"
+	"strconv"
 	"time"
 
 	"github.com/application-research/edge-ur/core"
 	"github.com/google/uuid"
 )
 
+var CarGenSizeTh int
+
 type BucketAssignProcessor struct {
 	Processor
 }
 
 func NewBucketAssignProcessor(ln *core.LightNode) IProcessor {
+	CarGenSize = viper.Get("CAR_GENERATOR_SIZE").(string)
+	CarGenSizeTh, _ = strconv.Atoi(CarGenSize)
 	return &BucketAssignProcessor{
 		Processor{
 			LightNode: ln,
@@ -26,33 +33,65 @@ func (r *BucketAssignProcessor) Info() error {
 func (r *BucketAssignProcessor) Run() error {
 	// run the content processor.
 	var contents []core.Content
+	var contentCollectionToBucket []core.Content
 	r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid is ''").Find(&contents)
 
 	// get range of content ids and assign a bucket
-	// if there are contents, create a new bucket and assign it to the contents
-	uuid, err := uuid.NewUUID()
-	if err != nil {
-		panic(err)
-	}
-	if len(contents) > 0 {
-		// create a new bucket
-		bucket := core.Bucket{
-			Status:     "open",        // open, car-assigned, piece-assigned, storage-deal-done
-			Name:       uuid.String(), // same as uuid
-			UUID:       uuid.String(),
-			Created_at: time.Now(), // log it.
+	for _, content := range contents {
+		fmt.Println("content size: ", r.GetContentCollectionToBucket(contentCollectionToBucket))
+		fmt.Println("threshold size: ", CarGenSizeTh)
+		if r.GetContentCollectionToBucket(contentCollectionToBucket) < int64(CarGenSizeTh) {
+			contentCollectionToBucket = append(contentCollectionToBucket, content)
 		}
-		r.LightNode.DB.Create(&bucket)
 
-		// assign bucket to contents
-		r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid is ''").Update("bucket_uuid", bucket.UUID).Update("status", "bucket-assigned")
+		if r.GetContentCollectionToBucket(contentCollectionToBucket) >= int64(CarGenSizeTh) {
+			// if there are contents, create a new bucket and assign it to the contents
+			uuid, err := uuid.NewUUID()
+			if err != nil {
+				panic(err)
+			}
+			if len(contentCollectionToBucket) > 0 {
+				// create a new bucket
+				bucket := core.Bucket{
+					Status:     "open",        // open, car-assigned, piece-assigned, storage-deal-done
+					Name:       uuid.String(), // same as uuid
+					UUID:       uuid.String(),
+					Created_at: time.Now(), // log it.
+				}
+				r.LightNode.DB.Create(&bucket)
 
+				// assign bucket to contents
+				//r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid is ''").Update("bucket_uuid", bucket.UUID).Update("status", "bucket-assigned")
+				r.UpdateContentCollectionToBucket(contentCollectionToBucket, bucket)
+			}
+
+			// reset contentCollectionToBucket
+			contentCollectionToBucket = []core.Content{}
+
+		}
 	}
-
-	//	 check if there are any content with bucket_uuid, completed but without estuary_content_id
-	// if there are contents, create a new bucket and assign it to the contents
-	var contents2 []core.Content
-	r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid is not ''").Where("status = ?", "uploaded-to-estuary").Where("estuary_content_id = ''").Find(&contents2)
 
 	return nil
+}
+
+func (r *BucketAssignProcessor) GetContentCollectionToBucket(contentCollectionToBucket []core.Content) int64 {
+	// get size of bucket
+	var size int64
+	for _, content := range contentCollectionToBucket {
+		size += content.Size
+	}
+
+	return size
+}
+
+func (r *BucketAssignProcessor) UpdateContentCollectionToBucket(contentCollectionToBucket []core.Content, bucket core.Bucket) int64 {
+	// get size of bucket
+	var size int64
+	for _, content := range contentCollectionToBucket {
+		content.BucketUuid = bucket.UUID
+		content.Status = "bucket-assigned"
+		r.LightNode.DB.Save(&content)
+	}
+
+	return size
 }

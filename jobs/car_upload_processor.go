@@ -44,126 +44,118 @@ func (r *CarUploadToEstuaryProcessor) Run() error {
 
 	// get open buckets and create a car for each content cid
 	var buckets []core.Bucket
-	r.LightNode.DB.Model(&core.Bucket{}).Where("status = ?", "open").Find(&buckets)
+	r.LightNode.DB.Model(&core.Bucket{}).Where("status = ?", "car-assigned").Find(&buckets)
 
 	//	for each bucket, get the contents and all estuary add-ipfs endpoint
 	for _, bucket := range buckets {
 
-		var contents []core.Content
-		r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid = ?", bucket.UUID).Or("estuary_content_id = ''").Find(&contents)
-
-		// call the api to upload cid
-		// update bucket cid and status
-		for _, content := range contents {
-
-			if MODE == "remote-pin" {
-				requestBody := IpfsPin{
-					CID:     content.Cid,
-					Name:    content.Name,
-					Origins: r.LightNode.GetLocalhostOrigins(),
-				}
-
-				payloadBuf := new(bytes.Buffer)
-
-				json.NewEncoder(payloadBuf).Encode(requestBody)
-				req, _ := http.NewRequest("POST",
-					PinEndpoint,
-					payloadBuf)
-
-				client := &http.Client{}
-				req.Header.Set("Content-Type", "application/json")
-				req.Header.Set("Authorization", "Bearer "+content.RequestingApiKey)
-				res, err := client.Do(req)
-
-				if err != nil {
-					fmt.Println(err)
-					return nil
-				}
-
-				if res.StatusCode != 202 {
-					fmt.Println("error uploading to estuary", res.StatusCode)
-					return nil
-				}
-
-				fmt.Println(res.StatusCode)
-				if res.StatusCode == 202 {
-					var addIpfsResponse IpfsPinStatusResponse
-					body, err := ioutil.ReadAll(res.Body)
-					if err != nil {
-						fmt.Println(err)
-						return nil
-					}
-					json.Unmarshal(body, &addIpfsResponse)
-
-					// connect to delegates
-					r.LightNode.ConnectToDelegates(context.Background(), addIpfsResponse.Pin.Origins)
-					content.Updated_at = time.Now()
-					content.Status = "uploaded-to-estuary"
-					content.EstuaryContentId = addIpfsResponse.RequestID
-					r.LightNode.DB.Updates(&content)
-				}
+		if MODE == "remote-pin" {
+			requestBody := IpfsPin{
+				CID:     bucket.Cid,
+				Name:    bucket.Name,
+				Origins: r.LightNode.GetLocalhostOrigins(),
 			}
 
-			if MODE == "remote-upload" {
-				decodedCid, err := cid.Decode(content.Cid)
+			payloadBuf := new(bytes.Buffer)
+
+			json.NewEncoder(payloadBuf).Encode(requestBody)
+			req, _ := http.NewRequest("POST",
+				PinEndpoint,
+				payloadBuf)
+
+			client := &http.Client{}
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+bucket.RequestingApiKey)
+			res, err := client.Do(req)
+
+			if err != nil {
+				fmt.Println(err)
+				return nil
+			}
+
+			if res.StatusCode != 202 {
+				fmt.Println("error uploading to estuary", res.StatusCode)
+				return nil
+			}
+
+			fmt.Println(res.StatusCode)
+			if res.StatusCode == 202 {
+				var addIpfsResponse IpfsPinStatusResponse
+				body, err := ioutil.ReadAll(res.Body)
 				if err != nil {
 					fmt.Println(err)
 					return nil
 				}
-				fileNd, err := r.LightNode.Node.GetFile(context.Background(), decodedCid)
+				json.Unmarshal(body, &addIpfsResponse)
+
+				// connect to delegates
+				r.LightNode.ConnectToDelegates(context.Background(), addIpfsResponse.Pin.Origins)
+				bucket.Updated_at = time.Now()
+				bucket.Status = "uploaded-to-estuary"
+				bucket.EstuaryContentId = addIpfsResponse.RequestID
+				r.LightNode.DB.Updates(&bucket)
+			}
+		}
+
+		if MODE == "remote-upload" {
+			decodedCid, err := cid.Decode(bucket.Cid)
+			if err != nil {
+				fmt.Println(err)
+				return nil
+			}
+			fileNd, err := r.LightNode.Node.GetFile(context.Background(), decodedCid)
+			if err != nil {
+				fmt.Println(err)
+				return nil
+			}
+
+			file, err := os.Create(bucket.Name)
+			fileNd.WriteTo(file)
+
+			payload := &bytes.Buffer{}
+			writer := multipart.NewWriter(payload)
+			partFile, err := writer.CreateFormFile("data", bucket.Name)
+			if err != nil {
+				fmt.Println(err)
+				return nil
+			}
+			io.Copy(partFile, file)
+			err = writer.Close()
+			if err != nil {
+				fmt.Println(err)
+				return nil
+			}
+			req, _ := http.NewRequest("POST",
+				UploadEndpoint,
+				payload)
+
+			client := &http.Client{}
+			req.Header.Add("content-type", "multipart/form-data")
+			req.Header.Set("Content-Type", writer.FormDataContentType())
+			req.Header.Set("Authorization", "Bearer "+bucket.RequestingApiKey)
+			res, err := client.Do(req)
+
+			if err != nil {
+				fmt.Println(err)
+				return nil
+			}
+
+			if res.StatusCode == 200 {
+				var uploadIpfsStatusResponse IpfsUploadStatusResponse
+				body, err := ioutil.ReadAll(res.Body)
 				if err != nil {
 					fmt.Println(err)
 					return nil
 				}
+				json.Unmarshal(body, &uploadIpfsStatusResponse)
 
-				file, err := os.Create(content.Name)
-				fileNd.WriteTo(file)
+				fmt.Println(uploadIpfsStatusResponse)
 
-				payload := &bytes.Buffer{}
-				writer := multipart.NewWriter(payload)
-				partFile, err := writer.CreateFormFile("data", content.Name)
-				if err != nil {
-					fmt.Println(err)
-					return nil
-				}
-				io.Copy(partFile, file)
-				err = writer.Close()
-				if err != nil {
-					fmt.Println(err)
-					return nil
-				}
-				req, _ := http.NewRequest("POST",
-					UploadEndpoint,
-					payload)
-
-				client := &http.Client{}
-				req.Header.Add("content-type", "multipart/form-data")
-				req.Header.Set("Content-Type", writer.FormDataContentType())
-				req.Header.Set("Authorization", "Bearer "+content.RequestingApiKey)
-				res, err := client.Do(req)
-
-				if err != nil {
-					fmt.Println(err)
-					return nil
-				}
-
-				if res.StatusCode == 200 {
-					var uploadIpfsStatusResponse IpfsUploadStatusResponse
-					body, err := ioutil.ReadAll(res.Body)
-					if err != nil {
-						fmt.Println(err)
-						return nil
-					}
-					json.Unmarshal(body, &uploadIpfsStatusResponse)
-
-					fmt.Println(uploadIpfsStatusResponse)
-
-					// connect to delegates
-					content.Updated_at = time.Now()
-					content.Status = "uploaded-to-estuary"
-					content.EstuaryContentId = uploadIpfsStatusResponse.EstuaryID
-					r.LightNode.DB.Updates(&content)
-				}
+				// connect to delegates
+				bucket.Updated_at = time.Now()
+				bucket.Status = "uploaded-to-estuary"
+				bucket.EstuaryContentId = uploadIpfsStatusResponse.EstuaryID
+				r.LightNode.DB.Updates(&bucket)
 			}
 		}
 

@@ -64,6 +64,7 @@ func runProcessors(ln *core.LightNode) {
 
 	// run the job every 10 seconds.
 	bucketAssignFreq, err := strconv.Atoi(viper.Get("BUCKET_ASSIGN").(string))
+	carGeneFreq, err := strconv.Atoi(viper.Get("CAR_GENERATOR_PROCESS").(string))
 	uploadFreq, err := strconv.Atoi(viper.Get("UPLOAD_PROCESS").(string))
 	dealCheckFreq, err := strconv.Atoi(viper.Get("DEAL_CHECK").(string))
 
@@ -73,6 +74,7 @@ func runProcessors(ln *core.LightNode) {
 	}
 
 	bucketAssignFreqTick := time.NewTicker(time.Duration(bucketAssignFreq) * time.Second)
+	carGeneFreqTick := time.NewTicker(time.Duration(carGeneFreq) * time.Second)
 	uploadFreqTick := time.NewTicker(time.Duration(uploadFreq) * time.Second)
 	dealCheckFreqTick := time.NewTicker(time.Duration(dealCheckFreq) * time.Second)
 	for {
@@ -83,7 +85,7 @@ func runProcessors(ln *core.LightNode) {
 				bucketAssignRun := jobs.NewBucketAssignProcessor(ln)
 				d := jobs.CreateNewDispatcher()
 				d.AddJob(bucketAssignRun)
-				d.Start(10)
+				d.Start(1)
 
 				for {
 					if d.Finished() {
@@ -92,13 +94,27 @@ func runProcessors(ln *core.LightNode) {
 					}
 				}
 			}()
+		case <-carGeneFreqTick.C:
+			go func() {
 
+				newCarGeneratorRun := jobs.NewCarGeneratorProcessor(ln)
+				d := jobs.CreateNewDispatcher()
+				d.AddJob(newCarGeneratorRun)
+				d.Start(1)
+
+				for {
+					if d.Finished() {
+						fmt.Printf("All jobs finished.\n")
+						break
+					}
+				}
+			}()
 		case <-uploadFreqTick.C:
 			go func() {
 				uploadToEstuaryRun := jobs.NewUploadToEstuaryProcessor(ln)
 				d := jobs.CreateNewDispatcher() // dispatch uploads
 				d.AddJob(uploadToEstuaryRun)
-				d.Start(10)
+				d.Start(1)
 
 				for {
 					if d.Finished() {
@@ -112,7 +128,7 @@ func runProcessors(ln *core.LightNode) {
 				dealCheck := jobs.NewDealCheckProcessor(ln)
 				d := jobs.CreateNewDispatcher() // dispatch jobs
 				d.AddJob(dealCheck)
-				d.Start(10)
+				d.Start(1)
 
 				for {
 					if d.Finished() {
