@@ -58,9 +58,9 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 
 	defaultGatewayRoute := e.Group("")
 	ConfigureGatewayRouter(defaultGatewayRoute, ln) // access to light node
+	ConfigureStatsRouter(defaultGatewayRoute, ln)
 
-	apiGroup := e.Group("/api/v1") // no protection for now
-
+	apiGroup := e.Group("/api/v1")
 	apiGroup.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			authorizationString := c.Request().Header.Get("Authorization")
@@ -112,7 +112,6 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 	})
 	ConfigurePinningRouter(apiGroup, ln)
 	ConfigureStatusCheckRouter(apiGroup, ln)
-	ConfigureStatsRouter(apiGroup, ln)
 
 	// Start server
 	e.Logger.Fatal(e.Start("0.0.0.0:1313")) // configuration

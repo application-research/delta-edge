@@ -25,28 +25,37 @@ By decoupling this to a light node, we achieve the following:
 # Build
 ## `go build`
 ```
-    go build -tags netgo -ldflags '-s -w' -o edge-ur
+go build -tags netgo -ldflags '-s -w' -o edge-ur
 ```
 
 # Running 
 ## Create the `.env` file
 ```
+# Database configuration
 DB_NAME=edge-ur
-MODE=remote-pin
+
+# remote-pin or remote-upload
+MODE=remote-upload
 REMOTE_PIN_ENDPOINT=https://api.estuary.tech/pinning/pins
-REMOTE_UPLOAD_ENDPOINT=https://api.estuary.tech/content/add
+REMOTE_UPLOAD_ENDPOINT=https://upload.estuary.tech/content/add
 CONTENT_STATUS_CHECK_ENDPOINT=https://api.estuary.tech/content/status
 
-## For local CLI only
+# CLI configuration
 API_KEY=[REDACTED]
 
-# JOB Frequency
-BUCKET_ASSIGN=10
-UPLOAD_PROCESS=30
+# Deal configuration
+DELETE_AFTER_DEAL_MADE=false
+
+# Job Frequencies
+BUCKET_ASSIGN=300
+CAR_GENERATOR_PROCESS=300
+UPLOAD_PROCESS=300
+CHECK_REPIN=86400
 DEAL_CHECK=86400
 
-# Deal config
-DELETE_AFTER_DEAL_MADE=false
+# Car generation config (1GB default)
+AGGREGATION_MODE=individual # or car
+CAR_GENERATOR_SIZE=100000
 ```
 
 ## Running the daemon

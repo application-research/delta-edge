@@ -11,7 +11,7 @@ type Stats struct {
 }
 
 func ConfigureStatsRouter(e *echo.Group, node *core.LightNode) {
-	e.GET("/stats/", func(c echo.Context) error {
+	e.GET("/stats", func(c echo.Context) error {
 
 		var stats Stats
 		node.DB.Raw("select count(*) as total_content_count, sum(size) as total_size from contents").Scan(&stats)
