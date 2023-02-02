@@ -103,7 +103,7 @@ func (r *DealCheckProcessor) Run() error {
 	for _, content := range contents {
 
 		req, _ := http.NewRequest("GET",
-			CONTENT_STATUS_CHECK_ENDPOINT+"/"+string(content.EstuaryContentId), nil)
+			CONTENT_STATUS_CHECK_ENDPOINT+"/"+fmt.Sprint(content.EstuaryContentId), nil)
 
 		client := &http.Client{}
 		req.Header.Set("Content-Type", "application/json")

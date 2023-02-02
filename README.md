@@ -25,7 +25,7 @@ By decoupling this to a light node, we achieve the following:
 # Build
 ## `go build`
 ```
-go build -tags netgo -ldflags '-s -w' -o edge-ur
+go build -tags netgo -ldflags '-s -w' -o edge-cli
 ```
 
 # Running 
@@ -60,15 +60,15 @@ CAR_GENERATOR_SIZE=100000
 
 ## Running the daemon
 ```
-./edge-ur daemon --repo=/tmp/edge-ur (optional --repo)
+./edge-cli daemon --repo=/tmp/blockstore
 ```
 
 
 ## Running the CLI
 While running the daemon, the user can run the following commands to add file or dir to local instance
 ```
-./edge-ur pin-file <path>
-./edge-ur pin-dir <path>
+./edge-cli pin-file <path>
+./edge-cli pin-dir <path>
 ```
 
 This will create an entry on the contents table, assigned to a bucket which will then be pushed to Estuary and the delegates.
