@@ -1,8 +1,6 @@
 # Estuary Edge Node
 
-[![Go](https://github.com/application-research/edge-ur/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/application-research/edge-ur/actions/workflows/go.yml)
-
-[![codeql](https://github.com/application-research/edge-ur/actions/workflows/codeql.yml/badge.svg)](https://github.com/application-research/edge-ur/actions/workflows/codeql.yml)
+[![Go](https://github.com/application-research/edge-ur/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/application-research/edge-ur/actions/workflows/go.yml) [![codeql](https://github.com/application-research/edge-ur/actions/workflows/codeql.yml/badge.svg)](https://github.com/application-research/edge-ur/actions/workflows/codeql.yml)
 
 ## Goal/Purpose
 To allow the customer to have a better UX using estuary, we need to give a dedicated light node for them to upload and retrieve their CIDs. To do this, we decoupled the upload and retrieval aspect from the Estuary API node so we can create a node that can live on the "edge" closer to the customer.
