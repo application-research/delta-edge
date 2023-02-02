@@ -6,61 +6,38 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ipfs/go-cid"
+	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/application-research/edge-ur/core"
 	"github.com/spf13/viper"
 )
 
-type IpfsPin struct {
-	CID     string                 `json:"cid"`
-	Name    string                 `json:"name"`
-	Origins []string               `json:"origins"`
-	Meta    map[string]interface{} `json:"meta"`
-}
-type PinningStatus string
-
-type IpfsPinStatusResponse struct {
-	RequestID int64                  `json:"requestid"`
-	Status    PinningStatus          `json:"status"`
-	Created   time.Time              `json:"created"`
-	Delegates []string               `json:"delegates"`
-	Info      map[string]interface{} `json:"info"`
-	Pin       IpfsPin                `json:"pin"`
-}
-
-type IpfsUploadStatusResponse struct {
-	Cid                 string   `json:"cid"`
-	RetrievalURL        string   `json:"retrieval_url"`
-	EstuaryRetrievalURL string   `json:"estuary_retrieval_url"`
-	EstuaryID           int64    `json:"estuaryId"`
-	Providers           []string `json:"providers"`
-}
-
-type UploadToEstuaryProcessor struct {
+type CarUploadToEstuaryProcessor struct {
 	Processor
 }
 
-func NewUploadToEstuaryProcessor(ln *core.LightNode) IProcessor {
+func NewCarUploadToEstuaryProcessor(ln *core.LightNode) IProcessor {
 	MODE = viper.Get("MODE").(string)
 	PinEndpoint = viper.Get("REMOTE_PIN_ENDPOINT").(string)
 	UploadEndpoint = viper.Get("REMOTE_UPLOAD_ENDPOINT").(string)
-	return &UploadToEstuaryProcessor{
+	return &CarUploadToEstuaryProcessor{
 		Processor{
 			LightNode: ln,
 		},
 	}
 }
 
-func (r *UploadToEstuaryProcessor) Info() error {
+func (r *CarUploadToEstuaryProcessor) Info() error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (r *UploadToEstuaryProcessor) Run() error {
+func (r *CarUploadToEstuaryProcessor) Run() error {
 
 	// create a worker group.
 	// run the content processor.
@@ -139,15 +116,17 @@ func (r *UploadToEstuaryProcessor) Run() error {
 					return nil
 				}
 
+				file, err := os.Create(content.Name)
+				fileNd.WriteTo(file)
+
 				payload := &bytes.Buffer{}
 				writer := multipart.NewWriter(payload)
-				requestFileByteArr, err := ioutil.ReadAll(fileNd)
 				partFile, err := writer.CreateFormFile("data", content.Name)
-				partFile.Write(requestFileByteArr)
 				if err != nil {
 					fmt.Println(err)
 					return nil
 				}
+				io.Copy(partFile, file)
 				err = writer.Close()
 				if err != nil {
 					fmt.Println(err)
