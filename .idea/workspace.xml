@@ -6,7 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="c9eca934-9df8-434a-b941-7f39b58354bc" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/daemon.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/daemon.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/database.go" beforeDir="false" afterPath="$PROJECT_DIR$/core/database.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/jobs/deal_check.go" beforeDir="false" afterPath="$PROJECT_DIR$/jobs/deal_check.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -24,6 +25,14 @@
   <component name="GOROOT" url="file:///opt/homebrew/Cellar/go@1.18/1.18.7/libexec" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
   </component>
   <component name="GoLibraries">
     <option name="indexEntireGoPath" value="false" />

@@ -77,12 +77,18 @@ func runProcessors(ln *core.LightNode) {
 	carGeneFreqTick := time.NewTicker(time.Duration(carGeneFreq) * time.Second)
 	uploadFreqTick := time.NewTicker(time.Duration(uploadFreq) * time.Second)
 	dealCheckFreqTick := time.NewTicker(time.Duration(dealCheckFreq) * time.Second)
+
+	// processors
+	bucketAssignRun := jobs.NewBucketAssignProcessor(ln)
+	newCarGeneratorRun := jobs.NewCarGeneratorProcessor(ln)
+	uploadToEstuaryRun := jobs.NewUploadToEstuaryProcessor(ln)
+	dealCheck := jobs.NewDealCheckProcessor(ln)
+
 	for {
 		select {
 		case <-bucketAssignFreqTick.C:
 			go func() {
 
-				bucketAssignRun := jobs.NewBucketAssignProcessor(ln)
 				d := jobs.CreateNewDispatcher()
 				d.AddJob(bucketAssignRun)
 				d.Start(1)
@@ -96,8 +102,6 @@ func runProcessors(ln *core.LightNode) {
 			}()
 		case <-carGeneFreqTick.C:
 			go func() {
-
-				newCarGeneratorRun := jobs.NewCarGeneratorProcessor(ln)
 				d := jobs.CreateNewDispatcher()
 				d.AddJob(newCarGeneratorRun)
 				d.Start(1)
@@ -111,7 +115,6 @@ func runProcessors(ln *core.LightNode) {
 			}()
 		case <-uploadFreqTick.C:
 			go func() {
-				uploadToEstuaryRun := jobs.NewUploadToEstuaryProcessor(ln)
 				d := jobs.CreateNewDispatcher() // dispatch uploads
 				d.AddJob(uploadToEstuaryRun)
 				d.Start(1)
@@ -125,7 +128,6 @@ func runProcessors(ln *core.LightNode) {
 			}()
 		case <-dealCheckFreqTick.C:
 			go func() {
-				dealCheck := jobs.NewDealCheckProcessor(ln)
 				d := jobs.CreateNewDispatcher() // dispatch jobs
 				d.AddJob(dealCheck)
 				d.Start(1)
