@@ -17,7 +17,7 @@ By decoupling this to a light node, we achieve the following:
 - Stores the CID and content on the local blockstore using whypfs
 - Save the data on local sqlite DB
 - Process each files and call estuary add-ipfs endpoint to make deals for the CID
-- uses estuary api (`pinning/pins`) endpoint to pin files on estuary
+- uses estuary api (`pinning/pins` and `content/add`) endpoint to pin files on estuary
 - periodically checks the status of the deals and update the sqlite DB
 - option to delete the cid from the local blockstore if a deal is made
 
