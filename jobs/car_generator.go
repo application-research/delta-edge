@@ -14,6 +14,9 @@ import (
 
 var MiniBucketThresholdSize = 1000000000
 
+const UnixfsLinksPerLevel = 1 << 10
+const UnixfsChunkSize uint64 = 1 << 20
+
 type CarGeneratorProcessor struct {
 	Processor
 }
@@ -30,6 +33,42 @@ func (c CarGeneratorProcessor) Info() error {
 	//TODO implement me
 	panic("implement me")
 }
+
+//func (c CarGeneratorProcessor) GenerateCar(bucketUuid string, contents []core.Content) {
+//	dagServ := merkledag.NewDAGService(blockservice.New(c.LightNode.Node.Blockstore, offline.Exchange(c.LightNode.Node.Blockstore)))
+//	cidBuilder, err := merkledag.PrefixForCidVersion(1)
+//	if err != nil {
+//		logger.Warn(err)
+//		return
+//	}
+//	var layers []interface{}
+//	rootNode := uio.NewDirectory(dagServ)
+//	rootNode.SetCidBuilder(cidBuilder)
+//	layers = append(layers, &rootNode)
+//}
+//
+//func (c CarGeneratorProcessor) BuildFileNode(ctx context.Context, cidBuilder cid.Builder) (node ipld.Node, err error) {
+//
+//	params := ihelper.DagBuilderParams{
+//		Maxlinks:   UnixfsLinksPerLevel,
+//		RawLeaves:  true,
+//		CidBuilder: cidBuilder,
+//		Dagserv:    c.LightNode.Node.DAGService,
+//		NoCopy:     true,
+//	}
+//	db, err := params.New(chunker.NewSizeSplitter(r, int64(UnixfsChunkSize)))
+//	db.SetOffset(uint64(item.Start))
+//	if err != nil {
+//		logger.Warn(err)
+//		return
+//	}
+//	node, err = balanced.Layout(db)
+//	if err != nil {
+//		logger.Warn(err)
+//		return
+//	}
+//	return
+//}
 
 func (c CarGeneratorProcessor) Run() error {
 
@@ -104,6 +143,7 @@ func (c *CarGeneratorProcessor) buildCarForListOfContents(bucketUuid string, con
 
 		c.addToBlockstore(c.LightNode.Node.DAGService, node)
 	}
+
 	rootNodeFromP, err := c.LightNode.Node.Get(context.Background(), rootCid)
 	if err != nil {
 		return cid.Undef, err

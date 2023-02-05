@@ -78,7 +78,7 @@ func runProcessors(ln *core.LightNode) {
 	uploadFreqTick := time.NewTicker(time.Duration(uploadFreq) * time.Second)
 	dealCheckFreqTick := time.NewTicker(time.Duration(dealCheckFreq) * time.Second)
 
-	// processors
+	// processors (jobs)
 	bucketAssignRun := jobs.NewBucketAssignProcessor(ln)
 	newCarGeneratorRun := jobs.NewCarGeneratorProcessor(ln)
 	uploadToEstuaryRun := jobs.NewUploadToEstuaryProcessor(ln)

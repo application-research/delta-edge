@@ -101,6 +101,7 @@ func (d *Dispatcher) AddJob(je IProcessor) {
 	d.jobCounter++
 	fmt.Printf("jobCounter is now: %d\n", d.jobCounter)
 }
+
 func (d *Dispatcher) Finished() bool {
 	if d.jobCounter < 1 {
 		return true
