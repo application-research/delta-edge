@@ -52,23 +52,3 @@ func reassembleFile(filePath string, chunks [][]byte) error {
 	}
 	return nil
 }
-
-func main() {
-	filePath := "path/to/your/file"
-	chunkSize := 1024 * 1024 // 1 MB
-
-	// Split the file
-	chunks, err := splitFile(filePath, chunkSize)
-	if err != nil {
-		fmt.Println("Error splitting file:", err)
-		return
-	}
-
-	// Reassemble the file
-	reassembledFilePath := "path/to/reassembled/file"
-	if err := reassembleFile(reassembledFilePath, chunks); err != nil {
-		fmt.Println("Error reassembling file:", err)
-		return
-	}
-	fmt.Println("File reassembled successfully.")
-}
