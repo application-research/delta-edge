@@ -108,6 +108,12 @@ curl --location --request POST 'http://localhost:1313/api/v1/content/add-split' 
 --form 'chunkSize="200000"'
 ```
 
+# List all the files and cids on the local instance
+```
+curl --location --request GET 'http://localhost:1313/api/v1/list-all-cids' \
+--header 'Authorization: Bearer [ESTUARY_API_KEY]'
+```
+
 # Status check
 This will return the status of the file(s) or cid(s) on edge-ur. It'll also return the estuary content_id.
 ```
