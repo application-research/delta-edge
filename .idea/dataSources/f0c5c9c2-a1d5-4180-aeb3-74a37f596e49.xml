@@ -1313,26 +1313,302 @@
     <argument id="481" parent="165">
       <Position>1</Position>
     </argument>
-    <table id="482" parent="166" name="sqlite_master">
+    <table id="482" parent="166" name="buckets"/>
+    <table id="483" parent="166" name="content_deals"/>
+    <table id="484" parent="166" name="content_statuses"/>
+    <table id="485" parent="166" name="contents"/>
+    <table id="486" parent="166" name="sqlite_master">
       <System>1</System>
     </table>
-    <column id="483" parent="482" name="type">
-      <DataType>TEXT|0s</DataType>
+    <column id="487" parent="482" name="id">
+      <DataType>INTEGER|0s</DataType>
       <Position>1</Position>
     </column>
-    <column id="484" parent="482" name="name">
+    <column id="488" parent="482" name="name">
       <DataType>TEXT|0s</DataType>
       <Position>2</Position>
     </column>
-    <column id="485" parent="482" name="tbl_name">
+    <column id="489" parent="482" name="uuid">
       <DataType>TEXT|0s</DataType>
       <Position>3</Position>
     </column>
-    <column id="486" parent="482" name="rootpage">
+    <column id="490" parent="482" name="status">
+      <DataType>TEXT|0s</DataType>
+      <Position>4</Position>
+    </column>
+    <column id="491" parent="482" name="cid">
+      <DataType>TEXT|0s</DataType>
+      <Position>5</Position>
+    </column>
+    <column id="492" parent="482" name="requesting_api_key">
+      <DataType>TEXT|0s</DataType>
+      <Position>6</Position>
+    </column>
+    <column id="493" parent="482" name="estuary_content_id">
+      <DataType>INTEGER|0s</DataType>
+      <Position>7</Position>
+    </column>
+    <column id="494" parent="482" name="created_at">
+      <DataType>datetime|0s</DataType>
+      <Position>8</Position>
+    </column>
+    <column id="495" parent="482" name="updated_at">
+      <DataType>datetime|0s</DataType>
+      <Position>9</Position>
+    </column>
+    <key id="496" parent="482">
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <column id="497" parent="483" name="id">
+      <DataType>INTEGER|0s</DataType>
+      <Position>1</Position>
+    </column>
+    <column id="498" parent="483" name="created_at">
+      <DataType>datetime|0s</DataType>
+      <Position>2</Position>
+    </column>
+    <column id="499" parent="483" name="updated_at">
+      <DataType>datetime|0s</DataType>
+      <Position>3</Position>
+    </column>
+    <column id="500" parent="483" name="deleted_at">
+      <DataType>datetime|0s</DataType>
+      <Position>4</Position>
+    </column>
+    <column id="501" parent="483" name="content_id">
+      <DataType>INTEGER|0s</DataType>
+      <Position>5</Position>
+    </column>
+    <column id="502" parent="483" name="user_id">
+      <DataType>INTEGER|0s</DataType>
+      <Position>6</Position>
+    </column>
+    <column id="503" parent="483" name="prop_cid">
+      <DataType>TEXT|0s</DataType>
+      <Position>7</Position>
+    </column>
+    <column id="504" parent="483" name="deal_uuid">
+      <DataType>TEXT|0s</DataType>
+      <Position>8</Position>
+    </column>
+    <column id="505" parent="483" name="miner">
+      <DataType>TEXT|0s</DataType>
+      <Position>9</Position>
+    </column>
+    <column id="506" parent="483" name="failed">
+      <DataType>numeric|0s</DataType>
+      <Position>10</Position>
+    </column>
+    <column id="507" parent="483" name="verified">
+      <DataType>numeric|0s</DataType>
+      <Position>11</Position>
+    </column>
+    <column id="508" parent="483" name="slashed">
+      <DataType>numeric|0s</DataType>
+      <Position>12</Position>
+    </column>
+    <column id="509" parent="483" name="failed_at">
+      <DataType>datetime|0s</DataType>
+      <Position>13</Position>
+    </column>
+    <column id="510" parent="483" name="dt_chan">
+      <DataType>TEXT|0s</DataType>
+      <Position>14</Position>
+    </column>
+    <column id="511" parent="483" name="transfer_started">
+      <DataType>datetime|0s</DataType>
+      <Position>15</Position>
+    </column>
+    <column id="512" parent="483" name="transfer_finished">
+      <DataType>datetime|0s</DataType>
+      <Position>16</Position>
+    </column>
+    <column id="513" parent="483" name="on_chain_at">
+      <DataType>datetime|0s</DataType>
+      <Position>17</Position>
+    </column>
+    <column id="514" parent="483" name="sealed_at">
+      <DataType>datetime|0s</DataType>
+      <Position>18</Position>
+    </column>
+    <column id="515" parent="483" name="deal_protocol_version">
+      <DataType>TEXT|0s</DataType>
+      <Position>19</Position>
+    </column>
+    <column id="516" parent="483" name="miner_version">
+      <DataType>TEXT|0s</DataType>
+      <Position>20</Position>
+    </column>
+    <key id="517" parent="483">
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <column id="518" parent="484" name="id">
+      <DataType>INTEGER|0s</DataType>
+      <Position>1</Position>
+    </column>
+    <column id="519" parent="484" name="content_id">
+      <DataType>INTEGER|0s</DataType>
+      <Position>2</Position>
+    </column>
+    <column id="520" parent="484" name="created_at">
+      <DataType>datetime|0s</DataType>
+      <Position>3</Position>
+    </column>
+    <column id="521" parent="484" name="updated_at">
+      <DataType>datetime|0s</DataType>
+      <Position>4</Position>
+    </column>
+    <column id="522" parent="484" name="cid">
+      <DataType>TEXT|0s</DataType>
+      <Position>5</Position>
+    </column>
+    <column id="523" parent="484" name="name">
+      <DataType>TEXT|0s</DataType>
+      <Position>6</Position>
+    </column>
+    <column id="524" parent="484" name="user_id">
+      <DataType>INTEGER|0s</DataType>
+      <Position>7</Position>
+    </column>
+    <column id="525" parent="484" name="description">
+      <DataType>TEXT|0s</DataType>
+      <Position>8</Position>
+    </column>
+    <column id="526" parent="484" name="size">
+      <DataType>INTEGER|0s</DataType>
+      <Position>9</Position>
+    </column>
+    <column id="527" parent="484" name="type">
+      <DataType>INTEGER|0s</DataType>
+      <Position>10</Position>
+    </column>
+    <column id="528" parent="484" name="active">
+      <DataType>numeric|0s</DataType>
+      <Position>11</Position>
+    </column>
+    <column id="529" parent="484" name="offloaded">
+      <DataType>numeric|0s</DataType>
+      <Position>12</Position>
+    </column>
+    <column id="530" parent="484" name="replication">
+      <DataType>INTEGER|0s</DataType>
+      <Position>13</Position>
+    </column>
+    <column id="531" parent="484" name="aggregated_in">
+      <DataType>INTEGER|0s</DataType>
+      <Position>14</Position>
+    </column>
+    <column id="532" parent="484" name="aggregate">
+      <DataType>numeric|0s</DataType>
+      <Position>15</Position>
+    </column>
+    <column id="533" parent="484" name="pinning">
+      <DataType>numeric|0s</DataType>
+      <Position>16</Position>
+    </column>
+    <column id="534" parent="484" name="pin_meta">
+      <DataType>TEXT|0s</DataType>
+      <Position>17</Position>
+    </column>
+    <column id="535" parent="484" name="replace">
+      <DataType>numeric|0s</DataType>
+      <Position>18</Position>
+    </column>
+    <column id="536" parent="484" name="origins">
+      <DataType>TEXT|0s</DataType>
+      <Position>19</Position>
+    </column>
+    <column id="537" parent="484" name="failed">
+      <DataType>numeric|0s</DataType>
+      <Position>20</Position>
+    </column>
+    <column id="538" parent="484" name="location">
+      <DataType>TEXT|0s</DataType>
+      <Position>21</Position>
+    </column>
+    <column id="539" parent="484" name="dag_split">
+      <DataType>numeric|0s</DataType>
+      <Position>22</Position>
+    </column>
+    <column id="540" parent="484" name="split_from">
+      <DataType>INTEGER|0s</DataType>
+      <Position>23</Position>
+    </column>
+    <column id="541" parent="484" name="pinning_status">
+      <DataType>TEXT|0s</DataType>
+      <Position>24</Position>
+    </column>
+    <column id="542" parent="484" name="deal_status">
+      <DataType>TEXT|0s</DataType>
+      <Position>25</Position>
+    </column>
+    <key id="543" parent="484">
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <column id="544" parent="485" name="id">
+      <DataType>INTEGER|0s</DataType>
+      <Position>1</Position>
+    </column>
+    <column id="545" parent="485" name="name">
+      <DataType>TEXT|0s</DataType>
+      <Position>2</Position>
+    </column>
+    <column id="546" parent="485" name="size">
+      <DataType>INTEGER|0s</DataType>
+      <Position>3</Position>
+    </column>
+    <column id="547" parent="485" name="cid">
+      <DataType>TEXT|0s</DataType>
+      <Position>4</Position>
+    </column>
+    <column id="548" parent="485" name="bucket_uuid">
+      <DataType>TEXT|0s</DataType>
+      <Position>5</Position>
+    </column>
+    <column id="549" parent="485" name="requesting_api_key">
+      <DataType>TEXT|0s</DataType>
+      <Position>6</Position>
+    </column>
+    <column id="550" parent="485" name="estuary_content_id">
+      <DataType>INTEGER|0s</DataType>
+      <Position>7</Position>
+    </column>
+    <column id="551" parent="485" name="status">
+      <DataType>TEXT|0s</DataType>
+      <Position>8</Position>
+    </column>
+    <column id="552" parent="485" name="created_at">
+      <DataType>datetime|0s</DataType>
+      <Position>9</Position>
+    </column>
+    <column id="553" parent="485" name="updated_at">
+      <DataType>datetime|0s</DataType>
+      <Position>10</Position>
+    </column>
+    <key id="554" parent="485">
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <column id="555" parent="486" name="type">
+      <DataType>TEXT|0s</DataType>
+      <Position>1</Position>
+    </column>
+    <column id="556" parent="486" name="name">
+      <DataType>TEXT|0s</DataType>
+      <Position>2</Position>
+    </column>
+    <column id="557" parent="486" name="tbl_name">
+      <DataType>TEXT|0s</DataType>
+      <Position>3</Position>
+    </column>
+    <column id="558" parent="486" name="rootpage">
       <DataType>INT|0s</DataType>
       <Position>4</Position>
     </column>
-    <column id="487" parent="482" name="sql">
+    <column id="559" parent="486" name="sql">
       <DataType>TEXT|0s</DataType>
       <Position>5</Position>
     </column>

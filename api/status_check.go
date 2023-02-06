@@ -24,7 +24,7 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		authParts := strings.Split(authorizationString, " ")
 
 		var content core.Content
-		node.DB.Raw("select c.id, c.estuary_content_id, c.status from contents as c, buckets as b where c.bucket_uuid = b.uuid and c.id = ? and requesting_api_key = ?", c.Param("id"), authParts[1]).Scan(&content)
+		node.DB.Raw("select c.id, c.estuary_content_id, c.status from contents as c where c.id = ? and c.requesting_api_key = ?", c.Param("id"), authParts[1]).Scan(&content)
 
 		return c.JSON(200, StatusCheckResponse{
 			Content: struct {

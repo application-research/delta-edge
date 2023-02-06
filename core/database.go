@@ -73,15 +73,15 @@ type ContentStatus struct {
 }
 
 type ContentDeal struct {
-	ID        int64       `gorm:"primaryKey"`
-	CreatedAt time.Time   `json:"CreatedAt"`
-	UpdatedAt time.Time   `json:"UpdatedAt"`
-	DeletedAt interface{} `json:"DeletedAt"`
-	ContentId int64       `json:"estuary_content_id"`
-	UserID    int         `json:"user_id"`
-	PropCid   string      `json:"propCid"`
-	DealUUID  string      `json:"dealUuid"`
-	Miner     string      `json:"miner"`
+	ID        int64     `gorm:"primaryKey"`
+	CreatedAt time.Time `json:"CreatedAt"`
+	UpdatedAt time.Time `json:"UpdatedAt"`
+	DeletedAt time.Time `json:"DeletedAt"`
+	ContentId int64     `json:"estuary_content_id"`
+	UserID    int       `json:"user_id"`
+	PropCid   string    `json:"propCid"`
+	DealUUID  string    `json:"dealUuid"`
+	Miner     string    `json:"miner"`
 	//DealID              int         `json:"dealId"`
 	Failed              bool      `json:"failed"`
 	Verified            bool      `json:"verified"`
