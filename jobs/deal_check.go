@@ -150,6 +150,8 @@ func (r *DealCheckProcessor) Run() error {
 			return nil
 		})
 
+		// let's check if the content id has deal. if it has, check if we need to delete the cid on the local node.
+		
 	}
 	return nil
 }

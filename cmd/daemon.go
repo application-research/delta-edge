@@ -63,7 +63,7 @@ func DaemonCmd() []*cli.Command {
 func runProcessors(ln *core.LightNode) {
 
 	// run the job every 10 seconds.
-	bucketAssignFreq, err := strconv.Atoi(viper.Get("BUCKET_ASSIGN").(string))
+	bucketAssignFreq, err := strconv.Atoi(viper.Get("BUCKET_ASSIGN_JOB_FREQ").(string))
 	carGeneFreq, err := strconv.Atoi(viper.Get("CAR_GENERATOR_PROCESS").(string))
 	uploadFreq, err := strconv.Atoi(viper.Get("UPLOAD_PROCESS").(string))
 	dealCheckFreq, err := strconv.Atoi(viper.Get("DEAL_CHECK").(string))
@@ -78,17 +78,11 @@ func runProcessors(ln *core.LightNode) {
 	uploadFreqTick := time.NewTicker(time.Duration(uploadFreq) * time.Second)
 	dealCheckFreqTick := time.NewTicker(time.Duration(dealCheckFreq) * time.Second)
 
-	// processors (jobs)
-	bucketAssignRun := jobs.NewBucketAssignProcessor(ln)
-	newCarGeneratorRun := jobs.NewCarGeneratorProcessor(ln)
-	uploadToEstuaryRun := jobs.NewUploadToEstuaryProcessor(ln)
-	dealCheck := jobs.NewDealCheckProcessor(ln)
-
 	for {
 		select {
 		case <-bucketAssignFreqTick.C:
 			go func() {
-
+				bucketAssignRun := jobs.NewBucketAssignProcessor(ln)
 				d := jobs.CreateNewDispatcher()
 				d.AddJob(bucketAssignRun)
 				d.Start(1)
@@ -102,19 +96,20 @@ func runProcessors(ln *core.LightNode) {
 			}()
 		case <-carGeneFreqTick.C:
 			go func() {
-				d := jobs.CreateNewDispatcher()
-				d.AddJob(newCarGeneratorRun)
-				d.Start(1)
+				//d := jobs.CreateNewDispatcher()
+				//d.AddJob(newCarGeneratorRun)
+				//d.Start(1)
 
-				for {
-					if d.Finished() {
-						fmt.Printf("All jobs finished.\n")
-						break
-					}
-				}
+				//for {
+				//	if d.Finished() {
+				//		fmt.Printf("All jobs finished.\n")
+				//		break
+				//	}
+				//}
 			}()
 		case <-uploadFreqTick.C:
 			go func() {
+				uploadToEstuaryRun := jobs.NewUploadToEstuaryProcessor(ln)
 				d := jobs.CreateNewDispatcher() // dispatch uploads
 				d.AddJob(uploadToEstuaryRun)
 				d.Start(1)
@@ -128,6 +123,7 @@ func runProcessors(ln *core.LightNode) {
 			}()
 		case <-dealCheckFreqTick.C:
 			go func() {
+				dealCheck := jobs.NewDealCheckProcessor(ln)
 				d := jobs.CreateNewDispatcher() // dispatch jobs
 				d.AddJob(dealCheck)
 				d.Start(1)

@@ -36,28 +36,32 @@ go build -tags netgo -ldflags '-s -w' -o edge-cli
 # Database configuration
 DB_NAME=edge-ur
 
-# remote-pin or remote-upload
-MODE=remote-upload
+# CLI configuration
+API_KEY=[YOUR ESTUARY API KEY]
+
+# Bucket Assignment Job Configuration
+BUCKET_ASSIGN_JOB_FREQ=300
+AGGREGATION_MODE=individual # or car
+BUCKET_SIZE_THRESHOLD=100000
+
+# CAR Generation Job Configuration
+CAR_GENERATOR_PROCESS=300
+
+# Upload / Pin Job Configuration
+MODE=remote-upload  # remote-pin or remote-upload
 REMOTE_PIN_ENDPOINT=https://api.estuary.tech/pinning/pins
 REMOTE_UPLOAD_ENDPOINT=https://upload.estuary.tech/content/add
+UPLOAD_PROCESS=600
+CHECK_REPIN=86400
+
+# Deal check / reconcile job configuration
+DELETE_AFTER_DEAL_MADE=false
+DEAL_CHECK=86400
 CONTENT_STATUS_CHECK_ENDPOINT=https://api.estuary.tech/content/status
 
-# CLI configuration
-API_KEY=[REDACTED]
-
-# Deal configuration
-DELETE_AFTER_DEAL_MADE=false
-
-# Job Frequencies
-BUCKET_ASSIGN=300
-CAR_GENERATOR_PROCESS=300
-UPLOAD_PROCESS=300
-CHECK_REPIN=86400
-DEAL_CHECK=86400
-
-# Car generation config (1GB default)
-AGGREGATION_MODE=individual # or car
-CAR_GENERATOR_SIZE=100000
+# splitter job configuration
+SPLITTER_JOB=600
+CHUNK_SIZE=1000000
 ```
 
 ## Running the daemon

@@ -9,15 +9,15 @@ import (
 	"github.com/google/uuid"
 )
 
-var CarGenSizeTh int
+var BucketSizeTh int
 
 type BucketAssignProcessor struct {
 	Processor
 }
 
 func NewBucketAssignProcessor(ln *core.LightNode) IProcessor {
-	CarGenSize = viper.Get("CAR_GENERATOR_SIZE").(string)
-	CarGenSizeTh, _ = strconv.Atoi(CarGenSize)
+	BucketSizeThreshold = viper.Get("BUCKET_SIZE_THRESHOLD").(string)
+	BucketSizeTh, _ = strconv.Atoi(BucketSizeThreshold)
 	return &BucketAssignProcessor{
 		Processor{
 			LightNode: ln,
@@ -37,35 +37,34 @@ func (r *BucketAssignProcessor) Run() error {
 
 	// get range of content ids and assign a bucket
 	for _, content := range contents {
-		if r.GetContentCollectionToBucket(contentCollectionToBucket) < int64(CarGenSizeTh) {
+		if r.GetContentCollectionToBucket(contentCollectionToBucket) < int64(BucketSizeTh) {
 			contentCollectionToBucket = append(contentCollectionToBucket, content)
 		}
-
-		if r.GetContentCollectionToBucket(contentCollectionToBucket) >= int64(CarGenSizeTh) {
-			// if there are contents, create a new bucket and assign it to the contents
-			uuid, err := uuid.NewUUID()
-			if err != nil {
-				panic(err)
-			}
-			if len(contentCollectionToBucket) > 0 {
-				// create a new bucket
-				bucket := core.Bucket{
-					Status:     "open",        // open, car-assigned, piece-assigned, storage-deal-done
-					Name:       uuid.String(), // same as uuid
-					UUID:       uuid.String(),
-					Created_at: time.Now(), // log it.
-				}
-				r.LightNode.DB.Create(&bucket)
-
-				// assign bucket to contents
-				//r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid is ''").Update("bucket_uuid", bucket.UUID).Update("status", "bucket-assigned")
-				r.UpdateContentCollectionToBucket(contentCollectionToBucket, bucket)
-			}
-
-			// reset contentCollectionToBucket
-			contentCollectionToBucket = []core.Content{}
-
+	}
+	if r.GetContentCollectionToBucket(contentCollectionToBucket) >= int64(BucketSizeTh) {
+		// if there are contents, create a new bucket and assign it to the contents
+		uuid, err := uuid.NewUUID()
+		if err != nil {
+			panic(err)
 		}
+		if len(contentCollectionToBucket) > 0 {
+			// create a new bucket
+			bucket := core.Bucket{
+				Status:     "open",        // open, car-assigned, piece-assigned, storage-deal-done
+				Name:       uuid.String(), // same as uuid
+				UUID:       uuid.String(),
+				Created_at: time.Now(), // log it.
+			}
+			r.LightNode.DB.Create(&bucket)
+
+			// assign bucket to contents
+			//r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid is ''").Update("bucket_uuid", bucket.UUID).Update("status", "bucket-assigned")
+			r.UpdateContentCollectionToBucket(contentCollectionToBucket, bucket)
+		}
+
+		// reset contentCollectionToBucket
+		contentCollectionToBucket = []core.Content{}
+
 	}
 
 	return nil

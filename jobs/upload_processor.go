@@ -69,7 +69,7 @@ func (r *UploadToEstuaryProcessor) Run() error {
 	var buckets []core.Bucket
 	r.LightNode.DB.Model(&core.Bucket{}).Where("status = ?", "open").Find(&buckets)
 
-	//	for each bucket, get the contents and all estuary add-ipfs endpoint
+	//	for each bucket, get the contents
 	for _, bucket := range buckets {
 
 		var contents []core.Content
@@ -78,7 +78,6 @@ func (r *UploadToEstuaryProcessor) Run() error {
 		// call the api to upload cid
 		// update bucket cid and status
 		for _, content := range contents {
-
 			if MODE == "remote-pin" {
 				requestBody := IpfsPin{
 					CID:     content.Cid,
@@ -126,7 +125,6 @@ func (r *UploadToEstuaryProcessor) Run() error {
 					r.LightNode.DB.Updates(&content)
 				}
 			}
-
 			if MODE == "remote-upload" {
 				decodedCid, err := cid.Decode(content.Cid)
 				if err != nil {
@@ -177,8 +175,6 @@ func (r *UploadToEstuaryProcessor) Run() error {
 					}
 					json.Unmarshal(body, &uploadIpfsStatusResponse)
 
-					fmt.Println(uploadIpfsStatusResponse)
-
 					// connect to delegates
 					content.Updated_at = time.Now()
 					content.Status = "uploaded-to-estuary"
@@ -188,7 +184,7 @@ func (r *UploadToEstuaryProcessor) Run() error {
 			}
 		}
 
-		// keep it open until every content is uploaded
+		// keep it open until every content has been uploaded
 		bucket.Updated_at = time.Now()
 		bucket.Status = "completed"
 		r.LightNode.DB.Save(&bucket)

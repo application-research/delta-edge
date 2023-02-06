@@ -3,39 +3,37 @@ package api
 import (
 	"github.com/application-research/edge-ur/core"
 	"github.com/labstack/echo/v4"
+	"net/http"
 )
 
 func ConfigureRetrieveRouter(e *echo.Group, node *core.LightNode) {
 
-	//	api
-	gatewayHandler.node = node.Node
-	e.GET("/retrieve/split", RetrieveSplitHandler)
+	e.GET("/retrieve/split", func(c echo.Context) error {
+		return RetrieveSplitHandler(c, node)
+	})
 }
 
 // RetrieveSplitHandler is the handler for the /retrieve/split endpoint
-func RetrieveSplitHandler(c echo.Context) error {
+func RetrieveSplitHandler(c echo.Context, node *core.LightNode) error {
 
-	////authorizationString := c.Request().Header.Get("Authorization")
-	////authParts := strings.Split(authorizationString, " ")
-	//
-	//splitter := core.NewFileSplitter(struct {
-	//	ChuckSize int
-	//	LightNode *core.LightNode
-	//}{ChuckSize: 1024 * 1024, LightNode: node}) // parameterize split
-	//
-	//splitCid := e.QueryParam("split-cid")
-	//
-	//// split the file.
-	//splitChunk, err := splitter.ReassembleFile(src)
-	//
-	////	 add the json split to whypfs and return it
-	//splitResult, err := json.Marshal(splitChunk)
-	//reader := bytes.NewReader(splitResult)
-	//nodeSplitResult, err := node.Node.AddPinFile(c.Request().Context(), reader, nil)
-	//if err != nil {
-	//
-	//}
-	//c.JSON(200, nodeSplitResult.Cid().String())
+	reassembler := core.NewSplitReassembler(struct {
+		LightNode *core.LightNode
+	}{LightNode: node})
 
+	splitCid := c.QueryParam("split-cid")
+	file, err := reassembler.ReassembleFileFromCid(splitCid)
+	// split the file.
+	if err != nil {
+		return err
+	}
+
+	writer := c.Response().Writer
+	writer.WriteHeader(http.StatusOK)
+	writer.Header().Set("Content-Type", "application/octet-stream")
+	writer.Header().Set("Content-Disposition", "attachment; filename=\""+file.Name()+"\"")
+	writer.Header().Set("Content-Length", "1000000000")
+	writer.Header().Set("Connection", "keep-alive")
+	writer.Header().Set("Accept-Ranges", "bytes")
+	writer.Write([]byte("hello world"))
 	return nil
 }
