@@ -25,7 +25,7 @@ func OpenDatabase() (*gorm.DB, error) {
 }
 
 func ConfigureModels(db *gorm.DB) {
-	db.AutoMigrate(&Content{}, &Bucket{})
+	db.AutoMigrate(&Content{}, &Bucket{}, &ContentStatus{}, &ContentDeal{})
 }
 
 //	 main content record
@@ -73,27 +73,27 @@ type ContentStatus struct {
 }
 
 type ContentDeal struct {
-	ID                  int64       `gorm:"primaryKey"`
-	CreatedAt           time.Time   `json:"CreatedAt"`
-	UpdatedAt           time.Time   `json:"UpdatedAt"`
-	DeletedAt           interface{} `json:"DeletedAt"`
-	ContentId           int64       `json:"estuary_content_id"`
-	UserID              int         `json:"user_id"`
-	PropCid             string      `json:"propCid"`
-	DealUUID            string      `json:"dealUuid"`
-	Miner               string      `json:"miner"`
-	DealID              int         `json:"dealId"`
-	Failed              bool        `json:"failed"`
-	Verified            bool        `json:"verified"`
-	Slashed             bool        `json:"slashed"`
-	FailedAt            time.Time   `json:"failedAt"`
-	DtChan              string      `json:"dtChan"`
-	TransferStarted     time.Time   `json:"transferStarted"`
-	TransferFinished    time.Time   `json:"transferFinished"`
-	OnChainAt           time.Time   `json:"onChainAt"`
-	SealedAt            time.Time   `json:"sealedAt"`
-	DealProtocolVersion string      `json:"deal_protocol_version"`
-	MinerVersion        string      `json:"miner_version"`
+	ID        int64       `gorm:"primaryKey"`
+	CreatedAt time.Time   `json:"CreatedAt"`
+	UpdatedAt time.Time   `json:"UpdatedAt"`
+	DeletedAt interface{} `json:"DeletedAt"`
+	ContentId int64       `json:"estuary_content_id"`
+	UserID    int         `json:"user_id"`
+	PropCid   string      `json:"propCid"`
+	DealUUID  string      `json:"dealUuid"`
+	Miner     string      `json:"miner"`
+	//DealID              int         `json:"dealId"`
+	Failed              bool      `json:"failed"`
+	Verified            bool      `json:"verified"`
+	Slashed             bool      `json:"slashed"`
+	FailedAt            time.Time `json:"failedAt"`
+	DtChan              string    `json:"dtChan"`
+	TransferStarted     time.Time `json:"transferStarted"`
+	TransferFinished    time.Time `json:"transferFinished"`
+	OnChainAt           time.Time `json:"onChainAt"`
+	SealedAt            time.Time `json:"sealedAt"`
+	DealProtocolVersion string    `json:"deal_protocol_version"`
+	MinerVersion        string    `json:"miner_version"`
 }
 
 // buckets are aggregations of contents. It can either generate a car or just aggregate.

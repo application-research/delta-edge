@@ -5,9 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c9eca934-9df8-434a-b941-7f39b58354bc" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/core/sftp_read_upload.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/upload_pin.go" beforeDir="false" afterPath="$PROJECT_DIR$/api/upload_pin.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/splitter.go" beforeDir="false" afterPath="$PROJECT_DIR$/core/splitter.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/database.go" beforeDir="false" afterPath="$PROJECT_DIR$/core/database.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jobs/bucket_assigner.go" beforeDir="false" afterPath="$PROJECT_DIR$/jobs/bucket_assigner.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jobs/deal_check.go" beforeDir="false" afterPath="$PROJECT_DIR$/jobs/deal_check.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

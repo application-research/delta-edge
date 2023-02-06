@@ -51,16 +51,16 @@ type ContentStatusResponse struct {
 }
 
 type ContentDealResponse struct {
-	ID                  int         `json:"ID"`
+	ID                  int64       `json:"ID"`
 	CreatedAt           time.Time   `json:"CreatedAt"`
 	UpdatedAt           time.Time   `json:"UpdatedAt"`
 	DeletedAt           interface{} `json:"DeletedAt"`
-	Content             int         `json:"content"`
+	Content             int64       `json:"content"`
 	UserID              int         `json:"user_id"`
 	PropCid             string      `json:"propCid"`
 	DealUUID            string      `json:"dealUuid"`
 	Miner               string      `json:"miner"`
-	DealID              int         `json:"dealId"`
+	DealID              int64       `json:"dealId"`
 	Failed              bool        `json:"failed"`
 	Verified            bool        `json:"verified"`
 	Slashed             bool        `json:"slashed"`
@@ -127,9 +127,26 @@ func (r *DealCheckProcessor) Run() error {
 		}
 
 		// save the content status
+		contentModel, err := r.convertContentStatusResponseToModel(contentStatus)
+
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+
 		r.LightNode.DB.Transaction(func(tx *gorm.DB) error {
-			//tx.Model(&ContentStatus{}).Save(&contentStatus)
-			//tx.Model(&ContentDeal{}).Save(&contentStatus.Deals)
+			tx.Model(&core.ContentStatus{}).Save(&contentModel)
+
+			// for each content status
+			for _, deal := range contentStatus.Deals {
+				// save the deal
+				dealModel, err := r.convertContentDealResponseToModel(deal.Deal)
+				if err != nil {
+					fmt.Println(err)
+					return err
+				}
+				tx.Model(&core.ContentDeal{}).Save(&dealModel)
+			}
 			return nil
 		})
 
@@ -147,10 +164,46 @@ func (r *DealCheckProcessor) deleteCidOnLocalNode(cidParam string) {
 }
 
 func (r *DealCheckProcessor) convertContentStatusResponseToModel(response ContentStatusResponse) (core.ContentStatus, error) {
-	return core.ContentStatus{}, nil
+	contentModel := core.ContentStatus{}
+	contentModel.ContentId = response.Content.ID
+	contentModel.Active = response.Content.Active
+	contentModel.Offloaded = response.Content.Offloaded
+	contentModel.Replication = response.Content.Replication
+	contentModel.AggregatedIn = response.Content.AggregatedIn
+	contentModel.Aggregate = response.Content.Aggregate
+	contentModel.Pinning = response.Content.Pinning
+	contentModel.PinMeta = response.Content.PinMeta
+	contentModel.Origins = response.Content.Origins
+	contentModel.Failed = response.Content.Failed
+	contentModel.Location = response.Content.Location
+	contentModel.DagSplit = response.Content.DagSplit
+	contentModel.SplitFrom = response.Content.SplitFrom
+	contentModel.PinningStatus = response.Content.PinningStatus
+	contentModel.DealStatus = response.Content.DealStatus
+	contentModel.Updated_at = response.Content.UpdatedAt
+	contentModel.Created_at = response.Content.CreatedAt
+	return contentModel, nil
 }
 
 func (r *DealCheckProcessor) convertContentDealResponseToModel(response ContentDealResponse) (core.ContentDeal, error) {
 
-	return core.ContentDeal{}, nil
+	contentDealModel := core.ContentDeal{}
+	contentDealModel.ID = response.DealID
+	contentDealModel.ContentId = response.Content
+	contentDealModel.DealUUID = response.DealUUID
+	contentDealModel.PropCid = response.PropCid
+	contentDealModel.Miner = response.Miner
+	contentDealModel.Failed = response.Failed
+	contentDealModel.Verified = response.Verified
+	contentDealModel.Slashed = response.Slashed
+	contentDealModel.FailedAt = response.FailedAt
+	contentDealModel.DtChan = response.DtChan
+	contentDealModel.TransferStarted = response.TransferStarted
+	contentDealModel.TransferFinished = response.TransferFinished
+	contentDealModel.OnChainAt = response.OnChainAt
+	contentDealModel.SealedAt = response.SealedAt
+	contentDealModel.DealProtocolVersion = response.DealProtocolVersion
+	contentDealModel.MinerVersion = response.MinerVersion
+
+	return contentDealModel, nil
 }

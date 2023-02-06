@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"fmt"
 	"github.com/spf13/viper"
 	"strconv"
 	"time"
@@ -38,8 +37,6 @@ func (r *BucketAssignProcessor) Run() error {
 
 	// get range of content ids and assign a bucket
 	for _, content := range contents {
-		fmt.Println("content size: ", r.GetContentCollectionToBucket(contentCollectionToBucket))
-		fmt.Println("threshold size: ", CarGenSizeTh)
 		if r.GetContentCollectionToBucket(contentCollectionToBucket) < int64(CarGenSizeTh) {
 			contentCollectionToBucket = append(contentCollectionToBucket, content)
 		}
