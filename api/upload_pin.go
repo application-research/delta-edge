@@ -130,7 +130,7 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 		var uploadSplits []UploadSplits
 		for _, split := range splitChunk {
 			content := core.Content{
-				Name:             string(split.Index),
+				Name:             strconv.Itoa(split.Index),
 				Size:             int64(split.Size),
 				Cid:              split.Cid,
 				RequestingApiKey: authParts[1],
