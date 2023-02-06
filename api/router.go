@@ -110,6 +110,7 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 			return next(c)
 		}
 	})
+	ConfigureRetrieveRouter(apiGroup, ln)
 	ConfigurePinningRouter(apiGroup, ln)
 	ConfigureStatusCheckRouter(apiGroup, ln)
 

@@ -3,15 +3,84 @@ package core
 // function to split a file into chunks
 import (
 	"bufio"
+	"context"
 	"fmt"
+	"github.com/ipfs/go-merkledag"
+	"io"
 	"os"
 )
 
-func NewSplitter() {
+var defaultChuckSize = 1024 * 1024
 
+type FileSplitter struct {
+	SplitterParam
+}
+type SplitterParam struct {
+	ChuckSize int
+	LightNode *LightNode
 }
 
-func splitFile(filePath string, chunkSize int) ([][]byte, error) {
+type SplitChunk struct {
+	Cid   string
+	Chunk []byte `json:"Chunk,omitempty"`
+	Index int
+}
+
+func NewFileSplitter(param SplitterParam) FileSplitter {
+	if param.ChuckSize == 0 {
+		param.ChuckSize = defaultChuckSize
+	}
+	return FileSplitter{
+		SplitterParam: param,
+	}
+}
+
+func (c FileSplitter) SplitFileFromReaderIntoBlockstore(fileFromReader io.Reader) ([]SplitChunk, error) {
+	// Read the file into a buffer
+	buf := make([]byte, c.ChuckSize)
+	//var chunks [][]byte
+	var splitChunks []SplitChunk
+	var i = 0
+	for {
+
+		n, err := fileFromReader.Read(buf)
+		if n == 0 {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("Error reading file: %v", err)
+		}
+
+		rawNode := merkledag.NewRawNode(buf[:n])
+		c.LightNode.Node.Add(context.Background(), rawNode)
+		splitChunks = append(splitChunks, SplitChunk{
+			//Chunk: buf[:n],
+			Index: i,
+			Cid:   rawNode.Cid().String(),
+		})
+		i++
+	}
+	return splitChunks, nil
+}
+func (c FileSplitter) SplitFileFromReader(fileFromReader io.Reader) ([][]byte, error) {
+
+	// Read the file into a buffer
+	buf := make([]byte, c.ChuckSize)
+	var chunks [][]byte
+	for {
+		n, err := fileFromReader.Read(buf)
+		if n == 0 {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("Error reading file: %v", err)
+		}
+		chunks = append(chunks, buf[:n])
+	}
+	return chunks, nil
+}
+
+func (c FileSplitter) SplitFile(filePath string) ([][]byte, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("Error opening file: %v", err)
@@ -19,7 +88,7 @@ func splitFile(filePath string, chunkSize int) ([][]byte, error) {
 	defer file.Close()
 
 	// Read the file into a buffer
-	buf := make([]byte, chunkSize)
+	buf := make([]byte, c.ChuckSize)
 	var chunks [][]byte
 	for {
 		n, err := file.Read(buf)
@@ -34,7 +103,7 @@ func splitFile(filePath string, chunkSize int) ([][]byte, error) {
 	return chunks, nil
 }
 
-func reassembleFile(filePath string, chunks [][]byte) error {
+func (c FileSplitter) ReassembleFile(filePath string, chunks [][]byte) error {
 	file, err := os.Create(filePath)
 	if err != nil {
 		return fmt.Errorf("Error creating file: %v", err)

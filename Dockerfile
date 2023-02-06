@@ -1,4 +1,10 @@
-FROM golang:1.18-alpine
+FROM ubuntu
+
+COPY --from=golang:1.18-alpine /usr/local/go/ /usr/local/go/
+ENV PATH="/usr/local/go/bin:${PATH}"
+
+RUN apt-get -y update \
+  && apt-get -y install nginx
 
 WORKDIR /app
 

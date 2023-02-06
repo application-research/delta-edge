@@ -1,6 +1,8 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -58,6 +60,38 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 			Message: "Car uploaded and pinned successfully to the network.",
 			ID:      content.ID,
 		})
+		return nil
+	})
+
+	content.POST("/add-split", func(c echo.Context) error {
+		//authorizationString := c.Request().Header.Get("Authorization")
+		//authParts := strings.Split(authorizationString, " ")
+
+		splitter := core.NewFileSplitter(struct {
+			ChuckSize int
+			LightNode *core.LightNode
+		}{ChuckSize: 1024 * 1024, LightNode: node}) // parameterize split
+
+		file, err := c.FormFile("data")
+		if err != nil {
+			return err
+		}
+		src, err := file.Open()
+		if err != nil {
+			return err
+		}
+
+		// split the file.
+		splitChunk, err := splitter.SplitFileFromReaderIntoBlockstore(src)
+
+		//	 add the json split to whypfs and return it
+		splitResult, err := json.Marshal(splitChunk)
+		reader := bytes.NewReader(splitResult)
+		nodeSplitResult, err := node.Node.AddPinFile(c.Request().Context(), reader, nil)
+		if err != nil {
+
+		}
+		c.JSON(200, nodeSplitResult.Cid().String())
 		return nil
 	})
 
