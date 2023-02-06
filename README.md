@@ -96,7 +96,15 @@ curl --location --request POST 'http://localhost:1313/api/v1/content/cid/bafybei
 --header 'Authorization: Bearer [ESTUARY_API_KEY]'
 ```
 
-## Status check
+# Split a file into chunks and pin it on Estuary.
+```
+curl --location --request POST 'http://localhost:1313/api/v1/content/add-split' \
+--header 'Authorization: Bearer [ESTUARY_API_KEY]' \
+--form 'data=@"/path/to/file"' \
+--form 'chunkSize="200000"'
+```
+
+# Status check
 This will return the status of the file(s) or cid(s) on edge-ur. It'll also return the estuary content_id.
 ```
 curl --location --request GET 'http://localhost:1313/api/v1/status/5' \
