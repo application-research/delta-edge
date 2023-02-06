@@ -13,7 +13,7 @@ func ConfigureRetrieveRouter(e *echo.Group, node *core.LightNode) {
 }
 
 // RetrieveSplitHandler is the handler for the /retrieve/split endpoint
-func RetrieveSplitHandler(e echo.Context) error {
+func RetrieveSplitHandler(c echo.Context) error {
 
 	////authorizationString := c.Request().Header.Get("Authorization")
 	////authParts := strings.Split(authorizationString, " ")
@@ -36,5 +36,6 @@ func RetrieveSplitHandler(e echo.Context) error {
 	//
 	//}
 	//c.JSON(200, nodeSplitResult.Cid().String())
+
 	return nil
 }
