@@ -17,18 +17,13 @@ type CidRequest struct {
 }
 
 type UploadSplitResponse struct {
-	Status        string         `json:"status"`
-	Message       string         `json:"message"`
-	RootCid       string         `json:"rootCid,omitempty"`
-	RootContentId int64          `json:"rootContentId,omitempty"`
-	Splits        []UploadSplits `json:"splits,omitempty"`
+	Status        string              `json:"status"`
+	Message       string              `json:"message"`
+	RootCid       string              `json:"rootCid,omitempty"`
+	RootContentId int64               `json:"rootContentId,omitempty"`
+	Splits        []core.UploadSplits `json:"splits,omitempty"`
 }
 
-type UploadSplits struct {
-	Cid       string `json:"cid"`
-	Index     int    `json:"index"`
-	ContentId int64  `json:"contentId"`
-}
 type UploadResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
@@ -127,7 +122,7 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 		// create a new content record for each split so we can track them and put them
 		// on estuary.
 		var uploadSplitResponse UploadSplitResponse
-		var uploadSplits []UploadSplits
+		var uploadSplits []core.UploadSplits
 		for _, split := range splitChunk {
 			content := core.Content{
 				Name:             strconv.Itoa(split.Index),
@@ -140,7 +135,7 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 			}
 
 			node.DB.Create(&content)
-			uploadSplits = append(uploadSplits, UploadSplits{
+			uploadSplits = append(uploadSplits, core.UploadSplits{
 				Cid:       split.Cid,
 				Index:     split.Index,
 				ContentId: content.ID,

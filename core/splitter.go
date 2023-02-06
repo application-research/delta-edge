@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/application-research/edge-ur/api"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-merkledag"
 	"io"
@@ -15,6 +14,12 @@ import (
 )
 
 var defaultChuckSize int64 = 1024 * 1024
+
+type UploadSplits struct {
+	Cid       string `json:"cid"`
+	Index     int    `json:"index"`
+	ContentId int64  `json:"contentId"`
+}
 
 type FileSplitter struct {
 	SplitterParam
@@ -117,7 +122,7 @@ func (c FileSplitter) ReassembleFileFromCid(cidStr string) error {
 	}
 	node, err := c.LightNode.Node.Get(context.Background(), cidDecode)
 
-	var splits []api.UploadSplits
+	var splits []UploadSplits
 	json.Unmarshal(node.RawData(), &splits)
 
 	keys := make([]int, 0)
