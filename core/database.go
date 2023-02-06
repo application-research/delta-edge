@@ -25,21 +25,31 @@ func OpenDatabase() (*gorm.DB, error) {
 }
 
 func ConfigureModels(db *gorm.DB) {
-	db.AutoMigrate(&Content{}, &Bucket{}, &ContentStatus{}, &ContentDeal{})
+	db.AutoMigrate(&Content{}, &Bucket{}, &ContentStatus{}, &ContentDeal{}, &ContentSplitRequest{})
+}
+
+type ContentSplitRequest struct {
+	ID        int64  `gorm:"primaryKey"`
+	ContentId int64  `json:"content_id"`
+	Cid       string `json:"cid"`
+	Size      int64  `json:"size"`
+	Name      string `json:"name"`
+	ChunkSize int64  `json:"chunk_size"`
 }
 
 //	 main content record
 type Content struct {
-	ID               int64  `gorm:"primaryKey"`
-	Name             string `json:"name"`
-	Size             int64  `json:"size"`
-	Cid              string `json:"cid"`
-	BucketUuid       string `json:"bucket_uuid"`
-	RequestingApiKey string `json:"requesting_api_key"`
-	EstuaryContentId int64  `json:"estuary_content_id"`
-	Status           string `json:"status"`
-	Created_at       time.Time
-	Updated_at       time.Time
+	ID               int64     `gorm:"primaryKey"`
+	Name             string    `json:"name"`
+	Size             int64     `json:"size"`
+	Cid              string    `json:"cid"`
+	BucketUuid       string    `json:"bucket_uuid,omitempty"`
+	RequestingApiKey string    `json:"requesting_api_key,omitempty"`
+	EstuaryContentId int64     `json:"estuary_content_id"`
+	SplitRequestId   int64     `json:"split_request_id,omitempty"`
+	Status           string    `json:"status"`
+	Created_at       time.Time `json:"created_at"`
+	Updated_at       time.Time `json:"updated_at"`
 }
 
 type ContentStatus struct {
@@ -68,8 +78,8 @@ type ContentStatus struct {
 	SplitFrom     int       `json:"splitFrom"`
 	PinningStatus string    `json:"pinningStatus"`
 	DealStatus    string    `json:"dealStatus"`
-	Created_at    time.Time
-	Updated_at    time.Time
+	Created_at    time.Time `json:"created_at"`
+	Updated_at    time.Time `json:"updated_at"`
 }
 
 type ContentDeal struct {
@@ -98,13 +108,13 @@ type ContentDeal struct {
 
 // buckets are aggregations of contents. It can either generate a car or just aggregate.
 type Bucket struct {
-	ID               int64  `gorm:"primaryKey"`
-	Name             string `json:"name"`
-	UUID             string `json:"uuid"`
-	Status           string `json:"status"`
-	Cid              string `json:"cid"`
-	RequestingApiKey string `json:"requesting_api_key"`
-	EstuaryContentId int64  `json:"estuary_content_id"`
-	Created_at       time.Time
-	Updated_at       time.Time
+	ID               int64     `gorm:"primaryKey"`
+	Name             string    `json:"name"`
+	UUID             string    `json:"uuid"`
+	Status           string    `json:"status"`
+	Cid              string    `json:"cid"`
+	RequestingApiKey string    `json:"requesting_api_key,omitempty"`
+	EstuaryContentId int64     `json:"estuary_content_id"`
+	Created_at       time.Time `json:"created_at"`
+	Updated_at       time.Time `json:"updated_at"`
 }
