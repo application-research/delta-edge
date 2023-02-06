@@ -34,6 +34,7 @@ type ContentSplitRequest struct {
 	Cid       string `json:"cid"`
 	Size      int64  `json:"size"`
 	Name      string `json:"name"`
+	Origins   string `json:"origins,omitempty"`
 	ChunkSize int64  `json:"chunk_size"`
 }
 
@@ -48,6 +49,7 @@ type Content struct {
 	EstuaryContentId int64     `json:"estuary_content_id"`
 	SplitRequestId   int64     `json:"split_request_id,omitempty"`
 	Status           string    `json:"status"`
+	Origins          string    `json:"origins,omitempty"`
 	Created_at       time.Time `json:"created_at"`
 	Updated_at       time.Time `json:"updated_at"`
 }

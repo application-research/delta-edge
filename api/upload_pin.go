@@ -256,7 +256,7 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 			//	 get the node and save on the database
 			addNode, err := node.Node.Get(c.Request().Context(), cidNode)
 
-			// get availabel staging buckets.
+			// get available staging buckets.
 			// save the file to the database.
 			size, err := addNode.Size()
 
