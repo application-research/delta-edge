@@ -10,19 +10,20 @@ import (
 	"os"
 )
 
-var defaultChuckSize = 1024 * 1024
+var defaultChuckSize int64 = 1024 * 1024
 
 type FileSplitter struct {
 	SplitterParam
 }
 type SplitterParam struct {
-	ChuckSize int
+	ChuckSize int64
 	LightNode *LightNode
 }
 
 type SplitChunk struct {
 	Cid   string
 	Chunk []byte `json:"Chunk,omitempty"`
+	Size  int
 	Index int
 }
 
@@ -56,6 +57,7 @@ func (c FileSplitter) SplitFileFromReaderIntoBlockstore(fileFromReader io.Reader
 		splitChunks = append(splitChunks, SplitChunk{
 			//Chunk: buf[:n],
 			Index: i,
+			Size:  n,
 			Cid:   rawNode.Cid().String(),
 		})
 		i++

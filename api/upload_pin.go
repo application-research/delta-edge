@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,6 +16,17 @@ type CidRequest struct {
 	Cids []string `json:"cids"`
 }
 
+type UploadSplitResponse struct {
+	Status  string         `json:"status"`
+	Message string         `json:"message"`
+	RootCid string         `json:"rootCid,omitempty"`
+	Splits  []UploadSplits `json:"splits,omitempty"`
+}
+
+type UploadSplits struct {
+	Cid   string `json:"cid"`
+	Index int    `json:"index"`
+}
 type UploadResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
@@ -64,13 +76,18 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 	})
 
 	content.POST("/add-split", func(c echo.Context) error {
-		//authorizationString := c.Request().Header.Get("Authorization")
-		//authParts := strings.Split(authorizationString, " ")
+		authorizationString := c.Request().Header.Get("Authorization")
+		authParts := strings.Split(authorizationString, " ")
 
+		chunkSizeParam := c.FormValue("chunkSize")
+		chunkSizeParamInt64, err := strconv.ParseInt(chunkSizeParam, 10, 64)
+		if err != nil {
+			return err
+		}
 		splitter := core.NewFileSplitter(struct {
-			ChuckSize int
+			ChuckSize int64
 			LightNode *core.LightNode
-		}{ChuckSize: 1024 * 1024, LightNode: node}) // parameterize split
+		}{ChuckSize: chunkSizeParamInt64, LightNode: node}) // parameterize split
 
 		file, err := c.FormFile("data")
 		if err != nil {
@@ -89,9 +106,54 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 		reader := bytes.NewReader(splitResult)
 		nodeSplitResult, err := node.Node.AddPinFile(c.Request().Context(), reader, nil)
 		if err != nil {
-
+			return err
 		}
-		c.JSON(200, nodeSplitResult.Cid().String())
+
+		// save the root
+		rootContent := core.Content{
+			Name:             file.Filename,
+			Size:             int64(len(splitResult)),
+			Cid:              nodeSplitResult.Cid().String(),
+			RequestingApiKey: authParts[1],
+			Status:           "pinned",
+			Created_at:       time.Now(),
+			Updated_at:       time.Now(),
+		}
+
+		node.DB.Create(&rootContent)
+
+		// create a new content record for each split so we can track them and put them
+		// on estuary.
+		var uploadSplitResponse UploadSplitResponse
+		var uploadSplits []UploadSplits
+		for _, split := range splitChunk {
+			content := core.Content{
+				Name:             string(split.Index),
+				Size:             int64(split.Size),
+				Cid:              split.Cid,
+				RequestingApiKey: authParts[1],
+				Status:           "pinned",
+				Created_at:       time.Now(),
+				Updated_at:       time.Now(),
+			}
+
+			node.DB.Create(&content)
+			uploadSplits = append(uploadSplits, UploadSplits{
+				Cid:   split.Cid,
+				Index: split.Index,
+			})
+		}
+
+		uploadSplitResponse.Status = "success"
+		uploadSplitResponse.Message = "File split and pinned successfully to the network."
+		uploadSplitResponse.RootCid = nodeSplitResult.Cid().String()
+		uploadSplitResponse.Splits = uploadSplits
+
+		if err != nil {
+			return err
+		}
+
+		c.JSON(200, uploadSplitResponse)
 		return nil
 	})
 
@@ -109,7 +171,7 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 
 		addNode, err := node.Node.AddPinFile(c.Request().Context(), src, nil)
 
-		// get availabel staging buckets.
+		// get available staging buckets.
 		// save the file to the database.
 		content := core.Content{
 			Name:             file.Filename,
