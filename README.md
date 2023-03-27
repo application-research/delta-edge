@@ -1,16 +1,17 @@
-# Estuary Edge Node
+# Edge Node
 
 [![Go](https://github.com/application-research/edge-ur/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/application-research/edge-ur/actions/workflows/go.yml) [![codeql](https://github.com/application-research/edge-ur/actions/workflows/codeql.yml/badge.svg)](https://github.com/application-research/edge-ur/actions/workflows/codeql.yml)
 
+**Edge is currently under heavy development and a massive optimization release is coming soon**
+
 ## Goal/Purpose
-To allow the customer to have a better UX using estuary, we need to give a dedicated light node for them to upload and retrieve their CIDs. To do this, we decoupled the upload and retrieval aspect from the Estuary API node so we can create a node that can live on the "edge" closer to the customer.
+Dedicated light node to upload and retrieve their CIDs. To do this, we decoupled the upload and retrieval aspect from the Estuary API node so we can create a node that can live on the "edge" closer to the customer.
 
 By decoupling this to a light node, we achieve the following:
 - dedicated node assignment for each customer. The customer or user can now launch an edge node and use it for both uploading to Estuary and retrieval using the same API keys issued from Estuary.
-- offload the Estuary API node and get it to focus on deal-making process rather than consuming massive, concurrent HTTP uploads
 - switches the upload protocol. The user still needs to upload via HTTP but the edge node will use bitswap to transfer the files over to Estuary.
-![image](https://user-images.githubusercontent.com/4479171/211378054-ab24e2b6-6273-45fd-ad24-a98dbeb14fbe.png)
 
+![image](https://user-images.githubusercontent.com/4479171/227985970-58bfead8-0906-4f2e-b7ae-b314508ee3e5.png)
 
 ## Features
 - Accepts concurrent uploads (small to large)
@@ -121,3 +122,5 @@ curl --location --request GET 'http://localhost:1313/api/v1/status/5' \
 --header 'Authorization: Bearer [ESTUARY_API_KEY]'
 ```
 
+# Author
+Protocol Labs Outercore Engineering
