@@ -2,6 +2,8 @@
 
 [![Go](https://github.com/application-research/edge-ur/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/application-research/edge-ur/actions/workflows/go.yml) [![codeql](https://github.com/application-research/edge-ur/actions/workflows/codeql.yml/badge.svg)](https://github.com/application-research/edge-ur/actions/workflows/codeql.yml)
 
+**Edge is currently under heavy development and a massive optimization release is coming soon**
+
 ## Goal/Purpose
 Dedicated light node to upload and retrieve their CIDs. To do this, we decoupled the upload and retrieval aspect from the Estuary API node so we can create a node that can live on the "edge" closer to the customer.
 
@@ -9,14 +11,14 @@ By decoupling this to a light node, we achieve the following:
 - dedicated node assignment for each customer. The customer or user can now launch an edge node and use it for both uploading to Estuary and retrieval using the same API keys issued from Estuary.
 - switches the upload protocol. The user still needs to upload via HTTP but the edge node will use bitswap to transfer the files over to Estuary.
 
-- ![image](https://user-images.githubusercontent.com/4479171/211378054-ab24e2b6-6273-45fd-ad24-a98dbeb14fbe.png)
-
+![image](https://user-images.githubusercontent.com/4479171/227985970-58bfead8-0906-4f2e-b7ae-b314508ee3e5.png)
 
 ## Features
 - Accepts concurrent uploads (small to large)
 - Stores the CID and content on the local blockstore using whypfs
 - Save the data on local sqlite DB
-- uses delta api (`/deal/end-to-end`) to make deals.
+- Process each files and call estuary add-ipfs endpoint to make deals for the CID
+- uses estuary api (`pinning/pins` and `content/add`) endpoint to pin files on estuary
 - periodically checks the status of the deals and update the sqlite DB
 - option to delete the cid from the local blockstore if a deal is made
 
@@ -26,10 +28,10 @@ By decoupling this to a light node, we achieve the following:
 # Build
 ## `go build`
 ```
-go build -tags netgo -ldflags '-s -w' -o edge-ur
+go build -tags netgo -ldflags '-s -w' -o edge-cli
 ```
 
-# Running 
+# Running
 ## Create the `.env` file
 ```
 # Database configuration
@@ -120,3 +122,5 @@ curl --location --request GET 'http://localhost:1313/api/v1/status/5' \
 --header 'Authorization: Bearer [ESTUARY_API_KEY]'
 ```
 
+# Author
+Protocol Labs Outercore Engineering

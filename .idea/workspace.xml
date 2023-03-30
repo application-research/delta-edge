@@ -5,16 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c9eca934-9df8-434a-b941-7f39b58354bc" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.github/workflows/go.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/go.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/pin.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/pin.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/node.go" beforeDir="false" afterPath="$PROJECT_DIR$/core/node.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/jobs/bucket_assigner.go" beforeDir="false" afterPath="$PROJECT_DIR$/jobs/bucket_assigner.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/spammer.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/spammer.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
