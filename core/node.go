@@ -85,7 +85,7 @@ func BootstrapEstuaryPeers() []peer.AddrInfo {
 	return peers
 }
 
-func NewCliNode(ctx *context.Context) (*LightNode, error) {
+func NewEdgeNode(ctx *context.Context) (*LightNode, error) {
 
 	db, err := OpenDatabase()
 	// node
@@ -103,6 +103,7 @@ func NewCliNode(ctx *context.Context) (*LightNode, error) {
 	params := whypfs.NewNodeParams{
 		Ctx:       context.Background(),
 		Datastore: whypfs.NewInMemoryDatastore(),
+		Repo:      "",
 	}
 
 	params.Config = params.ConfigurationBuilder(newConfig)

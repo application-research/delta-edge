@@ -62,7 +62,6 @@ func (r *BucketAssignProcessor) Run() error {
 			r.UpdateContentCollectionToBucket(contentCollectionToBucket, bucket)
 		}
 
-		// reset contentCollectionToBucket
 		contentCollectionToBucket = []core.Content{}
 
 	}

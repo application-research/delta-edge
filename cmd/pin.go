@@ -20,7 +20,7 @@ func PinCmd() []*cli.Command {
 		Name:  "pin-file",
 		Usage: "Pin a file on the Filecoin network.",
 		Action: func(c *cli.Context) error {
-			lightNode, _ := core.NewCliNode(&ctx) // light node now
+			lightNode, _ := core.NewEdgeNode(&ctx) // light node now
 			value := c.Args().Get(0)
 			r, err := os.Open(value)
 			if err != nil {
@@ -46,7 +46,7 @@ func PinCmd() []*cli.Command {
 		Name:  "pin-dir",
 		Usage: "Pin a directory on the Filecoin network.",
 		Action: func(c *cli.Context) error {
-			lightNode, _ := core.NewCliNode(&ctx) // light node now
+			lightNode, _ := core.NewEdgeNode(&ctx) // light node now
 			valuePath := c.Args().Get(0)
 			dirNode, _ := lightNode.Node.AddPinDirectory(context.Background(), valuePath)
 			createContentEntryForEach(context.Background(), lightNode, dirNode)
