@@ -1,5 +1,6 @@
 # Edge Node
-**Edge is currently under heavy development and a massive optimization release is coming soon**
+
+**Edge is currently under heavy development. An optimized version will be released soon**
 
 ## Goal/Purpose
 Dedicated light node to upload and retrieve their CIDs. To do this, we decoupled the upload and retrieval aspect from the Estuary API node so we can create a node that can live on the "edge" closer to the customer.
@@ -84,7 +85,7 @@ https://localhost:1313/gw/ipfs/bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4
 ## Check the status of your content
 This will return the status of the file(s) or cid(s) on edge. It'll also return the delta content_id.
 ```
-curl --location --request GET 'http://localhost:1313/api/v1/status/1' \
+curl --location --request GET 'http://localhost:1313/api/v1/status/5' \
 --header 'Authorization: Bearer [API_KEY]'
 {
     "content": {
