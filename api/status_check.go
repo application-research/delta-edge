@@ -9,12 +9,12 @@ import (
 
 type StatusCheckResponse struct {
 	Content struct {
-		ID               int64  `json:"id"`
-		Name             string `json:"name"`
-		EstuaryContentId int64  `json:"estuary_content_id,omitempty"`
-		Cid              string `json:"cid,omitempty"`
-		Status           string `json:"status"`
-		Message          string `json:"message,omitempty"`
+		ID             int64  `json:"id"`
+		Name           string `json:"name"`
+		DeltaContentId int64  `json:"delta_content_id,omitempty"`
+		Cid            string `json:"cid,omitempty"`
+		Status         string `json:"status"`
+		Message        string `json:"message,omitempty"`
 	} `json:"content"`
 }
 
@@ -29,13 +29,13 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 
 		return c.JSON(200, StatusCheckResponse{
 			Content: struct {
-				ID               int64  `json:"id"`
-				Name             string `json:"name"`
-				EstuaryContentId int64  `json:"estuary_content_id,omitempty"`
-				Cid              string `json:"cid,omitempty"`
-				Status           string `json:"status"`
-				Message          string `json:"message,omitempty"`
-			}{ID: content.ID, Name: content.Name, EstuaryContentId: content.EstuaryContentId, Status: content.Status, Cid: content.Cid},
+				ID             int64  `json:"id"`
+				Name           string `json:"name"`
+				DeltaContentId int64  `json:"delta_content_id,omitempty"`
+				Cid            string `json:"cid,omitempty"`
+				Status         string `json:"status"`
+				Message        string `json:"message,omitempty"`
+			}{ID: content.ID, Name: content.Name, DeltaContentId: content.DeltaContentId, Status: content.Status, Cid: content.Cid},
 		})
 	})
 

@@ -6,14 +6,7 @@ import (
 	"github.com/application-research/edge-ur/core"
 )
 
-var workerPool = make(chan struct{}, 10)
-var MODE = "remote-pin"
-var PinEndpoint = ""
-var UploadEndpoint = ""
-var API_KEY = ""
-var DELETE_AFTER_DEAL_MADE = "false"
-var CONTENT_STATUS_CHECK_ENDPOINT = ""
-var BucketSizeThreshold = "1000000000"
+var DELTA_UPLOAD_API = ""
 
 type JobExecutable func() error
 type IProcessor interface {

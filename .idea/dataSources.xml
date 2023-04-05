@@ -13,7 +13,7 @@
         </library>
       </libraries>
     </data-source>
-    <data-source source="LOCAL" name="edge-urdb" uuid="64de0991-9175-4ab4-8f1a-83f544ad09e7">
+    <data-source source="LOCAL" name="edge-urdb" uuid="990e73c4-adea-4aaf-beaa-ee8328cce9c2">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>

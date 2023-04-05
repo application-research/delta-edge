@@ -4,10 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"mime/multipart"
-	"net/http"
+	"github.com/application-research/edge-ur/jobs"
 	"strconv"
 	"strings"
 	"time"
@@ -62,6 +59,7 @@ type UploadResponse struct {
 	Status       string      `json:"status"`
 	Message      string      `json:"message"`
 	ID           int64       `json:"id,omitempty"`
+	Cid          string      `json:"cid,omitempty"`
 	DeltaContent interface{} `json:"delta_content,omitempty"`
 }
 
@@ -76,7 +74,6 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 			return err
 		}
 		src, err := file.Open()
-		src1, err := file.Open()
 		if err != nil {
 			return err
 		}
@@ -95,54 +92,9 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 
 		node.DB.Create(&newContent)
 
-		// Set up the multipart form data for the file and metadata
-		var b bytes.Buffer
-		w := multipart.NewWriter(&b)
-
-		if err != nil {
-			log.Fatal("Open error: ", err)
-		}
-
-		fw, err := w.CreateFormFile("data", file.Filename)
-		if err != nil {
-			log.Fatal("CreateFormFile error: ", err)
-		}
-		if _, err = io.Copy(fw, src1); err != nil {
-			log.Fatal("Copy error: ", err)
-		}
-		if fw, err = w.CreateFormField("metadata"); err != nil {
-			log.Fatal("CreateFormField error: ", err)
-		}
-		if _, err = fw.Write([]byte(`{"auto_retry":true}`)); err != nil {
-			log.Fatal("Write error: ", err)
-		}
-		if err = w.Close(); err != nil {
-			log.Fatal("Close error: ", err)
-		}
-
-		// Create a new HTTP request with the form data and authentication header
-		req, err := http.NewRequest("POST", "http://localhost:1414/api/v1/deal/end-to-end", &b)
-		if err != nil {
-			log.Fatal("NewRequest error: ", err)
-		}
-		req.Header.Set("Content-Type", w.FormDataContentType())
-		req.Header.Set("Authorization", "Bearer "+authParts[1])
-
-		// Send the HTTP request
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Fatal("Do error: ", err)
-		}
-		defer resp.Body.Close()
-
-		// Read the response body
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatal("ReadAll error: ", err)
-		}
-		var dealE2EUploadResponse DealE2EUploadResponse
-		err = json.Unmarshal(body, &dealE2EUploadResponse)
+		job := jobs.CreateNewDispatcher()
+		job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent))
+		job.Start(1)
 
 		if err != nil {
 			c.JSON(500, UploadResponse{
@@ -152,10 +104,10 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 		}
 
 		c.JSON(200, UploadResponse{
-			Status:       "success",
-			Message:      "File uploaded and pinned successfully",
-			ID:           newContent.ID,
-			DeltaContent: dealE2EUploadResponse,
+			Status:  "success",
+			Message: "File uploaded and pinned successfully. Please take note of the ID.",
+			ID:      newContent.ID,
+			Cid:     newContent.Cid,
 		})
 		return nil
 	})

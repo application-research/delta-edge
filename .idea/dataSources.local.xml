@@ -13,7 +13,7 @@
         </introspection-scope>
       </schema-mapping>
     </data-source>
-    <data-source name="edge-urdb" uuid="64de0991-9175-4ab4-8f1a-83f544ad09e7">
+    <data-source name="edge-urdb" uuid="990e73c4-adea-4aaf-beaa-ee8328cce9c2">
       <database-info product="SQLite" version="3.38.0" jdbc-version="2.1" driver-name="SQLite JDBC" driver-version="3.38.0-SNAPSHOT" dbms="SQLITE" exact-version="3.38.0" exact-driver-version="3.38">
         <identifier-quote-string>&quot;</identifier-quote-string>
       </database-info>
