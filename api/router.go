@@ -48,7 +48,9 @@ type AuthResponse struct {
 // RouterConfig configures the API node
 func InitializeEchoRouterConfig(ln *core.LightNode) {
 	// Echo instance
+	// Echo instance
 	e := echo.New()
+	e.File("/", "templates/index.html")
 
 	// Middleware
 	e.Use(middleware.Logger())
