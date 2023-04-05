@@ -1,0 +1,6 @@
+.env
+.idea/*
+.whypfs
+edge-ur
+libp2p.key
+scripts/spammer.sh
