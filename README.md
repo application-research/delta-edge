@@ -30,7 +30,7 @@ go build -tags netgo -ldflags '-s -w' -o edge-cli
 ```
 DB_NAME=edge-urdb
 DELTA_NODE_API=https://cake.delta.store
-EDGE_NODE_API_KEY=EST4c96295b-27bc-4358-94c6-f547b61246c1ARY
+EDGE_NODE_API_KEY=[ESTUARY_API_KEY]
 DEAL_CHECK=600
 ```
 
