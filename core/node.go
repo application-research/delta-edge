@@ -3,8 +3,6 @@ package core
 import (
 	"context"
 	"io/ioutil"
-	"log"
-	"net"
 	"net/http"
 	"net/url"
 	"sync"
@@ -85,49 +83,50 @@ func BootstrapEstuaryPeers() []peer.AddrInfo {
 	return peers
 }
 
-func NewEdgeNode(ctx *context.Context) (*LightNode, error) {
+//
+//func NewEdgeNode(ctx *context.Context) (*LightNode, error) {
+//
+//	db, err := OpenDatabase()
+//	// node
+//	publicIp, err := GetPublicIP()
+//	newConfig := &whypfs.Config{
+//		ListenAddrs: []string{
+//			"/ip4/0.0.0.0/tcp/6745",
+//			"/ip4/" + publicIp + "/tcp/6745",
+//		},
+//		AnnounceAddrs: []string{
+//			"/ip4/0.0.0.0/tcp/6745",
+//			"/ip4/" + publicIp + "/tcp/6745",
+//		},
+//	}
+//	params := whypfs.NewNodeParams{
+//		Ctx:       context.Background(),
+//		Datastore: whypfs.NewInMemoryDatastore(),
+//		Repo:      "",
+//	}
+//
+//	params.Config = params.ConfigurationBuilder(newConfig)
+//	whypfsPeer, err := whypfs.NewNode(params)
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	whypfsPeer.BootstrapPeers(BootstrapEstuaryPeers())
+//
+//	// gateway
+//	gw, err := NewGatewayHandler(whypfsPeer)
+//
+//	// create the global light node.
+//	return &LightNode{
+//		Node: whypfsPeer,
+//		Gw:   gw,
+//		DB:   db,
+//	}, nil
+//}
 
-	db, err := OpenDatabase()
-	// node
-	publicIp, err := GetPublicIP()
-	newConfig := &whypfs.Config{
-		ListenAddrs: []string{
-			"/ip4/0.0.0.0/tcp/6745",
-			"/ip4/" + publicIp + "/tcp/6745",
-		},
-		AnnounceAddrs: []string{
-			"/ip4/0.0.0.0/tcp/6745",
-			"/ip4/" + publicIp + "/tcp/6745",
-		},
-	}
-	params := whypfs.NewNodeParams{
-		Ctx:       context.Background(),
-		Datastore: whypfs.NewInMemoryDatastore(),
-		Repo:      "",
-	}
-
-	params.Config = params.ConfigurationBuilder(newConfig)
-	whypfsPeer, err := whypfs.NewNode(params)
-	if err != nil {
-		panic(err)
-	}
-
-	whypfsPeer.BootstrapPeers(BootstrapEstuaryPeers())
-
-	// gateway
-	gw, err := NewGatewayHandler(whypfsPeer)
-
-	// create the global light node.
-	return &LightNode{
-		Node: whypfsPeer,
-		Gw:   gw,
-		DB:   db,
-	}, nil
-}
-
-// Add a config to enable gateway or not.
+// NewEdgeNode Add a config to enable gateway or not.
 // Add a config to enable content, bucket, commp, replication verifier processor
-func NewLightNode(ctx context.Context, repo string) (*LightNode, error) {
+func NewEdgeNode(ctx context.Context, repo string) (*LightNode, error) {
 
 	db, err := OpenDatabase()
 	// node
@@ -204,46 +203,6 @@ func (ln *LightNode) GetLocalhostOrigins() []string {
 	}
 	origins = append(origins, "/ip4/"+publicIp+"/tcp/6745/p2p/"+ln.Node.Host.ID().String())
 	return origins
-}
-
-func GetOutboundIP() net.IP {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err != nil {
-		log.Println(err)
-	}
-	defer conn.Close()
-
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
-
-	return localAddr.IP
-}
-
-func GetIpNet() net.IP {
-
-	ifaces, err := net.Interfaces()
-	// handle err
-	if err != nil {
-		panic(err)
-	}
-
-	//
-	var ip net.IP
-	for _, i := range ifaces {
-		addrs, err := i.Addrs()
-		if err != nil {
-			panic(err)
-		}
-		// handle err
-		for _, addr := range addrs {
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
-			}
-		}
-	}
-	return ip
 }
 
 func GetPublicIP() (string, error) {

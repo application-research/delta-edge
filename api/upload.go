@@ -83,8 +83,6 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 
 		addNode, err := node.Node.AddPinFile(c.Request().Context(), src, nil)
 		fmt.Println("addNode: ", addNode.Cid().String())
-		// get available staging buckets.
-		// save the file to the database.
 		newContent := core.Content{
 			Name:             file.Filename,
 			Size:             file.Size,
