@@ -40,7 +40,7 @@ DEAL_CHECK=600
 
 ## Running the daemon
 ```
-./edge-cli daemon --repo=/tmp/blockstore
+./edge daemon --repo=/tmp/blockstore
 ```
 
 
@@ -52,9 +52,20 @@ View the gateway using:
 - https://localhost:1313/gw/ipfs/:cid
 
 # Pin and make a storage deal for your file(s) on Estuary
+
+## Get API key
+```
+curl --location --request GET 'https://auth.estuary.tech/register-new-token'
+{
+    "expires": "2123-02-03T21:12:15.632368998Z",
+    "token": "<API_KEY>"
+}
+```
+
+## Upload and make a storage deal
 ```
 curl --location --request POST 'http://localhost:1313/api/v1/content/add' \
---header 'Authorization: Bearer [ESTUARY_API_KEY]' \
+--header 'Authorization: Bearer [API_KEY]' \
 --form 'data=@"/path/to/file"'
 {
     "status": "success",
@@ -64,11 +75,17 @@ curl --location --request POST 'http://localhost:1313/api/v1/content/add' \
 }
 ```
 
-# Status check
+## View / download your file
+```
+https://localhost:1313/gw/bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y
+https://localhost:1313/gw/ipfs/bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y
+```
+
+## Check the status of your content
 This will return the status of the file(s) or cid(s) on edge. It'll also return the delta content_id.
 ```
 curl --location --request GET 'http://localhost:1313/api/v1/status/1' \
---header 'Authorization: Bearer [ESTUARY_API_KEY]'
+--header 'Authorization: Bearer [API_KEY]'
 {
     "content": {
         "ID": 1,
