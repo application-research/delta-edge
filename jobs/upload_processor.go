@@ -67,12 +67,47 @@ type DealE2EUploadRequest struct {
 
 // DealResponse Creating a new struct called DealResponse and then returning it.
 type DealE2EUploadResponse struct {
-	Status                       string      `json:"status"`
-	Message                      string      `json:"message"`
-	ContentId                    int64       `json:"content_id,omitempty"`
-	DealRequest                  interface{} `json:"deal_request_meta,omitempty"`
-	DealProposalParameterRequest interface{} `json:"deal_proposal_parameter_request_meta,omitempty"`
-	ReplicatedContents           interface{} `json:"replicated_contents,omitempty"`
+	Status          string `json:"status"`
+	Message         string `json:"message"`
+	ContentId       int64  `json:"content_id,omitempty"`
+	DealRequestMeta struct {
+		Cid    string `json:"cid"`
+		Miner  string `json:"miner"`
+		Wallet struct {
+		} `json:"wallet"`
+		PieceCommitment struct {
+		} `json:"piece_commitment"`
+		ConnectionMode     string `json:"connection_mode"`
+		Replication        int    `json:"replication"`
+		RemoveUnsealedCopy bool   `json:"remove_unsealed_copy"`
+		SkipIpniAnnounce   bool   `json:"skip_ipni_announce"`
+		AutoRetry          bool   `json:"auto_retry"`
+	} `json:"deal_request_meta"`
+	DealProposalParameterRequestMeta struct {
+		ID                 int    `json:"ID"`
+		Content            int    `json:"content"`
+		Label              string `json:"label"`
+		Duration           int    `json:"duration"`
+		RemoveUnsealedCopy bool   `json:"remove_unsealed_copy"`
+		SkipIpniAnnounce   bool   `json:"skip_ipni_announce"`
+		VerifiedDeal       bool   `json:"verified_deal"`
+		CreatedAt          string `json:"created_at"`
+		UpdatedAt          string `json:"updated_at"`
+	} `json:"deal_proposal_parameter_request_meta"`
+	ReplicatedContents []struct {
+		ID               int    `json:"ID"`
+		Name             string `json:"name"`
+		Size             int    `json:"size"`
+		Cid              string `json:"cid"`
+		RequestingAPIKey string `json:"requesting_api_key"`
+		Status           string `json:"status"`
+		RequestType      string `json:"request_type"`
+		ConnectionMode   string `json:"connection_mode"`
+		AutoRetry        bool   `json:"auto_retry"`
+		LastMessage      string `json:"last_message"`
+		CreatedAt        string `json:"created_at"`
+		UpdatedAt        string `json:"updated_at"`
+	} `json:"replicated_contents"`
 }
 
 func NewUploadToEstuaryProcessor(ln *core.LightNode, contentToProcess core.Content) IProcessor {
@@ -108,7 +143,7 @@ func (r *UploadToEstuaryProcessor) Run() error {
 
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
-	partFile, err := writer.CreateFormFile("data", "filename.txt")
+	partFile, err := writer.CreateFormFile("data", r.Content.Name)
 	if err != nil {
 		fmt.Println("CreateFormFile error: ", err)
 		return nil
@@ -122,7 +157,7 @@ func (r *UploadToEstuaryProcessor) Run() error {
 		fmt.Println("CreateFormField error: ", err)
 		return nil
 	}
-	if _, err = partFile.Write([]byte(`{"auto_retry":true}`)); err != nil {
+	if _, err = partFile.Write([]byte(`{"auto_retry":true,"replication":3}`)); err != nil {
 		fmt.Println("Write error: ", err)
 		return nil
 	}

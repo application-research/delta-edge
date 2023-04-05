@@ -36,11 +36,22 @@ type Content struct {
 	Cid              string    `json:"cid"`
 	RequestingApiKey string    `json:"requesting_api_key,omitempty"`
 	DeltaContentId   int64     `json:"delta_content_id"`
+	DeltaNodeUrl     string    `json:"delta_node_url"`
 	Status           string    `json:"status"`
 	LastMessage      string    `json:"last_message"`
 	Miner            string    `json:"miner"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+type ContentReplication struct {
+	ID                    int64     `gorm:"primaryKey"`
+	PrimaryContentID      int64     `json:"primary_content_id"`
+	PrimaryDeltaContentID int64     `json:"primary_delta_content_id"`
+	ReplicaContentID      int64     `json:"replica_content_id"`
+	ReplicaDeltaContentID int64     `json:"replica_delta_content_id"`
+	CreatedAt             time.Time `json:"CreatedAt"`
+	UpdatedAt             time.Time `json:"UpdatedAt"`
 }
 
 type ContentDeal struct {

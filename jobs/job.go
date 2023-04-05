@@ -80,11 +80,8 @@ func (d *Dispatcher) Start(numWorkers int) {
 		for {
 			select {
 			case job := <-d.jobQueue:
-				//fmt.Printf("Got a job in the queue to dispatch: %d\n", job.ID)
-				// Sending it off;
 				d.workQueue <- job
 			case ds := <-d.dispatchStatus:
-				//fmt.Printf("Got a dispatch status:\n\tType[%s] - ID[%d] - Status[%s]\n", ds.Type, ds.ID, ds.Status)
 				if ds.Type == "worker" {
 					if ds.Status == "quit" {
 						d.jobCounter--
@@ -99,7 +96,6 @@ func (d *Dispatcher) AddJob(je IProcessor) {
 	j := &Job{ID: d.jobCounter, Processor: je}
 	go func() { d.jobQueue <- j }()
 	d.jobCounter++
-	fmt.Printf("jobCounter is now: %d\n", d.jobCounter)
 }
 
 func (d *Dispatcher) Finished() bool {
