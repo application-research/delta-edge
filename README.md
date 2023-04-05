@@ -22,7 +22,12 @@ By decoupling this to a light node, we achieve the following:
 # Build
 ## `go build`
 ```
-go build -tags netgo -ldflags '-s -w' -o edge-cli
+go build -tags netgo -ldflags '-s -w' -o edge
+```
+
+## `make`
+```
+make all
 ```
 
 # Running
@@ -53,14 +58,14 @@ curl --location --request POST 'http://localhost:1313/api/v1/content/add' \
 --form 'data=@"/path/to/file"'
 {
     "status": "success",
-    "message": "File uploaded and pinned successfully. Please take note of the ID.",
+    "message": "File uploaded and pinned successfully. Please take note of the id.",
     "id": 5,
     "cid": "bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y"
 }
 ```
 
 # Status check
-This will return the status of the file(s) or cid(s) on edge-ur. It'll also return the estuary content_id.
+This will return the status of the file(s) or cid(s) on edge. It'll also return the delta content_id.
 ```
 curl --location --request GET 'http://localhost:1313/api/v1/status/1' \
 --header 'Authorization: Bearer [ESTUARY_API_KEY]'
