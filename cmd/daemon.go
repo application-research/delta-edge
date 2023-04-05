@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"github.com/application-research/edge-ur/api"
 	"github.com/application-research/edge-ur/core"
 	"github.com/application-research/edge-ur/jobs"
@@ -42,6 +43,17 @@ func DaemonCmd() []*cli.Command {
 			go runProcessors(ln)
 
 			// launch the API node
+			fmt.Println(`
+ _______    ________   ________   _______                    ___  ___   ________     
+|\  ___ \  |\   ___ \ |\   ____\ |\  ___ \                  |\  \|\  \ |\   __  \    
+\ \   __/| \ \  \_|\ \\ \  \___| \ \   __/|    ____________ \ \  \\\  \\ \  \|\  \   
+ \ \  \_|/__\ \  \ \\ \\ \  \  ___\ \  \_|/__ |\____________\\ \  \\\  \\ \   _  _\  
+  \ \  \_|\ \\ \  \_\\ \\ \  \|\  \\ \  \_|\ \\|____________| \ \  \\\  \\ \  \\  \| 
+   \ \_______\\ \_______\\ \_______\\ \_______\                \ \_______\\ \__\\ _\ 
+    \|_______| \|_______| \|_______| \|_______|                 \|_______| \|__|\|__|
+`)
+			fmt.Println("Starting API server")
+			fmt.Println("API server up and running on port 1313")
 			api.InitializeEchoRouterConfig(ln)
 			api.LoopForever()
 
