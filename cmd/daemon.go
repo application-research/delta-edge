@@ -30,7 +30,7 @@ func DaemonCmd() []*cli.Command {
 			repo := c.String("repo")
 
 			if repo == "" {
-				repo = ".whypfs"
+				repo = viper.Get("REPO").(string)
 			}
 
 			ln, err := core.NewEdgeNode(context.Background(), repo)

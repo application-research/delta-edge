@@ -28,10 +28,7 @@ func main() {
 	}
 	// get all the commands
 	var commands []*cli.Command
-
-	// commands
 	commands = append(commands, cmd.DaemonCmd()...)
-	//	commands = append(commands, cmd.PinCmd()...)
 
 	app := &cli.App{
 		Commands: commands,

@@ -54,6 +54,11 @@ type ContentReplication struct {
 	UpdatedAt             time.Time `json:"UpdatedAt"`
 }
 
+type ContentCarSplit struct {
+	ID        int64 `gorm:"primaryKey"`
+	ContentID int64 `json:"content_id"`
+}
+
 type ContentDeal struct {
 	ID                  int64     `gorm:"primaryKey"`
 	CreatedAt           time.Time `json:"CreatedAt"`
