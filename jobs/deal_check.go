@@ -103,7 +103,8 @@ func (r *DealChecker) Run() error {
 
 	// run thru the DIR contents and add them to the DB
 	var content []core.Content
-	r.LightNode.DB.Raw("select * from contents where status not in (?)", "transfer-finished").Scan(&content)
+	// only get 25 at a time
+	r.LightNode.DB.Raw("select * from contents where status not in (?)", "transfer-finished").Limit(25).Scan(&content)
 
 	for _, c := range content {
 		contentId := strconv.Itoa(int(c.DeltaContentId))

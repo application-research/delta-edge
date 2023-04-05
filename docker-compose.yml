@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  app:
+    build: .
+    labels:
+      - "build-date=${BUILD_DATE}"
+      - "commit=${COMMIT}"
+      - "version=${VERSION}"
+      - "description=${DESCRIPTION}"
+    ports:
+      - "${APP_PORT:-1313}:1313"
+    environment:
+      - NODE_NAME=${NODE_NAME:-"edge-node"}
+      - DELTA_NODE_API=${DELTA_NODE_API:-"http://localhost:1414"}
+      - DEAL_CHECK=600

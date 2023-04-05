@@ -1,5 +1,4 @@
 # Edge Node
-
 **Edge is currently under heavy development and a massive optimization release is coming soon**
 
 ## Goal/Purpose

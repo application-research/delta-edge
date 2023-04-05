@@ -32,7 +32,7 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		})
 	})
 
-	e.GET("/list-all-cids", func(c echo.Context) error {
+	e.GET("/list", func(c echo.Context) error {
 
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")

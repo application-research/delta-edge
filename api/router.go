@@ -56,9 +56,11 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.HTTPErrorHandler = ErrorHandler
 
-	defaultGatewayRoute := e.Group("")
-	ConfigureGatewayRouter(defaultGatewayRoute, ln) // access to light node
-	ConfigureStatsRouter(defaultGatewayRoute, ln)
+	defaultOpenRoute := e.Group("")
+	ConfigureGatewayRouter(defaultOpenRoute, ln) // access to light node
+	ConfigureStatsRouter(defaultOpenRoute, ln)
+	ConfigureHealthCheckRouter(defaultOpenRoute, ln)
+	ConfigureNodeInfoRouter(defaultOpenRoute, ln)
 
 	apiGroup := e.Group("/api/v1")
 	apiGroup.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
