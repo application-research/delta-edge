@@ -1,5 +1,5 @@
 SHELL=/usr/bin/env bash
-GO_BUILD_IMAGE?=golang:1.19
+GO_BUILD_IMAGE?=golang:1.18
 VERSION=$(shell git describe --always --tag --dirty)
 COMMIT=$(shell git rev-parse --short HEAD)
 DOCKER_COMPOSE_FILE=docker-compose.yml

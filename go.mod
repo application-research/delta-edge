@@ -7,7 +7,6 @@ require (
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/lotus v1.18.0
 	github.com/gabriel-vasile/mimetype v1.4.1
-	github.com/google/uuid v1.3.0
 	github.com/ipfs/go-blockservice v0.4.0
 	github.com/ipfs/go-cid v0.3.2
 	github.com/ipfs/go-fetcher v1.6.1
@@ -16,11 +15,10 @@ require (
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/ipfs/go-merkledag v0.8.0
 	github.com/ipfs/go-path v0.3.0
-	github.com/ipfs/go-unixfs v0.4.2
+	github.com/ipfs/go-unixfs v0.4.1
 	github.com/ipfs/go-unixfsnode v1.4.0
-	github.com/ipld/go-car v0.5.0
-	github.com/ipld/go-codec-dagpb v1.5.0
-	github.com/ipld/go-ipld-prime v0.19.0
+	github.com/ipld/go-codec-dagpb v1.3.2
+	github.com/ipld/go-ipld-prime v0.17.0
 	github.com/labstack/echo/v4 v4.9.1
 	github.com/libp2p/go-libp2p v0.23.4
 	github.com/multiformats/go-multiaddr v0.8.0
@@ -60,12 +58,12 @@ require (
 	github.com/filecoin-project/go-bitfield v0.2.4 // indirect
 	github.com/filecoin-project/go-cbor-util v0.0.1 // indirect
 	github.com/filecoin-project/go-data-transfer v1.15.2 // indirect
-	github.com/filecoin-project/go-fil-markets v1.25.0 // indirect
+	github.com/filecoin-project/go-fil-markets v1.24.0-v17 // indirect
 	github.com/filecoin-project/go-hamt-ipld v0.1.5 // indirect
 	github.com/filecoin-project/go-hamt-ipld/v2 v2.0.0 // indirect
 	github.com/filecoin-project/go-hamt-ipld/v3 v3.1.0 // indirect
 	github.com/filecoin-project/go-padreader v0.0.1 // indirect
-	github.com/filecoin-project/go-state-types v0.9.9 // indirect
+	github.com/filecoin-project/go-state-types v0.9.8 // indirect
 	github.com/filecoin-project/go-statestore v0.2.0 // indirect
 	github.com/filecoin-project/go-ulimit v0.0.0-20220526030355-e9ff1445536a // indirect
 	github.com/filecoin-project/specs-actors v0.9.15 // indirect
@@ -91,6 +89,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/gopacket v1.1.19 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hannahhoward/cbor-gen-for v0.0.0-20200817222906-ea96cece81f1 // indirect
 	github.com/hannahhoward/go-pubsub v0.0.0-20200423002714-8d62886cc36e // indirect
@@ -123,12 +122,12 @@ require (
 	github.com/ipfs/go-ipld-cbor v0.0.6 // indirect
 	github.com/ipfs/go-ipld-legacy v0.1.1 // indirect
 	github.com/ipfs/go-ipns v0.3.0 // indirect
-	github.com/ipfs/go-libipfs v0.1.0 // indirect
 	github.com/ipfs/go-log v1.0.5 // indirect
 	github.com/ipfs/go-metrics-interface v0.0.1 // indirect
-	github.com/ipfs/go-peertaskqueue v0.8.0 // indirect
+	github.com/ipfs/go-peertaskqueue v0.7.1 // indirect
 	github.com/ipfs/go-verifcid v0.0.1 // indirect
 	github.com/ipfs/interface-go-ipfs-core v0.7.0 // indirect
+	github.com/ipld/go-car v0.5.0 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/jbenet/go-temp-err-catcher v0.1.0 // indirect
 	github.com/jbenet/goprocess v0.1.4 // indirect
