@@ -85,7 +85,7 @@ https://localhost:1313/gw/ipfs/bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4
 ## Check the status of your content
 This will return the status of the file(s) or cid(s) on edge. It'll also return the delta content_id.
 ```
-curl --location --request GET 'http://localhost:1313/api/v1/status/1' \
+curl --location --request GET 'http://localhost:1313/api/v1/status/5' \
 --header 'Authorization: Bearer [API_KEY]'
 {
     "content": {
