@@ -1,6 +1,6 @@
 # Edge Node
 
-**Edge is currently under heavy development and a massive optimization release is coming soon**
+**Edge is currently under heavy development. An optimize version will be released soon**
 
 ## Goal/Purpose
 Dedicated light node to upload and retrieve their CIDs. To do this, we decoupled the upload and retrieval aspect from the Estuary API node so we can create a node that can live on the "edge" closer to the customer.
