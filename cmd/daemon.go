@@ -19,7 +19,7 @@ func DaemonCmd() []*cli.Command {
 
 	daemonCmd := &cli.Command{
 		Name:  "daemon",
-		Usage: "A light version of Estuary that allows users to upload and download data from the Filecoin network.",
+		Usage: "Edge gateway daemon that allows users to upload and download data to/from the Filecoin network.",
 
 		Flags: []cli.Flag{
 			&cli.StringFlag{

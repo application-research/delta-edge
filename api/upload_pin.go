@@ -3,6 +3,11 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"mime/multipart"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -16,6 +21,35 @@ type CidRequest struct {
 	Cids []string `json:"cids"`
 }
 
+type DealE2EUploadRequest struct {
+	Cid            string `json:"cid,omitempty"`
+	Miner          string `json:"miner,omitempty"`
+	Duration       int64  `json:"duration,omitempty"`
+	DurationInDays int64  `json:"duration_in_days,omitempty"`
+	//Wallet             WalletRequest          `json:"wallet,omitempty"`
+	//PieceCommitment    PieceCommitmentRequest `json:"piece_commitment,omitempty"`
+	ConnectionMode     string `json:"connection_mode,omitempty"`
+	Size               int64  `json:"size,omitempty"`
+	StartEpoch         int64  `json:"start_epoch,omitempty"`
+	StartEpochInDays   int64  `json:"start_epoch_in_days,omitempty"`
+	Replication        int    `json:"replication,omitempty"`
+	RemoveUnsealedCopy bool   `json:"remove_unsealed_copy"`
+	SkipIPNIAnnounce   bool   `json:"skip_ipni_announce"`
+	AutoRetry          bool   `json:"auto_retry"`
+	Label              string `json:"label,omitempty"`
+	DealVerifyState    string `json:"deal_verify_state,omitempty"`
+}
+
+// DealResponse Creating a new struct called DealResponse and then returning it.
+type DealE2EUploadResponse struct {
+	Status                       string      `json:"status"`
+	Message                      string      `json:"message"`
+	ContentId                    int64       `json:"content_id,omitempty"`
+	DealRequest                  interface{} `json:"deal_request_meta,omitempty"`
+	DealProposalParameterRequest interface{} `json:"deal_proposal_parameter_request_meta,omitempty"`
+	ReplicatedContents           interface{} `json:"replicated_contents,omitempty"`
+}
+
 type UploadSplitResponse struct {
 	Status        string              `json:"status"`
 	Message       string              `json:"message"`
@@ -25,14 +59,109 @@ type UploadSplitResponse struct {
 }
 
 type UploadResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
-	ID      int64  `json:"id,omitempty"`
+	Status       string      `json:"status"`
+	Message      string      `json:"message"`
+	ID           int64       `json:"id,omitempty"`
+	DeltaContent interface{} `json:"delta_content,omitempty"`
 }
 
 func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 
 	content := e.Group("/content")
+	content.POST("/add", func(c echo.Context) error {
+		authorizationString := c.Request().Header.Get("Authorization")
+		authParts := strings.Split(authorizationString, " ")
+		file, err := c.FormFile("data")
+		if err != nil {
+			return err
+		}
+		src, err := file.Open()
+		src1, err := file.Open()
+		if err != nil {
+			return err
+		}
+
+		addNode, err := node.Node.AddPinFile(c.Request().Context(), src, nil)
+		fmt.Println("addNode: ", addNode.Cid().String())
+		// get available staging buckets.
+		// save the file to the database.
+		newContent := core.Content{
+			Name:             file.Filename,
+			Size:             file.Size,
+			Cid:              addNode.Cid().String(),
+			RequestingApiKey: authParts[1],
+			Status:           "pinned",
+			Created_at:       time.Now(),
+			Updated_at:       time.Now(),
+		}
+
+		node.DB.Create(&newContent)
+
+		// Set up the multipart form data for the file and metadata
+		var b bytes.Buffer
+		w := multipart.NewWriter(&b)
+
+		if err != nil {
+			log.Fatal("Open error: ", err)
+		}
+
+		fw, err := w.CreateFormFile("data", file.Filename)
+		if err != nil {
+			log.Fatal("CreateFormFile error: ", err)
+		}
+		if _, err = io.Copy(fw, src1); err != nil {
+			log.Fatal("Copy error: ", err)
+		}
+		if fw, err = w.CreateFormField("metadata"); err != nil {
+			log.Fatal("CreateFormField error: ", err)
+		}
+		if _, err = fw.Write([]byte(`{"auto_retry":true}`)); err != nil {
+			log.Fatal("Write error: ", err)
+		}
+		if err = w.Close(); err != nil {
+			log.Fatal("Close error: ", err)
+		}
+
+		// Create a new HTTP request with the form data and authentication header
+		req, err := http.NewRequest("POST", "http://localhost:1414/api/v1/deal/end-to-end", &b)
+		if err != nil {
+			log.Fatal("NewRequest error: ", err)
+		}
+		req.Header.Set("Content-Type", w.FormDataContentType())
+		req.Header.Set("Authorization", "Bearer "+authParts[1])
+
+		// Send the HTTP request
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Fatal("Do error: ", err)
+		}
+		defer resp.Body.Close()
+
+		// Read the response body
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal("ReadAll error: ", err)
+		}
+		var dealE2EUploadResponse DealE2EUploadResponse
+		err = json.Unmarshal(body, &dealE2EUploadResponse)
+
+		if err != nil {
+			c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error pinning the file" + err.Error(),
+			})
+		}
+
+		c.JSON(200, UploadResponse{
+			Status:       "success",
+			Message:      "File uploaded and pinned successfully",
+			ID:           newContent.ID,
+			DeltaContent: dealE2EUploadResponse,
+		})
+		return nil
+	})
+
 	content.POST("/add-car", func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
@@ -71,7 +200,6 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 		})
 		return nil
 	})
-
 	content.POST("/add-split", func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
@@ -155,50 +283,6 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 		c.JSON(200, uploadSplitResponse)
 		return nil
 	})
-
-	content.POST("/add", func(c echo.Context) error {
-		authorizationString := c.Request().Header.Get("Authorization")
-		authParts := strings.Split(authorizationString, " ")
-		file, err := c.FormFile("data")
-		if err != nil {
-			return err
-		}
-		src, err := file.Open()
-		if err != nil {
-			return err
-		}
-
-		addNode, err := node.Node.AddPinFile(c.Request().Context(), src, nil)
-
-		// get available staging buckets.
-		// save the file to the database.
-		content := core.Content{
-			Name:             file.Filename,
-			Size:             file.Size,
-			Cid:              addNode.Cid().String(),
-			RequestingApiKey: authParts[1],
-			Status:           "pinned",
-			Created_at:       time.Now(),
-			Updated_at:       time.Now(),
-		}
-
-		node.DB.Create(&content)
-
-		if err != nil {
-			c.JSON(500, UploadResponse{
-				Status:  "error",
-				Message: "Error pinning the file" + err.Error(),
-			})
-		}
-
-		c.JSON(200, UploadResponse{
-			Status:  "success",
-			Message: "File uploaded and pinned successfully",
-			ID:      content.ID,
-		})
-		return nil
-	})
-
 	content.POST("/cid/:cid", func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
@@ -241,7 +325,6 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 		})
 		return nil
 	})
-
 	content.POST("/cids", func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")

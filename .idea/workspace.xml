@@ -5,8 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c9eca934-9df8-434a-b941-7f39b58354bc" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/upload_pin.go" beforeDir="false" afterPath="$PROJECT_DIR$/api/upload_pin.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/daemon.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/daemon.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,6 +62,9 @@
     <setting file="file://$PROJECT_DIR$/scripts/spammer.sh" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/api/upload_pin.go" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/jobs/deal_check.go" root0="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="KubernetesApiPersistence">
+    <option name="context" value="minikube" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
