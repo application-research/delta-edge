@@ -1,7 +1,5 @@
 # Edge Node
 
-[![Go](https://github.com/application-research/edge-ur/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/application-research/edge-ur/actions/workflows/go.yml) [![codeql](https://github.com/application-research/edge-ur/actions/workflows/codeql.yml/badge.svg)](https://github.com/application-research/edge-ur/actions/workflows/codeql.yml)
-
 **Edge is currently under heavy development and a massive optimization release is coming soon**
 
 ## Goal/Purpose

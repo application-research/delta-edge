@@ -8,8 +8,8 @@ RUN go mod download
 
 COPY . ./
 
-RUN go build -tags netgo -ldflags '-s -w' -o edge-cli
+RUN go build -tags netgo -ldflags '-s -w' -o edge
 
 EXPOSE 1313
 
-CMD [ "./edge-cli daemon --repo=.whypfs" ]
+CMD [ "./edge daemon --repo=.whypfs" ]
