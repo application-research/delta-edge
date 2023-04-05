@@ -36,7 +36,7 @@ make all
 ```
 DB_NAME=edge-urdb
 DELTA_NODE_API=https://cake.delta.store
-DEAL_CHECK=600
+DEAL_CHECK=600 # checks all deal status every 10mins.
 ```
 
 ## Running the daemon
