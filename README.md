@@ -89,7 +89,7 @@ curl --location --request GET 'http://localhost:1313/api/v1/status/5' \
 --header 'Authorization: Bearer [API_KEY]'
 {
     "content": {
-        "ID": 1,
+        "ID": 5,
         "name": "aqua-plugin-231.8109.147.zip",
         "size": 1157548,
         "cid": "bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y",
