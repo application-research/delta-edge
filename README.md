@@ -16,8 +16,9 @@ By decoupling this to a light node, we achieve the following:
 - Accepts concurrent uploads (small to large)
 - Stores the CID and content on the local blockstore using whypfs
 - Save the data on local sqlite DB
+- retries the storage deals if it fails. Uses delta `auto_retry` feature.
 - periodically checks the status of the deals and update the database.
-- For 32GB and above, the node will split the file into 32GB chunks and make deals for each chunk and car them.
+- For 32GB and above, the node will split the file into 32GB chunks and make deals for each chunk and car them. **[WIP]**
 
 # Build
 ## `go build`
