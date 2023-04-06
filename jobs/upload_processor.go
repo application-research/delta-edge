@@ -201,11 +201,6 @@ func (r *UploadToEstuaryProcessor) Run() error {
 			fmt.Printf("Error sending request (attempt %d): %v\n", j+1, err)
 			time.Sleep(retryInterval)
 			continue
-
-			if err != nil || res.StatusCode != http.StatusOK {
-				fmt.Println("Failed to send HTTP request")
-				return nil
-			}
 		} else {
 			if res.StatusCode == 200 {
 				var dealE2EUploadResponse DealE2EUploadResponse

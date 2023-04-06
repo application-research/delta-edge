@@ -62,9 +62,15 @@ type UploadResponse struct {
 func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 	var DeltaUploadApi = viper.Get("DELTA_NODE_API").(string)
 	content := e.Group("/content")
-	content.POST("/add", func(c echo.Context) error {
+	content.POST("/add", handlePinAddToNode(node, DeltaUploadApi))
+
+}
+
+func handlePinAddToNode(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
+	return func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
+
 		file, err := c.FormFile("data")
 		if err != nil {
 			return err
@@ -108,6 +114,5 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 			Cid:     newContent.Cid,
 		})
 		return nil
-	})
-
+	}
 }
