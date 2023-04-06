@@ -53,8 +53,17 @@ REPO=./whypfs
 This node comes with it's own gateway to serve directories and files.
 
 View the gateway using:
-- https://localhost:1313/gw/:cid
-- https://localhost:1313/gw/ipfs/:cid
+- http://localhost:1313/gw/:cid
+- http://localhost:1313/gw/ipfs/:cid
+
+## Gateway home page
+```
+http://localhost:1313/
+```
+![image](https://user-images.githubusercontent.com/4479171/230234478-80f27572-6615-4dde-8507-39701acdd9ee.png)
+
+## Dir Viewer
+![image](https://user-images.githubusercontent.com/4479171/230234667-9e910d07-13bc-47b2-9662-0b3370981680.png)
 
 # Pin and make a storage deal for your file(s) on Estuary
 
@@ -82,8 +91,8 @@ curl --location --request POST 'http://localhost:1313/api/v1/content/add' \
 
 ## View / download your file
 ```
-https://localhost:1313/gw/bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y
-https://localhost:1313/gw/ipfs/bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y
+http://localhost:1313/gw/bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y
+http://localhost:1313/gw/ipfs/bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y
 ```
 
 ## Check the status of your content
