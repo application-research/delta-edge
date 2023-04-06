@@ -108,7 +108,7 @@ func (r *DealChecker) Run() error {
 	// run thru the DIR contents and add them to the DB
 	var content []core.Content
 	// only get 25 at a time
-	r.LightNode.DB.Raw("select * from contents where status not in (?)", "transfer-finished").Limit(25).Scan(&content)
+	r.LightNode.DB.Raw("select * from contents where delta_content_id <> 0 and status not in (?)", "transfer-finished").Limit(25).Scan(&content)
 
 	for _, c := range content {
 		contentId := strconv.Itoa(int(c.DeltaContentId))
@@ -129,16 +129,16 @@ func (r *DealChecker) Run() error {
 		}
 		var dealResult DealResult
 		json.Unmarshal(body, &dealResult)
-		if c.Status != dealResult.Content.Status {
-			fmt.Println("Status changed from ", c.Status, " to ", dealResult.Content.Status)
-			fmt.Println("Last message: ", dealResult.Content.LastMessage)
-			c.LastMessage = dealResult.Content.LastMessage
-			if len(dealResult.Deals) > 0 {
-				c.Miner = dealResult.Deals[len(dealResult.Deals)-1].Miner
-			}
-			c.Status = dealResult.Content.Status
-			r.LightNode.DB.Save(&c)
+		//if c.Status != dealResult.Content.Status {
+		fmt.Println("Status changed from ", c.Status, " to ", dealResult.Content.Status)
+		fmt.Println("Last message: ", dealResult.Content.LastMessage)
+		c.LastMessage = dealResult.Content.LastMessage
+		if len(dealResult.Deals) > 0 {
+			c.Miner = dealResult.Deals[len(dealResult.Deals)-1].Miner
 		}
+		c.Status = dealResult.Content.Status
+		r.LightNode.DB.Save(&c)
+		//}
 
 		// if the updated date is 1 day old, then we should just retry the request
 		if c.Status == "transfer-started" {

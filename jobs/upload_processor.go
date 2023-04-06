@@ -2,14 +2,13 @@ package jobs
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ipfs/go-cid"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/application-research/edge-ur/core"
@@ -43,6 +42,7 @@ type IpfsUploadStatusResponse struct {
 
 type UploadToEstuaryProcessor struct {
 	Content core.Content `json:"content"`
+	File    io.Reader    `json:"file"`
 	Processor
 }
 
@@ -110,10 +110,12 @@ type DealE2EUploadResponse struct {
 	} `json:"replicated_contents"`
 }
 
-func NewUploadToEstuaryProcessor(ln *core.LightNode, contentToProcess core.Content) IProcessor {
+func NewUploadToEstuaryProcessor(ln *core.LightNode, contentToProcess core.Content, fileNode io.Reader) IProcessor {
 	DELTA_UPLOAD_API = viper.Get("DELTA_NODE_API").(string)
+	REPLICATION_FACTOR = viper.Get("REPLICATION_FACTOR").(string)
 	return &UploadToEstuaryProcessor{
 		contentToProcess,
+		fileNode,
 		Processor{
 			LightNode: ln,
 		},
@@ -121,25 +123,14 @@ func NewUploadToEstuaryProcessor(ln *core.LightNode, contentToProcess core.Conte
 }
 
 func (r *UploadToEstuaryProcessor) Info() error {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (r *UploadToEstuaryProcessor) Run() error {
-
+	maxRetries := 5
+	retryInterval := 5 * time.Second
 	var content []core.Content
 	r.LightNode.DB.Model(&core.Content{}).Where("id = ?", r.Content.ID).Find(&content)
-
-	decodedCid, err := cid.Decode(r.Content.Cid)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-	fileNd, err := r.LightNode.Node.GetFile(context.Background(), decodedCid)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
 
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
@@ -148,7 +139,7 @@ func (r *UploadToEstuaryProcessor) Run() error {
 		fmt.Println("CreateFormFile error: ", err)
 		return nil
 	}
-	_, err = io.Copy(partFile, fileNd)
+	_, err = io.Copy(partFile, r.File)
 	if err != nil {
 		fmt.Println("Copy error: ", err)
 		return nil
@@ -157,7 +148,17 @@ func (r *UploadToEstuaryProcessor) Run() error {
 		fmt.Println("CreateFormField error: ", err)
 		return nil
 	}
-	if _, err = partFile.Write([]byte(`{"auto_retry":true,"replication":3}`)); err != nil {
+	repFactor, err := strconv.Atoi(REPLICATION_FACTOR)
+	if err != nil {
+		fmt.Println("REPLICATION_FACTOR error: ", err)
+		return nil
+	}
+	partMetadata := fmt.Sprintf(`{"auto_retry":true,"replication":%d}`, repFactor)
+	if repFactor == 0 {
+		partMetadata = fmt.Sprintf(`{"auto_retry":true}`)
+	}
+
+	if _, err = partFile.Write([]byte(partMetadata)); err != nil {
 		fmt.Println("Write error: ", err)
 		return nil
 	}
@@ -178,27 +179,43 @@ func (r *UploadToEstuaryProcessor) Run() error {
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.Header.Set("Authorization", "Bearer "+r.Content.RequestingApiKey)
 	client := &http.Client{}
-	res, err := client.Do(req)
+	var res *http.Response
+	for j := 0; j < maxRetries; j++ {
+		res, err = client.Do(req)
+		if err != nil || res.StatusCode != http.StatusOK {
+			fmt.Printf("Error sending request (attempt %d): %v\n", j+1, err)
+			time.Sleep(retryInterval)
+			continue
 
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-	defer res.Body.Close()
-	if res.StatusCode == 200 {
-		var dealE2EUploadResponse DealE2EUploadResponse
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			fmt.Println(err)
-			return nil
+			if err != nil || res.StatusCode != http.StatusOK {
+				fmt.Println("Failed to send HTTP request")
+				return nil
+			}
+		} else {
+			if res.StatusCode == 200 {
+				var dealE2EUploadResponse DealE2EUploadResponse
+				body, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				err = json.Unmarshal(body, &dealE2EUploadResponse)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				} else {
+					if dealE2EUploadResponse.ContentId == 0 {
+						continue
+					} else {
+						r.Content.UpdatedAt = time.Now()
+						r.Content.Status = "uploaded-to-delta"
+						r.Content.DeltaContentId = dealE2EUploadResponse.ContentId
+						r.LightNode.DB.Save(&r.Content)
+					}
+				}
+			}
 		}
-		json.Unmarshal(body, &dealE2EUploadResponse)
-
-		// connect to delegates
-		r.Content.UpdatedAt = time.Now()
-		r.Content.Status = "uploaded-to-delta"
-		r.Content.DeltaContentId = dealE2EUploadResponse.ContentId
-		r.LightNode.DB.Updates(&r.Content)
+		break
 	}
 
 	return nil

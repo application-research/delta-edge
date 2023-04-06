@@ -7,6 +7,7 @@ import (
 )
 
 var DELTA_UPLOAD_API = ""
+var REPLICATION_FACTOR = "0"
 
 type JobExecutable func() error
 type IProcessor interface {

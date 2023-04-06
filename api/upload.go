@@ -70,6 +70,7 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 			return err
 		}
 		src, err := file.Open()
+		srcR, err := file.Open()
 		if err != nil {
 			return err
 		}
@@ -90,7 +91,7 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 		node.DB.Create(&newContent)
 
 		job := jobs.CreateNewDispatcher()
-		job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent))
+		job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
 		job.Start(1)
 
 		if err != nil {

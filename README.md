@@ -39,7 +39,7 @@ NODE_DESCRIPTION=Edge node
 DB_NAME=edge-urdb
 DELTA_NODE_API=http://localhost:1414 # or https://node.delta.store
 DEAL_CHECK=600 # 10 minutes
-REPLICATION_FACTOR=3
+REPLICATION_FACTOR=0
 REPO=./whypfs
 ```
 
