@@ -20,7 +20,7 @@ By decoupling this to a light node, we achieve the following:
 
 ## Getting Started
 - To get started running an edge node, please refer to the guide [here](running_node.md).
-- To get started uploading files to the edge node, please refer to the guide [here](uploading_file.md).
+- To get started uploading files to the edge node, please refer to the guide [here](upload_file.md).
 - To get started getting the status of files from the edge node, please refer to the guide [here](check_status.md).
 - To get started retrieving files from the edge node, please refer to the guide [here](retrieve_gateway.md).
 - To learn how edge integrates with delta, please refer to the guide [here](delta_integration.md) *[WIP]*.
