@@ -129,9 +129,6 @@ func (r *DealChecker) Run() error {
 		}
 		var dealResult DealResult
 		json.Unmarshal(body, &dealResult)
-		//if c.Status != dealResult.Content.Status {
-		fmt.Println("Status changed from ", c.Status, " to ", dealResult.Content.Status)
-		fmt.Println("Last message: ", dealResult.Content.LastMessage)
 		c.LastMessage = dealResult.Content.LastMessage
 		if len(dealResult.Deals) > 0 {
 			c.Miner = dealResult.Deals[len(dealResult.Deals)-1].Miner

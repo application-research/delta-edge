@@ -69,7 +69,7 @@ type DealE2EUploadRequest struct {
 type DealE2EUploadResponse struct {
 	Status          string `json:"status"`
 	Message         string `json:"message"`
-	ContentId       int64  `json:"content_id,omitempty"`
+	ContentID       int    `json:"content_id"`
 	DealRequestMeta struct {
 		Cid    string `json:"cid"`
 		Miner  string `json:"miner"`
@@ -95,18 +95,33 @@ type DealE2EUploadResponse struct {
 		UpdatedAt          string `json:"updated_at"`
 	} `json:"deal_proposal_parameter_request_meta"`
 	ReplicatedContents []struct {
-		ID               int    `json:"ID"`
-		Name             string `json:"name"`
-		Size             int    `json:"size"`
-		Cid              string `json:"cid"`
-		RequestingAPIKey string `json:"requesting_api_key"`
-		Status           string `json:"status"`
-		RequestType      string `json:"request_type"`
-		ConnectionMode   string `json:"connection_mode"`
-		AutoRetry        bool   `json:"auto_retry"`
-		LastMessage      string `json:"last_message"`
-		CreatedAt        string `json:"created_at"`
-		UpdatedAt        string `json:"updated_at"`
+		Status          string `json:"status"`
+		Message         string `json:"message"`
+		ContentID       int    `json:"content_id"`
+		DealRequestMeta struct {
+			Cid    string `json:"cid"`
+			Miner  string `json:"miner"`
+			Wallet struct {
+			} `json:"wallet"`
+			PieceCommitment struct {
+			} `json:"piece_commitment"`
+			ConnectionMode     string `json:"connection_mode"`
+			Replication        int    `json:"replication"`
+			RemoveUnsealedCopy bool   `json:"remove_unsealed_copy"`
+			SkipIpniAnnounce   bool   `json:"skip_ipni_announce"`
+			AutoRetry          bool   `json:"auto_retry"`
+		} `json:"deal_request_meta"`
+		DealProposalParameterRequestMeta struct {
+			ID                 int    `json:"ID"`
+			Content            int    `json:"content"`
+			Label              string `json:"label"`
+			Duration           int    `json:"duration"`
+			RemoveUnsealedCopy bool   `json:"remove_unsealed_copy"`
+			SkipIpniAnnounce   bool   `json:"skip_ipni_announce"`
+			VerifiedDeal       bool   `json:"verified_deal"`
+			CreatedAt          string `json:"created_at"`
+			UpdatedAt          string `json:"updated_at"`
+		} `json:"deal_proposal_parameter_request_meta"`
 	} `json:"replicated_contents"`
 }
 
@@ -204,13 +219,33 @@ func (r *UploadToEstuaryProcessor) Run() error {
 					fmt.Println(err)
 					continue
 				} else {
-					if dealE2EUploadResponse.ContentId == 0 {
+					if dealE2EUploadResponse.ContentID == 0 {
 						continue
 					} else {
 						r.Content.UpdatedAt = time.Now()
 						r.Content.Status = "uploaded-to-delta"
-						r.Content.DeltaContentId = dealE2EUploadResponse.ContentId
+						r.Content.DeltaContentId = int64(dealE2EUploadResponse.ContentID)
 						r.LightNode.DB.Save(&r.Content)
+
+						// insert each replicated content into the database
+						for _, replicatedContent := range dealE2EUploadResponse.ReplicatedContents {
+							fmt.Println(replicatedContent)
+							var replicatedContentModel core.Content
+							//r.LightNode.DB.Model(&core.Content{}).Where("cid = ?", replicatedContent.Cid).Find(&replicatedContentModel)
+							//if replicatedContentModel.ID == 0 {
+							replicatedContentModel.Name = r.Content.Name
+							replicatedContentModel.Cid = r.Content.Cid
+							replicatedContentModel.Size = r.Content.Size
+							replicatedContentModel.Status = replicatedContent.Status
+							replicatedContentModel.LastMessage = replicatedContent.Message
+							replicatedContentModel.DeltaNodeUrl = DELTA_UPLOAD_API
+							replicatedContentModel.CreatedAt = time.Now()
+							replicatedContentModel.UpdatedAt = time.Now()
+							replicatedContentModel.RequestingApiKey = r.Content.RequestingApiKey
+							replicatedContentModel.DeltaContentId = int64(replicatedContent.ContentID)
+							r.LightNode.DB.Save(&replicatedContentModel)
+							//}
+						}
 					}
 				}
 			}
