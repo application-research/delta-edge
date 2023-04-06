@@ -34,9 +34,13 @@ make all
 # Running
 ## Create the `.env` file
 ```
+NODE_NAME=edge
+NODE_DESCRIPTION=Edge node
 DB_NAME=edge-urdb
-DELTA_NODE_API=https://cake.delta.store
-DEAL_CHECK=600 # checks all deal status every 10mins.
+DELTA_NODE_API=http://localhost:1414 # or https://node.delta.store
+DEAL_CHECK=600 # 10 minutes
+REPLICATION_FACTOR=3
+REPO=./whypfs
 ```
 
 ## Running the daemon
