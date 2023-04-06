@@ -6,8 +6,10 @@ import (
 	"github.com/application-research/edge-ur/api"
 	"github.com/application-research/edge-ur/core"
 	"github.com/application-research/edge-ur/jobs"
+	"github.com/application-research/edge-ur/utils"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
+	"runtime"
 	"strconv"
 	"time"
 )
@@ -28,17 +30,30 @@ func DaemonCmd() []*cli.Command {
 
 		Action: func(c *cli.Context) error {
 
+			fmt.Println("OS:", runtime.GOOS)
+			fmt.Println("Architecture:", runtime.GOARCH)
+			fmt.Println("Hostname:", core.GetHostname())
+
+			ip, err := core.GetPublicIP()
+			if err != nil {
+				fmt.Println("Error getting public IP:", err)
+			}
+			fmt.Println("Public IP:", ip)
+			fmt.Println(utils.Blue + "Starting Edge daemon..." + utils.Reset)
+
 			repo := c.String("repo")
 
 			if repo == "" {
 				repo = viper.Get("REPO").(string)
 			}
-
+			fmt.Println(utils.Blue + "Setting up the Edge node... " + utils.Reset)
 			ln, err := core.NewEdgeNode(context.Background(), repo)
 			if err != nil {
 				return err
 			}
+			fmt.Println(utils.Blue + "Setting up the Edge node... Done" + utils.Reset)
 
+			core.ScanHostComputeResources(ln, repo)
 			//	launch the jobs
 			go runProcessors(ln)
 

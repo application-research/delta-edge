@@ -2,10 +2,15 @@ package core
 
 import (
 	"context"
+	"fmt"
+	"github.com/application-research/edge-ur/utils"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
+	"runtime"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/application-research/whypfs-core"
@@ -244,4 +249,42 @@ func (ln *LightNode) ConnectToDelegates(ctx context.Context, delegates []string)
 	}
 
 	return nil
+}
+
+func GetHostname() string {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return "unknown"
+	}
+	return hostname
+}
+
+func ScanHostComputeResources(ln *LightNode, repo string) error {
+
+	memStats := &runtime.MemStats{}
+	runtime.ReadMemStats(memStats)
+	totalMemory := memStats.Sys
+	fmt.Printf("Total memory: %v bytes\n", totalMemory)
+
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	fmt.Printf("Total memory: %v bytes\n", m.Alloc)
+	fmt.Printf("Total system memory: %v bytes\n", m.Sys)
+	fmt.Printf("Total heap memory: %v bytes\n", m.HeapSys)
+	fmt.Printf("Heap in use: %v bytes\n", m.HeapInuse)
+	fmt.Printf("Stack in use: %v bytes\n", m.StackInuse)
+	// get the 80% of the total disk usage
+	var stat syscall.Statfs_t
+	syscall.Statfs(repo, &stat) // blockstore size
+	totalStorage := stat.Blocks * uint64(stat.Bsize)
+	fmt.Println("Total storage: ", totalStorage)
+	// set the number of CPUs
+	numCPU := runtime.NumCPU()
+	fmt.Printf("Total number of CPUs: %d\n", numCPU)
+	fmt.Printf("Number of CPUs that this Delta will use: %d\n", numCPU/(1200/1000))
+	fmt.Println(utils.Purple + "Note: Delta instance proactively recalculate resources to use based on the current load." + utils.Reset)
+	runtime.GOMAXPROCS(numCPU / (1200 / 1000))
+
+	return nil
+
 }
