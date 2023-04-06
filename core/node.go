@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"fmt"
-	"github.com/application-research/edge-ur/utils"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -282,7 +281,6 @@ func ScanHostComputeResources(ln *LightNode, repo string) error {
 	numCPU := runtime.NumCPU()
 	fmt.Printf("Total number of CPUs: %d\n", numCPU)
 	fmt.Printf("Number of CPUs that this Delta will use: %d\n", numCPU/(1200/1000))
-	fmt.Println(utils.Purple + "Note: Delta instance proactively recalculate resources to use based on the current load." + utils.Reset)
 	runtime.GOMAXPROCS(numCPU / (1200 / 1000))
 
 	return nil

@@ -51,7 +51,6 @@ Stack in use: 22544384 bytes
 Total storage:  994662584320
 Total number of CPUs: 10
 Number of CPUs that this Delta will use: 10
-Note: Delta instance proactively recalculate resources to use based on the current load.
 
  _______    ________   ________   _______                    ___  ___   ________     
 |\  ___ \  |\   ___ \ |\   ____\ |\  ___ \                  |\  \|\  \ |\   __  \    
