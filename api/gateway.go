@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"html/template"
 	"io"
 	"net/http"
@@ -39,14 +40,19 @@ type GatewayHandler struct {
 	dserv    mdagipld.DAGService
 	resolver resolver.Resolver
 	node     *whypfs.Node
+	db       *gorm.DB
 }
 
 func ConfigureGatewayRouter(e *echo.Group, node *core.LightNode) {
 
 	//	api
 	gatewayHandler.node = node.Node
+	gatewayHandler.bs = node.Node.Blockstore
+	gatewayHandler.db = node.DB
+
 	e.GET("/gw/ipfs/:path", GatewayResolverCheckHandlerDirectPath)
 	e.GET("/gw/:path", GatewayResolverCheckHandlerDirectPath)
+	e.GET("/content/:contentId", GatewayContentResolverCheckHandler)
 	e.GET("/ipfs/:path", GatewayResolverCheckHandlerDirectPath)
 }
 
@@ -247,6 +253,25 @@ func (gw *GatewayHandler) GatewayDirResolverCheckHandler(c echo.Context) error {
 	rscDir.GetNode()
 
 	return nil
+}
+
+func GatewayContentResolverCheckHandler(c echo.Context) error {
+	p := c.Param("contentId")
+
+	// get the cid from the db
+	var content core.Content
+	err := gatewayHandler.db.Model(&content).Where("id = ?", p).First(&content).Error
+	if err != nil {
+		return err
+	}
+	if content.Cid == "" {
+		return errors.New("content not found")
+	}
+	fmt.Println("cid: " + content.Cid)
+	c.SetParamNames("path")
+	c.SetParamValues(content.Cid)
+
+	return GatewayResolverCheckHandlerDirectPath(c)
 }
 
 // `GatewayResolverCheckHandlerDirectPath` is a function that takes a `echo.Context` and returns an `error`

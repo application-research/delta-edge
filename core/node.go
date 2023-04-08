@@ -87,47 +87,6 @@ func BootstrapEstuaryPeers() []peer.AddrInfo {
 	return peers
 }
 
-//
-//func NewEdgeNode(ctx *context.Context) (*LightNode, error) {
-//
-//	db, err := OpenDatabase()
-//	// node
-//	publicIp, err := GetPublicIP()
-//	newConfig := &whypfs.Config{
-//		ListenAddrs: []string{
-//			"/ip4/0.0.0.0/tcp/6745",
-//			"/ip4/" + publicIp + "/tcp/6745",
-//		},
-//		AnnounceAddrs: []string{
-//			"/ip4/0.0.0.0/tcp/6745",
-//			"/ip4/" + publicIp + "/tcp/6745",
-//		},
-//	}
-//	params := whypfs.NewNodeParams{
-//		Ctx:       context.Background(),
-//		Datastore: whypfs.NewInMemoryDatastore(),
-//		Repo:      "",
-//	}
-//
-//	params.Config = params.ConfigurationBuilder(newConfig)
-//	whypfsPeer, err := whypfs.NewNode(params)
-//	if err != nil {
-//		panic(err)
-//	}
-//
-//	whypfsPeer.BootstrapPeers(BootstrapEstuaryPeers())
-//
-//	// gateway
-//	gw, err := NewGatewayHandler(whypfsPeer)
-//
-//	// create the global light node.
-//	return &LightNode{
-//		Node: whypfsPeer,
-//		Gw:   gw,
-//		DB:   db,
-//	}, nil
-//}
-
 // NewEdgeNode Add a config to enable gateway or not.
 // Add a config to enable content, bucket, commp, replication verifier processor
 func NewEdgeNode(ctx context.Context, repo string) (*LightNode, error) {

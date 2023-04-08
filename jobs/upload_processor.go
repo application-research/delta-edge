@@ -142,6 +142,10 @@ func (r *UploadToEstuaryProcessor) Info() error {
 }
 
 func (r *UploadToEstuaryProcessor) Run() error {
+
+	// if network connection is not available or delta node is not available, then we need to skip and
+	// let the upload retry consolidate the content until it is available
+
 	maxRetries := 5
 	retryInterval := 5 * time.Second
 	var content []core.Content
