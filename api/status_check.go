@@ -27,6 +27,13 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		var content core.Content
 		node.DB.Raw("select * from contents as c where requesting_api_key = ? and id = ?", authParts[1], c.Param("id")).Scan(&content)
 		content.RequestingApiKey = ""
+
+		if content.ID == 0 {
+			return c.JSON(404, map[string]interface{}{
+				"message": "Content not found. Please check if you have the proper API key or if the content id is valid",
+			})
+		}
+
 		return c.JSON(200, map[string]interface{}{
 			"content": content,
 		})
