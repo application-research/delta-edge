@@ -199,8 +199,10 @@ func (r *UploadToEstuaryProcessor) Run() error {
 	req.Header.Set("Authorization", "Bearer "+r.Content.RequestingApiKey)
 	client := &http.Client{}
 	var res *http.Response
+	fmt.Println("Sending request to delta node")
 	for j := 0; j < maxRetries; j++ {
 		res, err = client.Do(req)
+		fmt.Println("Response from delta node: ", res)
 		if err != nil || res.StatusCode != http.StatusOK {
 			fmt.Printf("Error sending request (attempt %d): %v\n", j+1, err)
 			time.Sleep(retryInterval)
@@ -245,11 +247,11 @@ func (r *UploadToEstuaryProcessor) Run() error {
 							r.LightNode.DB.Save(&replicatedContentModel)
 							//}
 						}
+						break
 					}
 				}
 			}
 		}
-		break
 	}
 
 	return nil

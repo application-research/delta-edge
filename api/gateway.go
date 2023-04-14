@@ -1,4 +1,4 @@
-// It takes a path, parses it, and returns the protocol, the CID, and the path segments
+// Package api It takes a path, parses it, and returns the protocol, the CID, and the path segments
 package api
 
 import (
