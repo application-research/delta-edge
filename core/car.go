@@ -57,7 +57,7 @@ type CarParam struct {
 	IncludeCommp   bool
 }
 
-func Car(carParam CarParam) (Result, error) {
+func ChunkFileToCar(carParam CarParam) (Result, error) {
 	ctx := context.Background()
 	sourceInput := carParam.SourceInput
 	splitSizeInput := carParam.SplitSizeInput
@@ -125,7 +125,6 @@ func Car(carParam CarParam) (Result, error) {
 					End:   written,
 				})
 				outFilename := uuid.New().String() + ".car"
-				//outFilename := cid + ".car"
 				outPath := path.Join(outDir, outFilename)
 				carF, err := os.Create(outPath)
 				if err != nil {
@@ -179,7 +178,7 @@ func Car(carParam CarParam) (Result, error) {
 	} else {
 		stat, err := os.Stat(sourceInput)
 		if err != nil {
-			return err
+			return Result{}, err
 		}
 		if stat.IsDir() {
 			err := filepath.Walk(sourceInput, func(sourcePath string, info os.FileInfo, err error) error {
@@ -244,9 +243,9 @@ func Car(carParam CarParam) (Result, error) {
 				fmt.Println(err)
 			}
 			fmt.Println(buffer.String())
-			return nil
+			return Result{}, err
 			if err != nil {
-				return err
+				return Result{}, err
 			}
 		} else {
 			input = append(input, utils.Finfo{
@@ -259,17 +258,17 @@ func Car(carParam CarParam) (Result, error) {
 			outPath := path.Join(outDir, outFilename)
 			carF, err := os.Create(outPath)
 			if err != nil {
-				return err
+				return Result{}, err
 			}
 			cp := new(commp.Calc)
 			writer := bufio.NewWriterSize(io.MultiWriter(carF, cp), BufSize)
 			_, cid, cidMap, err := utils.GenerateCar(ctx, input, "", "", writer)
 			if err != nil {
-				return err
+				return Result{}, err
 			}
 			err = writer.Flush()
 			if err != nil {
-				return err
+				return Result{}, err
 			}
 			output := Result{
 				PayloadCid: cid,
@@ -279,15 +278,15 @@ func Car(carParam CarParam) (Result, error) {
 			if includeCommp {
 				rawCommP, pieceSize, err := cp.Digest()
 				if err != nil {
-					return err
+					return Result{}, err
 				}
 				commCid, err := commcid.DataCommitmentV1ToCID(rawCommP)
 				if err != nil {
-					return err
+					return Result{}, err
 				}
 				err = os.Rename(outPath, path.Join(outDir, commCid.String()+".car"))
 				if err != nil {
-					return err
+					return Result{}, err
 				}
 				output.PieceCommitment.PieceCID = commCid.String()
 				output.PieceCommitment.PaddedPieceSize = pieceSize
@@ -295,7 +294,7 @@ func Car(carParam CarParam) (Result, error) {
 			}
 			outputs = append(outputs, output)
 			if err != nil {
-				return err
+				return Result{}, err
 			}
 			var buffer bytes.Buffer
 			err = utils.PrettyEncode(output, &buffer)
@@ -304,8 +303,8 @@ func Car(carParam CarParam) (Result, error) {
 			}
 			fmt.Println(buffer.String())
 		}
-		return nil
+		return Result{}, nil
 	}
 
-	return nil
+	return Result{}, nil
 }
