@@ -65,54 +65,15 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 	var DeltaUploadApi = viper.Get("DELTA_NODE_API").(string)
 	content := e.Group("/content")
 	content.POST("/add", handlePinAddToNode(node, DeltaUploadApi))
+	content.POST("/add-large", handlePinAddToNodeLarge(node, DeltaUploadApi))
 	content.POST("/add-car", handlePinAddCarToNode(node, DeltaUploadApi))
-
 }
 
-func handlePinAddCarToNode(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
+func handlePinAddToNodeLarge(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
-
-		file, err := c.FormFile("data")
-		src, err := file.Open()
-		srcR := src
-
-		if err != nil {
-			c.JSON(500, UploadResponse{
-				Status:  "error",
-				Message: "Error pinning the car file:" + err.Error(),
-			})
-		}
-
-		carHeader, err := car.LoadCar(context.Background(), node.Node.Blockstore, src)
-		if err != nil {
-			c.JSON(500, UploadResponse{
-				Status:  "error",
-				Message: "Error loading car file: " + err.Error(),
-			})
-		}
-
-		rootCid := carHeader.Roots[0].String()
-
-		// insert a new record
-		newContent := core.Content{
-			Name:             file.Filename,
-			Size:             file.Size,
-			Cid:              rootCid,
-			DeltaNodeUrl:     DeltaUploadApi,
-			RequestingApiKey: authParts[1],
-			Status:           "pinned",
-			CreatedAt:        time.Now(),
-			UpdatedAt:        time.Now(),
-		}
-
-		node.DB.Create(&newContent)
-
-		job := jobs.CreateNewDispatcher()
-		job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
-		job.Start(1)
-
+		fmt.Println("authParts: ", authParts[1])
 		return nil
 	}
 }
@@ -164,6 +125,53 @@ func handlePinAddToNode(node *core.LightNode, DeltaUploadApi string) func(c echo
 			ID:      newContent.ID,
 			Cid:     newContent.Cid,
 		})
+		return nil
+	}
+}
+func handlePinAddCarToNode(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		authorizationString := c.Request().Header.Get("Authorization")
+		authParts := strings.Split(authorizationString, " ")
+
+		file, err := c.FormFile("data")
+		src, err := file.Open()
+		srcR := src
+
+		if err != nil {
+			c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error pinning the car file:" + err.Error(),
+			})
+		}
+
+		carHeader, err := car.LoadCar(context.Background(), node.Node.Blockstore, src)
+		if err != nil {
+			c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error loading car file: " + err.Error(),
+			})
+		}
+
+		rootCid := carHeader.Roots[0].String()
+
+		// insert a new record
+		newContent := core.Content{
+			Name:             file.Filename,
+			Size:             file.Size,
+			Cid:              rootCid,
+			DeltaNodeUrl:     DeltaUploadApi,
+			RequestingApiKey: authParts[1],
+			Status:           "pinned",
+			CreatedAt:        time.Now(),
+			UpdatedAt:        time.Now(),
+		}
+
+		node.DB.Create(&newContent)
+
+		job := jobs.CreateNewDispatcher()
+		job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
+		job.Start(1)
+
 		return nil
 	}
 }

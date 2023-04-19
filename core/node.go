@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"github.com/ipfs/go-datastore"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -104,9 +105,10 @@ func NewEdgeNode(ctx context.Context, repo string) (*LightNode, error) {
 			"/ip4/" + publicIp + "/tcp/6745",
 		},
 	}
+
 	params := whypfs.NewNodeParams{
 		Ctx:       ctx,
-		Datastore: whypfs.NewInMemoryDatastore(),
+		Datastore: datastore.NewMapDatastore(),
 		Repo:      repo,
 	}
 
