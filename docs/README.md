@@ -25,6 +25,7 @@ By decoupling this to a light node, we achieve the following:
 - To get started retrieving files from the edge node, please refer to the guide [here](retrieve_gateway.md).
 - To learn how edge integrates with delta, please refer to the guide [here](delta_integration.md) *[WIP]*.
 - To learn how edge chunks large files, please refer to the guide [here](chunking.md) *[WIP]*.
+- To play with a spammer script to test the edge node, please refer to the guide [here](spammer.md) *[WIP]*.
 
 # Author
 Protocol Labs Outercore Engineering.

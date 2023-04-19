@@ -55,6 +55,9 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+	}))
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.HTTPErrorHandler = ErrorHandler
 
@@ -70,6 +73,15 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 			authorizationString := c.Request().Header.Get("Authorization")
 			authParts := strings.Split(authorizationString, " ")
 
+			if len(authParts) != 2 {
+				return c.JSON(http.StatusInternalServerError, HttpErrorResponse{
+					Error: HttpError{
+						Code:    http.StatusInternalServerError,
+						Reason:  http.StatusText(http.StatusInternalServerError),
+						Details: "Invalid Authorization Header",
+					},
+				})
+			}
 			response, err := http.Post(
 				"https://estuary-auth-api.onrender.com/check-api-key",
 				"application/json",
