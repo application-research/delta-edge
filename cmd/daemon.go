@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 	"github.com/application-research/edge-ur/api"
+	"github.com/application-research/edge-ur/config"
 	"github.com/application-research/edge-ur/core"
 	"github.com/application-research/edge-ur/jobs"
 	"github.com/application-research/edge-ur/utils"
-	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
 	"runtime"
 	"strconv"
 	"time"
 )
 
-func DaemonCmd() []*cli.Command {
+func DaemonCmd(cfg *config.DeltaConfig) []*cli.Command {
 	// add a command to run API node
 	var daemonCommands []*cli.Command
 
@@ -25,6 +25,9 @@ func DaemonCmd() []*cli.Command {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name: "repo",
+			},
+			&cli.StringFlag{
+				Name: "port",
 			},
 		},
 
@@ -42,12 +45,20 @@ func DaemonCmd() []*cli.Command {
 			fmt.Println(utils.Blue + "Starting Edge daemon..." + utils.Reset)
 
 			repo := c.String("repo")
-
+			port := c.String("port")
 			if repo == "" {
-				repo = viper.Get("REPO").(string)
+				repo = cfg.Node.Repo
 			}
+			if port != "" {
+				portInt, err := strconv.Atoi(port)
+				if err != nil {
+					fmt.Println("Error parsing port:", err)
+				}
+				cfg.Node.Port = portInt
+			}
+
 			fmt.Println(utils.Blue + "Setting up the Edge node... " + utils.Reset)
-			ln, err := core.NewEdgeNode(context.Background(), repo)
+			ln, err := core.NewEdgeNode(context.Background(), *cfg)
 			if err != nil {
 				return err
 			}
@@ -68,7 +79,6 @@ func DaemonCmd() []*cli.Command {
     \|_______| \|_______| \|_______| \|_______|                 \|_______| \|__|\|__|
 `)
 			fmt.Println("Starting API server")
-			fmt.Println("API server up and running on port 1313")
 			api.InitializeEchoRouterConfig(ln)
 			api.LoopForever()
 
@@ -84,10 +94,7 @@ func DaemonCmd() []*cli.Command {
 }
 
 func runProcessors(ln *core.LightNode) {
-	dealCheckFreq, err := strconv.Atoi(viper.Get("DEAL_CHECK").(string))
-	if err != nil {
-		dealCheckFreq = 10
-	}
+	dealCheckFreq := ln.Config.Delta.DealCheck
 	dealCheckFreqTick := time.NewTicker(time.Duration(dealCheckFreq) * time.Second)
 
 	for {

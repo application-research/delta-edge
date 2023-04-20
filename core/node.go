@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"github.com/application-research/edge-ur/config"
 	"github.com/ipfs/go-datastore"
 	"io/ioutil"
 	"net/http"
@@ -39,7 +40,7 @@ type LightNode struct {
 	Api    url.URL
 	DB     *gorm.DB
 	Gw     *GatewayHandler
-	Config *Configuration
+	Config *config.DeltaConfig
 }
 
 type LocalWallet struct {
@@ -49,10 +50,6 @@ type LocalWallet struct {
 	lk sync.Mutex
 }
 
-type Configuration struct {
-	APINodeAddress string
-}
-
 type GatewayHandler struct {
 	bs       blockstore.Blockstore
 	dserv    mdagipld.DAGService
@@ -60,39 +57,11 @@ type GatewayHandler struct {
 	node     *whypfs.Node
 }
 
-var defaultTestBootstrapPeers []multiaddr.Multiaddr
-
-// Creating a list of multiaddresses that are used to bootstrap the network.
-func BootstrapEstuaryPeers() []peer.AddrInfo {
-
-	for _, s := range []string{
-		"/ip4/145.40.90.135/tcp/6746/p2p/12D3KooWNTiHg8eQsTRx8XV7TiJbq3379EgwG6Mo3V3MdwAfThsx",
-		"/ip4/139.178.68.217/tcp/6744/p2p/12D3KooWCVXs8P7iq6ao4XhfAmKWrEeuKFWCJgqe9jGDMTqHYBjw",
-		"/ip4/147.75.49.71/tcp/6745/p2p/12D3KooWGBWx9gyUFTVQcKMTenQMSyE2ad9m7c9fpjS4NMjoDien",
-		"/ip4/147.75.86.255/tcp/6745/p2p/12D3KooWFrnuj5o3tx4fGD2ZVJRyDqTdzGnU3XYXmBbWbc8Hs8Nd",
-		"/ip4/3.134.223.177/tcp/6745/p2p/12D3KooWN8vAoGd6eurUSidcpLYguQiGZwt4eVgDvbgaS7kiGTup",
-		"/ip4/35.74.45.12/udp/6746/quic/p2p/12D3KooWLV128pddyvoG6NBvoZw7sSrgpMTPtjnpu3mSmENqhtL7",
-		"/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
-		"/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
-		"/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
-		"/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
-	} {
-		ma, err := multiaddr.NewMultiaddr(s)
-		if err != nil {
-			panic(err)
-		}
-		defaultTestBootstrapPeers = append(defaultTestBootstrapPeers, ma)
-	}
-
-	peers, _ := peer.AddrInfosFromP2pAddrs(defaultTestBootstrapPeers...)
-	return peers
-}
-
 // NewEdgeNode Add a config to enable gateway or not.
 // Add a config to enable content, bucket, commp, replication verifier processor
-func NewEdgeNode(ctx context.Context, repo string) (*LightNode, error) {
+func NewEdgeNode(ctx context.Context, cfg config.DeltaConfig) (*LightNode, error) {
 
-	db, err := OpenDatabase()
+	db, err := OpenDatabase(cfg)
 	// node
 	publicIp, err := GetPublicIP()
 	newConfig := &whypfs.Config{
@@ -109,7 +78,7 @@ func NewEdgeNode(ctx context.Context, repo string) (*LightNode, error) {
 	params := whypfs.NewNodeParams{
 		Ctx:       ctx,
 		Datastore: datastore.NewMapDatastore(),
-		Repo:      repo,
+		Repo:      cfg.Node.Repo,
 	}
 
 	params.Config = params.ConfigurationBuilder(newConfig)
@@ -118,16 +87,17 @@ func NewEdgeNode(ctx context.Context, repo string) (*LightNode, error) {
 		panic(err)
 	}
 
-	whypfsPeer.BootstrapPeers(BootstrapEstuaryPeers())
+	whypfsPeer.BootstrapPeers(config.BootstrapEstuaryPeers())
 
 	// gateway
 	gw, err := NewGatewayHandler(whypfsPeer)
 
 	// create the global light node.
 	return &LightNode{
-		Node: whypfsPeer,
-		Gw:   gw,
-		DB:   db,
+		Node:   whypfsPeer,
+		Gw:     gw,
+		DB:     db,
+		Config: &cfg,
 	}, nil
 }
 

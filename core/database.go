@@ -1,19 +1,15 @@
 package core
 
 import (
-	"github.com/spf13/viper"
+	"github.com/application-research/edge-ur/config"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"time"
 )
 
-func OpenDatabase() (*gorm.DB, error) {
+func OpenDatabase(cfg config.DeltaConfig) (*gorm.DB, error) {
 
-	dbName, okHost := viper.Get("DB_NAME").(string)
-	if !okHost {
-		panic("DB_NAME not set")
-	}
-	DB, err := gorm.Open(sqlite.Open(dbName), &gorm.Config{})
+	DB, err := gorm.Open(sqlite.Open(cfg.Node.DbName), &gorm.Config{})
 
 	// generate new models.
 	ConfigureModels(DB) // create models.

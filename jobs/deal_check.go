@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/application-research/edge-ur/core"
-	"github.com/spf13/viper"
 	"io"
 	"net/http"
 	"strconv"
@@ -95,7 +94,7 @@ func (r *DealChecker) Info() error {
 }
 
 func NewDealChecker(ln *core.LightNode) IProcessor {
-	DELTA_UPLOAD_API = viper.Get("DELTA_NODE_API").(string)
+	DELTA_UPLOAD_API = ln.Config.Delta.ApiUrl
 	return &DealChecker{
 		Processor{
 			LightNode: ln,

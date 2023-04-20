@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/application-research/edge-ur/core"
-	"github.com/spf13/viper"
 )
 
 type IpfsPin struct {
@@ -126,8 +125,8 @@ type DealE2EUploadResponse struct {
 }
 
 func NewUploadToEstuaryProcessor(ln *core.LightNode, contentToProcess core.Content, fileNode io.Reader) IProcessor {
-	DELTA_UPLOAD_API = viper.Get("DELTA_NODE_API").(string)
-	REPLICATION_FACTOR = viper.Get("REPLICATION_FACTOR").(string)
+	DELTA_UPLOAD_API = ln.Config.Delta.ApiUrl
+	REPLICATION_FACTOR = string(ln.Config.Delta.ReplicationFactor)
 	return &UploadToEstuaryProcessor{
 		contentToProcess,
 		fileNode,
