@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/application-research/edge-ur/jobs"
 	"strings"
 
 	"github.com/application-research/edge-ur/core"
@@ -33,6 +34,11 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 				"message": "Content not found. Please check if you have the proper API key or if the content id is valid",
 			})
 		}
+
+		// trigger status check
+		job := jobs.CreateNewDispatcher()
+		job.AddJob(jobs.NewDealItemChecker(node, content))
+		job.Start(1)
 
 		return c.JSON(200, map[string]interface{}{
 			"content": content,

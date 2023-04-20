@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/application-research/edge-ur/core"
@@ -166,15 +165,10 @@ func (r *UploadToEstuaryProcessor) Run() error {
 		fmt.Println("CreateFormField error: ", err)
 		return nil
 	}
-	repFactor, err := strconv.Atoi(REPLICATION_FACTOR)
-	if err != nil {
-		fmt.Println("REPLICATION_FACTOR error: ", err)
-		return nil
-	}
-	partMetadata := fmt.Sprintf(`{"auto_retry":true,"replication":%d}`, repFactor)
-	if repFactor == 0 {
-		partMetadata = fmt.Sprintf(`{"auto_retry":true}`)
-	}
+	repFactor := r.LightNode.Config.Delta.ReplicationFactor
+	partMetadata := fmt.Sprintf(`{"auto_retry":true,"miner":"%s","replication":%d}`, r.Content.Miner, repFactor)
+
+	fmt.Println("partMetadata: ", partMetadata)
 
 	if _, err = partFile.Write([]byte(partMetadata)); err != nil {
 		fmt.Println("Write error: ", err)

@@ -66,7 +66,7 @@ func DaemonCmd(cfg *config.DeltaConfig) []*cli.Command {
 
 			core.ScanHostComputeResources(ln, repo)
 			//	launch the jobs
-			go runProcessors(ln)
+			//go runProcessors(ln)
 
 			// launch the API node
 			fmt.Println(`

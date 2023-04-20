@@ -36,6 +36,7 @@ type Content struct {
 	Status           string    `json:"status"`
 	LastMessage      string    `json:"last_message"`
 	Miner            string    `json:"miner"`
+	Replication      int       `json:"replication"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
 }

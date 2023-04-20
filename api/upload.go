@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/application-research/edge-ur/jobs"
 	"github.com/ipld/go-car"
+	"strconv"
 	"strings"
 	"time"
 
@@ -66,6 +67,7 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 	content.POST("/add", handlePinAddToNode(node, DeltaUploadApi))
 	content.POST("/add-large", handlePinAddToNodeLarge(node, DeltaUploadApi))
 	content.POST("/add-car", handlePinAddCarToNode(node, DeltaUploadApi))
+
 }
 
 func handlePinAddToNodeLarge(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
@@ -81,6 +83,16 @@ func handlePinAddToNode(node *core.LightNode, DeltaUploadApi string) func(c echo
 	return func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
+		miner := c.FormValue("miner")
+		replicationParam := c.FormValue("replication")
+		replication, err := strconv.Atoi(replicationParam)
+
+		if replication > 6 {
+			return c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Replication cannot be more than 3",
+			})
+		}
 
 		file, err := c.FormFile("data")
 		if err != nil {
@@ -101,6 +113,8 @@ func handlePinAddToNode(node *core.LightNode, DeltaUploadApi string) func(c echo
 			DeltaNodeUrl:     DeltaUploadApi,
 			RequestingApiKey: authParts[1],
 			Status:           "pinned",
+			Miner:            miner,
+			Replication:      replication,
 			CreatedAt:        time.Now(),
 			UpdatedAt:        time.Now(),
 		}
@@ -133,6 +147,24 @@ func handlePinAddCarToNode(node *core.LightNode, DeltaUploadApi string) func(c e
 		authParts := strings.Split(authorizationString, " ")
 
 		file, err := c.FormFile("data")
+		miner := c.FormValue("miner")
+		replicationParam := c.FormValue("replication")
+		replication, err := strconv.Atoi(replicationParam)
+
+		if replication > 6 {
+			return c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Replication cannot be more than 3",
+			})
+		}
+
+		if err != nil {
+			c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error pinning the car file:" + err.Error(),
+			})
+		}
+
 		src, err := file.Open()
 		srcR := src
 
@@ -161,6 +193,8 @@ func handlePinAddCarToNode(node *core.LightNode, DeltaUploadApi string) func(c e
 			DeltaNodeUrl:     DeltaUploadApi,
 			RequestingApiKey: authParts[1],
 			Status:           "pinned",
+			Miner:            miner,
+			Replication:      replication,
 			CreatedAt:        time.Now(),
 			UpdatedAt:        time.Now(),
 		}
