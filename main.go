@@ -3,12 +3,12 @@
 package main
 
 import (
+	"github.com/application-research/edge-ur/config"
 	_ "net/http"
 	"os"
 
 	"github.com/application-research/edge-ur/cmd"
 	logging "github.com/ipfs/go-log/v2"
-	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
 )
 
@@ -21,14 +21,11 @@ var Version string
 
 func main() {
 
-	viper.SetConfigFile(".env")
-	err := viper.ReadInConfig()
-	if err != nil {
-		log.Error(err)
-	}
+	cfg := config.InitConfig()
+
 	// get all the commands
 	var commands []*cli.Command
-	commands = append(commands, cmd.DaemonCmd()...)
+	commands = append(commands, cmd.DaemonCmd(&cfg)...)
 
 	app := &cli.App{
 		Commands: commands,

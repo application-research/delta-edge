@@ -131,7 +131,9 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 	ConfigureStatusCheckRouter(apiGroup, ln)
 
 	// Start server
-	e.Logger.Fatal(e.Start("0.0.0.0:1313")) // configuration
+
+	addrPort := fmt.Sprintf("0.0.0.0:%d", ln.Config.Node.Port)
+	e.Logger.Fatal(e.Start(addrPort)) // configuration
 }
 
 func GetAuthResponse(resp *http.Response) (AuthResponse, error) {

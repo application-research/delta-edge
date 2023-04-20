@@ -18,6 +18,6 @@ func ConfigureNodeInfoRouter(e *echo.Group, node *core.LightNode) {
 // handleNodeInfo is the handler for the /node/info endpoint
 func handleNodeInfo(node *core.LightNode) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return c.JSON(http.StatusOK, node.Config.APINodeAddress)
+		return c.JSON(http.StatusOK, node.Node.Host.ID())
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/application-research/edge-ur/jobs"
 	"github.com/ipld/go-car"
-	"github.com/spf13/viper"
 	"strings"
 	"time"
 
@@ -62,7 +61,7 @@ type UploadResponse struct {
 }
 
 func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
-	var DeltaUploadApi = viper.Get("DELTA_NODE_API").(string)
+	var DeltaUploadApi = node.Config.Delta.ApiUrl
 	content := e.Group("/content")
 	content.POST("/add", handlePinAddToNode(node, DeltaUploadApi))
 	content.POST("/add-large", handlePinAddToNodeLarge(node, DeltaUploadApi))
