@@ -1,6 +1,8 @@
-# Edge Node
+# EdgeUR (Upload/Retrieve)
 
-**Edge is currently under heavy development. An optimized version will be released soon**
+[![CodeQL](https://github.com/application-research/edge-ur/actions/workflows/codeql.yml/badge.svg)](https://github.com/application-research/edge-ur/actions/workflows/codeql.yml)
+
+*Edge is currently under heavy development.*
 
 ## Goal/Purpose
 Dedicated light node to upload and retrieve their CIDs. To do this, we decoupled the upload and retrieval aspect from the Estuary API node so we can create a node that can live on the "edge" closer to the customer.
