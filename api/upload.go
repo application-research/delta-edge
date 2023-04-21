@@ -67,10 +67,108 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 	var DeltaUploadApi = node.Config.Delta.ApiUrl
 	content := e.Group("/content")
 	content.POST("/add", handlePinAddToNode(node, DeltaUploadApi))
+	content.POST("/add-to-miners", handleFetchPinToNodeToMiners(node, DeltaUploadApi))
 	content.POST("/add-large", handlePinAddToNodeLarge(node, DeltaUploadApi))
 	content.POST("/add-car", handlePinAddCarToNode(node, DeltaUploadApi))
 	content.POST("/fetch-pin", handleFetchPinToNode(node, DeltaUploadApi)) // foreign cids
 
+}
+
+func handleFetchPinToNodeToMiners(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		authorizationString := c.Request().Header.Get("Authorization")
+		authParts := strings.Split(authorizationString, " ")
+		cidToFetch := c.FormValue("cid")
+		minersString := c.FormValue("miners")
+
+		if minersString == "" {
+			return c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Missing miners",
+			})
+		}
+
+		miners := make(map[string]bool)
+
+		for _, miner := range strings.Split(minersString, ",") {
+			miners[miner] = true
+		}
+
+		source := c.FormValue("source") // multiaddress where to pull. This can be empty.
+
+		// if the source is given, peer to it. (optional but recommended)
+		node.ConnectToDelegates(context.Background(), []string{source}) // connects to the specified IPFS node multiaddress
+		cidToFetchCid, err := cid.Decode(cidToFetch)
+		if err != nil {
+			return c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Invalid CID",
+			})
+		}
+
+		addNode, err := node.Node.Get(c.Request().Context(), cidToFetchCid)
+		if err != nil {
+			return c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error getting the file from the source or network",
+			})
+		}
+		addNodeSize, err := addNode.Size()
+		if err != nil {
+			return c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error getting the file size",
+			})
+		}
+
+		fmt.Println("addNode: ", addNode.Cid().String())
+
+		var contentList []core.Content
+
+		for miner := range miners {
+			newContent := core.Content{
+				Name:             addNode.Cid().String(),
+				Size:             int64(addNodeSize),
+				Cid:              addNode.Cid().String(),
+				DeltaNodeUrl:     DeltaUploadApi,
+				RequestingApiKey: authParts[1],
+				Status:           "fetching",
+				Miner:            miner,
+				Replication:      0,
+				CreatedAt:        time.Now(),
+				UpdatedAt:        time.Now(),
+			}
+
+			node.DB.Create(&newContent)
+
+			srcR := bytes.NewReader(addNode.RawData())
+
+			job := jobs.CreateNewDispatcher()
+			job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
+			job.Start(1)
+
+			if err != nil {
+				c.JSON(500, UploadResponse{
+					Status:  "error",
+					Message: "Error pinning the file" + err.Error(),
+				})
+			}
+
+			contentList = append(contentList, newContent)
+		}
+
+		c.JSON(200, struct {
+			Status   string         `json:"status"`
+			Message  string         `json:"message"`
+			Contents []core.Content `json:"contents"`
+		}{
+			Status:   "success",
+			Message:  "File uploaded and pinned successfully to miners. Please take note of the ids.",
+			Contents: contentList,
+		})
+
+		return nil
+	}
 }
 
 func handleFetchPinToNode(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
