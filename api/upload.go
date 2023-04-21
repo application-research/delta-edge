@@ -67,10 +67,11 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 	var DeltaUploadApi = node.Config.Delta.ApiUrl
 	content := e.Group("/content")
 	content.POST("/add", handlePinAddToNode(node, DeltaUploadApi))
-	content.POST("/add-to-miners", handleFetchPinToNodeToMiners(node, DeltaUploadApi))
+	content.POST("/add-to-miners", handlePinAddToNodeToMiners(node, DeltaUploadApi))
 	content.POST("/add-large", handlePinAddToNodeLarge(node, DeltaUploadApi))
 	content.POST("/add-car", handlePinAddCarToNode(node, DeltaUploadApi))
-	content.POST("/fetch-pin", handleFetchPinToNode(node, DeltaUploadApi)) // foreign cids
+	content.POST("/fetch-pin", handleFetchPinToNode(node, DeltaUploadApi))                // foreign cids
+	content.POST("/fetch-pin-miners", handleFetchPinToNodeToMiners(node, DeltaUploadApi)) // foreign cids
 
 }
 
@@ -256,6 +257,83 @@ func handlePinAddToNodeLarge(node *core.LightNode, DeltaUploadApi string) func(c
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
 		fmt.Println("authParts: ", authParts[1])
+		return nil
+	}
+}
+func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		authorizationString := c.Request().Header.Get("Authorization")
+		authParts := strings.Split(authorizationString, " ")
+		minersString := c.FormValue("miners") // comma-separated list of miners to pin to
+		miners := make(map[string]bool)
+		for _, miner := range strings.Split(minersString, ",") {
+			miners[miner] = true
+		}
+		replicationParam := c.FormValue("replication")
+		replication, err := strconv.Atoi(replicationParam)
+
+		if replication > 6 {
+			return c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Replication cannot be more than 3",
+			})
+		}
+
+		file, err := c.FormFile("data")
+		if err != nil {
+			return err
+		}
+		src, err := file.Open()
+		srcR, err := file.Open()
+		if err != nil {
+			return err
+		}
+
+		addNode, err := node.Node.AddPinFile(c.Request().Context(), src, nil)
+		fmt.Println("addNode: ", addNode.Cid().String())
+
+		var contentList []core.Content
+
+		for miner := range miners {
+			newContent := core.Content{
+				Name:             file.Filename,
+				Size:             file.Size,
+				Cid:              addNode.Cid().String(),
+				DeltaNodeUrl:     DeltaUploadApi,
+				RequestingApiKey: authParts[1],
+				Status:           "pinned",
+				Miner:            miner,
+				Replication:      replication,
+				CreatedAt:        time.Now(),
+				UpdatedAt:        time.Now(),
+			}
+
+			node.DB.Create(&newContent)
+
+			job := jobs.CreateNewDispatcher()
+			job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
+			job.Start(1)
+
+			if err != nil {
+				c.JSON(500, UploadResponse{
+					Status:  "error",
+					Message: "Error pinning the file" + err.Error(),
+				})
+			}
+
+			contentList = append(contentList, newContent)
+		}
+
+		c.JSON(200, struct {
+			Status   string         `json:"status"`
+			Message  string         `json:"message"`
+			Contents []core.Content `json:"contents"`
+		}{
+			Status:   "success",
+			Message:  "File uploaded and pinned successfully to miners. Please take note of the ids.",
+			Contents: contentList,
+		})
+
 		return nil
 	}
 }
