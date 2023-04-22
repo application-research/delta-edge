@@ -13,12 +13,41 @@ Once you have a node and API key, you can upload a file to the node using the fo
 curl --location 'http://localhost:1313/api/v1/content/add' \
 --header 'Authorization: Bearer [API_KEY]' \
 --form 'data=@"/path/to/file"'
+--form 'miners="f0137168,f0717969"' // optional - add a list of miners to pin the file to
 
 {
     "status": "success",
-    "message": "File uploaded and pinned successfully. Please take note of the id.",
-    "id": 1,
-    "cid": "bafybeigt7ba7nrauzln4gjffo2msoigcvsqje4jralw45gf7vvyq6xkrtq"
+    "message": "File uploaded and pinned successfully to miners. Please take note of the ids.",
+    "contents": [
+        {
+            "ID": 51,
+            "name": "bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y.zip",
+            "size": 1157548,
+            "cid": "bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y",
+            "delta_content_id": 0,
+            "delta_node_url": "https://node.delta.store",
+            "status": "pinned",
+            "last_message": "",
+            "miner": "f0137168",
+            "replication": 0,
+            "created_at": "2023-04-22T13:10:34.177515+02:00",
+            "updated_at": "2023-04-22T13:10:34.177515+02:00"
+        },
+        {
+            "ID": 52,
+            "name": "bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y.zip",
+            "size": 1157548,
+            "cid": "bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y",
+            "delta_content_id": 0,
+            "delta_node_url": "https://node.delta.store",
+            "status": "pinned",
+            "last_message": "",
+            "miner": "f0717969",
+            "replication": 0,
+            "created_at": "2023-04-22T13:10:34.178703+02:00",
+            "updated_at": "2023-04-22T13:10:34.178703+02:00"
+        }
+    ]
 }
 ```
 

@@ -66,12 +66,9 @@ type UploadResponse struct {
 func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 	var DeltaUploadApi = node.Config.Delta.ApiUrl
 	content := e.Group("/content")
-	content.POST("/add", handlePinAddToNode(node, DeltaUploadApi))
-	content.POST("/add-to-miners", handlePinAddToNodeToMiners(node, DeltaUploadApi))
-	content.POST("/add-large", handlePinAddToNodeLarge(node, DeltaUploadApi))
-	content.POST("/add-car", handlePinAddCarToNode(node, DeltaUploadApi))
-	content.POST("/fetch-pin", handleFetchPinToNode(node, DeltaUploadApi))                // foreign cids
-	content.POST("/fetch-pin-miners", handleFetchPinToNodeToMiners(node, DeltaUploadApi)) // foreign cids
+	content.POST("/add", handlePinAddToNodeToMiners(node, DeltaUploadApi))
+	content.POST("/add-car", handlePinAddCarToNodeToMiners(node, DeltaUploadApi))
+	content.POST("/fetch-pin", handleFetchPinToNodeToMiners(node, DeltaUploadApi)) // foreign cids
 
 }
 
@@ -154,7 +151,7 @@ func handleFetchPinToNodeToMiners(node *core.LightNode, DeltaUploadApi string) f
 					Message: "Error pinning the file" + err.Error(),
 				})
 			}
-
+			newContent.RequestingApiKey = ""
 			contentList = append(contentList, newContent)
 		}
 
@@ -320,7 +317,7 @@ func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) fun
 					Message: "Error pinning the file" + err.Error(),
 				})
 			}
-
+			newContent.RequestingApiKey = ""
 			contentList = append(contentList, newContent)
 		}
 
@@ -337,7 +334,6 @@ func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) fun
 		return nil
 	}
 }
-
 func handlePinAddToNode(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
@@ -400,13 +396,17 @@ func handlePinAddToNode(node *core.LightNode, DeltaUploadApi string) func(c echo
 		return nil
 	}
 }
-func handlePinAddCarToNode(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
+func handlePinAddCarToNodeToMiners(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
 
 		file, err := c.FormFile("data")
-		miner := c.FormValue("miner")
+		minersString := c.FormValue("miners") // comma-separated list of miners to pin to
+		miners := make(map[string]bool)
+		for _, miner := range strings.Split(minersString, ",") {
+			miners[miner] = true
+		}
 		replicationParam := c.FormValue("replication")
 		replication, err := strconv.Atoi(replicationParam)
 
@@ -443,26 +443,46 @@ func handlePinAddCarToNode(node *core.LightNode, DeltaUploadApi string) func(c e
 		}
 
 		rootCid := carHeader.Roots[0].String()
+		var contentList []core.Content
+		for miner := range miners {
+			newContent := core.Content{
+				Name:             file.Filename,
+				Size:             file.Size,
+				Cid:              rootCid,
+				DeltaNodeUrl:     DeltaUploadApi,
+				RequestingApiKey: authParts[1],
+				Status:           "pinned",
+				Miner:            miner,
+				Replication:      replication,
+				CreatedAt:        time.Now(),
+				UpdatedAt:        time.Now(),
+			}
 
-		// insert a new record
-		newContent := core.Content{
-			Name:             file.Filename,
-			Size:             file.Size,
-			Cid:              rootCid,
-			DeltaNodeUrl:     DeltaUploadApi,
-			RequestingApiKey: authParts[1],
-			Status:           "pinned",
-			Miner:            miner,
-			Replication:      replication,
-			CreatedAt:        time.Now(),
-			UpdatedAt:        time.Now(),
+			node.DB.Create(&newContent)
+
+			job := jobs.CreateNewDispatcher()
+			job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
+			job.Start(1)
+
+			if err != nil {
+				c.JSON(500, UploadResponse{
+					Status:  "error",
+					Message: "Error pinning the file" + err.Error(),
+				})
+			}
+
+			contentList = append(contentList, newContent)
 		}
 
-		node.DB.Create(&newContent)
-
-		job := jobs.CreateNewDispatcher()
-		job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
-		job.Start(1)
+		c.JSON(200, struct {
+			Status   string         `json:"status"`
+			Message  string         `json:"message"`
+			Contents []core.Content `json:"contents"`
+		}{
+			Status:   "success",
+			Message:  "File uploaded and pinned successfully to miners. Please take note of the ids.",
+			Contents: contentList,
+		})
 
 		return nil
 	}
