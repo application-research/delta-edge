@@ -7,7 +7,6 @@ import (
 	"github.com/application-research/edge-ur/jobs"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-car"
-	"strconv"
 	"strings"
 	"time"
 
@@ -28,7 +27,6 @@ type DealE2EUploadRequest struct {
 	Size               int64  `json:"size,omitempty"`
 	StartEpoch         int64  `json:"start_epoch,omitempty"`
 	StartEpochInDays   int64  `json:"start_epoch_in_days,omitempty"`
-	Replication        int    `json:"replication,omitempty"`
 	RemoveUnsealedCopy bool   `json:"remove_unsealed_copy"`
 	SkipIPNIAnnounce   bool   `json:"skip_ipni_announce"`
 	AutoRetry          bool   `json:"auto_retry"`
@@ -132,7 +130,6 @@ func handleFetchPinToNodeToMiners(node *core.LightNode, DeltaUploadApi string) f
 				RequestingApiKey: authParts[1],
 				Status:           "fetching",
 				Miner:            miner,
-				Replication:      0,
 				CreatedAt:        time.Now(),
 				UpdatedAt:        time.Now(),
 			}
@@ -175,17 +172,7 @@ func handleFetchPinToNode(node *core.LightNode, DeltaUploadApi string) func(c ec
 		authParts := strings.Split(authorizationString, " ")
 		cidToFetch := c.FormValue("cid")
 		miner := c.FormValue("miner")
-		replicationParam := c.FormValue("replication")
 		source := c.FormValue("source") // multiaddress where to pull. This can be empty.
-
-		replication, err := strconv.Atoi(replicationParam)
-
-		if replication > 6 {
-			return c.JSON(500, UploadResponse{
-				Status:  "error",
-				Message: "Replication cannot be more than 3",
-			})
-		}
 		// if the source is given, peer to it. (optional but recommended)
 		node.ConnectToDelegates(context.Background(), []string{source}) // connects to the specified IPFS node multiaddress
 		cidToFetchCid, err := cid.Decode(cidToFetch)
@@ -220,7 +207,6 @@ func handleFetchPinToNode(node *core.LightNode, DeltaUploadApi string) func(c ec
 			RequestingApiKey: authParts[1],
 			Status:           "fetching",
 			Miner:            miner,
-			Replication:      replication,
 			CreatedAt:        time.Now(),
 			UpdatedAt:        time.Now(),
 		}
@@ -266,15 +252,6 @@ func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) fun
 		for _, miner := range strings.Split(minersString, ",") {
 			miners[miner] = true
 		}
-		replicationParam := c.FormValue("replication")
-		replication, err := strconv.Atoi(replicationParam)
-
-		if replication > 6 {
-			return c.JSON(500, UploadResponse{
-				Status:  "error",
-				Message: "Replication cannot be more than 3",
-			})
-		}
 
 		file, err := c.FormFile("data")
 		if err != nil {
@@ -300,7 +277,6 @@ func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) fun
 				RequestingApiKey: authParts[1],
 				Status:           "pinned",
 				Miner:            miner,
-				Replication:      replication,
 				CreatedAt:        time.Now(),
 				UpdatedAt:        time.Now(),
 			}
@@ -339,15 +315,6 @@ func handlePinAddToNode(node *core.LightNode, DeltaUploadApi string) func(c echo
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
 		miner := c.FormValue("miner")
-		replicationParam := c.FormValue("replication")
-		replication, err := strconv.Atoi(replicationParam)
-
-		if replication > 6 {
-			return c.JSON(500, UploadResponse{
-				Status:  "error",
-				Message: "Replication cannot be more than 3",
-			})
-		}
 
 		file, err := c.FormFile("data")
 		if err != nil {
@@ -369,7 +336,6 @@ func handlePinAddToNode(node *core.LightNode, DeltaUploadApi string) func(c echo
 			RequestingApiKey: authParts[1],
 			Status:           "pinned",
 			Miner:            miner,
-			Replication:      replication,
 			CreatedAt:        time.Now(),
 			UpdatedAt:        time.Now(),
 		}
@@ -407,16 +373,6 @@ func handlePinAddCarToNodeToMiners(node *core.LightNode, DeltaUploadApi string) 
 		for _, miner := range strings.Split(minersString, ",") {
 			miners[miner] = true
 		}
-		replicationParam := c.FormValue("replication")
-		replication, err := strconv.Atoi(replicationParam)
-
-		if replication > 6 {
-			return c.JSON(500, UploadResponse{
-				Status:  "error",
-				Message: "Replication cannot be more than 3",
-			})
-		}
-
 		if err != nil {
 			c.JSON(500, UploadResponse{
 				Status:  "error",
@@ -453,7 +409,6 @@ func handlePinAddCarToNodeToMiners(node *core.LightNode, DeltaUploadApi string) 
 				RequestingApiKey: authParts[1],
 				Status:           "pinned",
 				Miner:            miner,
-				Replication:      replication,
 				CreatedAt:        time.Now(),
 				UpdatedAt:        time.Now(),
 			}
