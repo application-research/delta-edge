@@ -22,6 +22,75 @@ By decoupling this to a light node, we achieve the following:
 - periodically checks the status of the deals and update the database.
 - For 32GB and above, the node will split the file into 32GB chunks and make deals for each chunk and car them. **[WIP]**
 
+## Quick how to
+
+### Upload a file with a given miner
+We have a working live server that you can use. To run basic upload, please get API key first. You can get one here https://auth.estuary.tech/register-new-token
+
+```
+curl --location 'http://localhost:3000/api/v1/content/add-to-miners' \
+--header 'Authorization: Bearer [APIKEY]' \
+--form 'data=@"/file.zip"' \
+--form 'miners="f0137168,f0717969"' // list of miners (optional)
+{
+    "status": "success",
+    "message": "File uploaded and pinned successfully to miners. Please take note of the ids.",
+    "contents": [
+        {
+            "ID": 53,
+            "name": "bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y.zip",
+            "size": 1157548,
+            "cid": "bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y",
+            "delta_content_id": 0,
+            "delta_node_url": "https://node.delta.store",
+            "status": "pinned",
+            "last_message": "",
+            "miner": "f0137168",
+            "replication": 0,
+            "created_at": "2023-04-22T14:40:43.10918+02:00",
+            "updated_at": "2023-04-22T14:40:43.10918+02:00"
+        },
+        {
+            "ID": 54,
+            "name": "bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y.zip",
+            "size": 1157548,
+            "cid": "bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y",
+            "delta_content_id": 0,
+            "delta_node_url": "https://node.delta.store",
+            "status": "pinned",
+            "last_message": "",
+            "miner": "f0717969",
+            "replication": 0,
+            "created_at": "2023-04-22T14:40:43.112161+02:00",
+            "updated_at": "2023-04-22T14:40:43.112161+02:00"
+        }
+    ]
+}
+```
+
+### Check status
+Get the content id and use the following call
+```
+curl --location 'http://localhost:3000/api/v1/status/53' \
+--header 'Authorization: Bearer [APIKEY]'
+{
+    "content": {
+        "ID": 53,
+        "name": "bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y.zip",
+        "size": 1157548,
+        "cid": "bafybeicgdjdvwes3e5aaicqljrlv6hpdfsducknrjvsq66d4gsvepolk6y",
+        "delta_content_id": 67547,
+        "delta_node_url": "https://node.delta.store",
+        "status": "uploaded-to-delta",
+        "last_message": "",
+        "miner": "f0137168",
+        "replication": 0,
+        "created_at": "2023-04-22T14:40:43.10918+02:00",
+        "updated_at": "2023-04-22T14:40:46.564971+02:00"
+    }
+}
+```
+
 ## Getting Started
 To get started, follow the guide [here](docs/README.md).
 
