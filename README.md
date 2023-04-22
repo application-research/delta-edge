@@ -28,7 +28,7 @@ By decoupling this to a light node, we achieve the following:
 We have a working live server that you can use. To run basic upload, please get API key first. You can get one here https://auth.estuary.tech/register-new-token
 
 ```
-curl --location 'http://localhost:3000/api/v1/content/add-to-miners' \
+curl --location 'http://localhost:3000/api/v1/content/add' \
 --header 'Authorization: Bearer [APIKEY]' \
 --form 'data=@"/file.zip"' \
 --form 'miners="f0137168,f0717969"' // list of miners (optional)
