@@ -15,7 +15,7 @@ By decoupling this to a light node, we achieve the following:
 - Save the data on local sqlite DB
 - retries the storage deals if it fails. Uses delta `auto_retry` feature.
 - periodically checks the status of the deals and update the database.
-- global replication factor can be set in the config file. This will make the node replicate the data to the specified number of nodes.
+- specify the list of miners you want to make a deal with.
 - For 32GB and above, the node will split the file into 32GB chunks and make deals for each chunk and car them. **[WIP]** 
 
 ## Getting Started

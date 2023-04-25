@@ -72,3 +72,8 @@ curl --location --request GET 'http://localhost:1313/api/v1/status/1' \
 }
 ```
 
+## View the file using the gateway url
+```
+http://localhost:1313/gw/<cid>
+http://localhost:1313/gw/content/<content_id>
+```

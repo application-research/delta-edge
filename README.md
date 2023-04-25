@@ -90,6 +90,11 @@ curl --location 'http://localhost:3000/api/v1/status/53' \
     }
 }
 ```
+### View the file using the gateway url
+```
+http://localhost:1313/gw/<cid>
+http://localhost:1313/gw/content/<content_id>
+```
 
 ## Getting Started
 To get started, follow the guide [here](docs/README.md).

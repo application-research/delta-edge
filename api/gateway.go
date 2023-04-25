@@ -52,7 +52,7 @@ func ConfigureGatewayRouter(e *echo.Group, node *core.LightNode) {
 
 	e.GET("/gw/ipfs/:path", GatewayResolverCheckHandlerDirectPath)
 	e.GET("/gw/:path", GatewayResolverCheckHandlerDirectPath)
-	e.GET("/content/:contentId", GatewayContentResolverCheckHandler)
+	e.GET("/gw/content/:contentId", GatewayContentResolverCheckHandler)
 	e.GET("/ipfs/:path", GatewayResolverCheckHandlerDirectPath)
 }
 
