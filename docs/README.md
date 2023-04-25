@@ -15,7 +15,7 @@ By decoupling this to a light node, we achieve the following:
 - Save the data on local sqlite DB
 - retries the storage deals if it fails. Uses delta `auto_retry` feature.
 - periodically checks the status of the deals and update the database.
-- specifcy the list of miners you want to make a deal with.
+- specify the list of miners you want to make a deal with.
 - For 32GB and above, the node will split the file into 32GB chunks and make deals for each chunk and car them. **[WIP]** 
 
 ## Getting Started
