@@ -27,7 +27,7 @@ Copy the `.env.example` file to `.env` and update the values as needed.
 ```
 NODE_NAME=edge
 NODE_DESCRIPTION=Edge node
-DB_NAME=edge-urdb
+DBDSN=edge-urdb.db // or 
 DELTA_NODE_API=http://localhost:1414 # or https://node.delta.store
 DEAL_CHECK=600 # 10 minutes
 REPLICATION_FACTOR=0

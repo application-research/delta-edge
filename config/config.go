@@ -18,7 +18,7 @@ type DeltaConfig struct {
 		Name        string `env:"NODE_NAME" envDefault:"edge-ur"`
 		Description string `env:"NODE_DESCRIPTION"`
 		Type        string `env:"NODE_TYPE"`
-		DbName      string `env:"DB_NAME" envDefault:"edge-ur.db"`
+		DbDsn       string `env:"DB_DSN" envDefault:"edge-ur.db"`
 		Repo        string `env:"REPO"`
 		Port        int    `env:"PORT" envDefault:"1414"`
 	}

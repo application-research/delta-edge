@@ -8,14 +8,28 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"time"
 )
 
 func OpenDatabase(cfg config.DeltaConfig) (*gorm.DB, error) {
 
-	DB, err := gorm.Open(sqlite.Open(cfg.Node.DbName), &gorm.Config{})
+	// use postgres
+	var DB *gorm.DB
+	var err error
+
+	if cfg.Node.DbDsn[:8] == "postgres" {
+		DB, err = gorm.Open(postgres.Open(cfg.Node.DbDsn), &gorm.Config{
+			Logger: logger.Default.LogMode(logger.Silent),
+		})
+	} else {
+		DB, err = gorm.Open(sqlite.Open(cfg.Node.DbDsn), &gorm.Config{
+			Logger: logger.Default.LogMode(logger.Silent),
+		})
+	}
 
 	// generate new models.
 	ConfigureModels(DB) // create models.

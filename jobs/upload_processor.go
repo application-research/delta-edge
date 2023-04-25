@@ -221,7 +221,6 @@ func (r *UploadToEstuaryProcessor) Run() error {
 
 						// insert each replicated content into the database
 						for _, replicatedContent := range dealE2EUploadResponse.ReplicatedContents {
-							fmt.Println(replicatedContent)
 							var replicatedContentModel core.Content
 							//r.LightNode.DB.Model(&core.Content{}).Where("cid = ?", replicatedContent.Cid).Find(&replicatedContentModel)
 							//if replicatedContentModel.ID == 0 {
