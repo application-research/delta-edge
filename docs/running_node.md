@@ -8,7 +8,7 @@ Edge **REQUIRES** a running delta node to make deals. You can run a delta node l
 
 ### Clone the repo
 ``` 
-git clone github.com/application-research/edge-ur
+git clone https://github.com/application-research/edge-ur
 ```
 
 ### build with `go build`
