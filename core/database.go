@@ -56,6 +56,7 @@ type Content struct {
 	Status           string    `json:"status"`
 	LastMessage      string    `json:"last_message"`
 	Miner            string    `json:"miner"`
+	MakeDeal         bool      `json:"make_deal"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
 }
