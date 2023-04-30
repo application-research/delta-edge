@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/application-research/edge-ur/utils"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -215,7 +216,7 @@ func (r *UploadToEstuaryProcessor) Run() error {
 						continue
 					} else {
 						r.Content.UpdatedAt = time.Now()
-						r.Content.Status = "uploaded-to-delta"
+						r.Content.Status = utils.STATUS_UPLOADED_TO_DELTA
 						r.Content.DeltaContentId = int64(dealE2EUploadResponse.ContentID)
 						r.LightNode.DB.Save(&r.Content)
 
