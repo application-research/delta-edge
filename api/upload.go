@@ -77,7 +77,11 @@ func handleFetchPinToNodeToMiners(node *core.LightNode, DeltaUploadApi string) f
 		authParts := strings.Split(authorizationString, " ")
 		cidToFetch := c.FormValue("cid")
 		minersString := c.FormValue("miners")
+		makeDeal := c.FormValue("make_deal")
 
+		if makeDeal == "" {
+			makeDeal = "true"
+		}
 		if minersString == "" {
 			return c.JSON(500, UploadResponse{
 				Status:  "error",
@@ -131,17 +135,24 @@ func handleFetchPinToNodeToMiners(node *core.LightNode, DeltaUploadApi string) f
 				RequestingApiKey: authParts[1],
 				Status:           "fetching",
 				Miner:            miner,
-				CreatedAt:        time.Now(),
-				UpdatedAt:        time.Now(),
+				MakeDeal: func() bool {
+					if makeDeal == "true" {
+						return true
+					}
+					return false
+				}(),
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
 			}
 
 			node.DB.Create(&newContent)
 
-			srcR := bytes.NewReader(addNode.RawData())
-
-			job := jobs.CreateNewDispatcher()
-			job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
-			job.Start(1)
+			if makeDeal == "true" {
+				srcR := bytes.NewReader(addNode.RawData())
+				job := jobs.CreateNewDispatcher()
+				job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
+				job.Start(1)
+			}
 
 			if err != nil {
 				c.JSON(500, UploadResponse{
