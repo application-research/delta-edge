@@ -14,6 +14,7 @@ curl --location 'http://localhost:1313/api/v1/content/add' \
 --header 'Authorization: Bearer [API_KEY]' \
 --form 'data=@"/path/to/file"'
 --form 'miners="f0137168,f0717969"' // optional - add a list of miners to pin the file to
+--form 'make_deal="false"' // optional - make a deal with the miners. Default is true.
 
 {
     "status": "success",

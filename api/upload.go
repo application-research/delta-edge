@@ -260,7 +260,7 @@ func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) fun
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
 		minersString := c.FormValue("miners") // comma-separated list of miners to pin to
-		makeDeal := c.FormValue("makeDeal")   // whether to make a deal with the miners or not
+		makeDeal := c.FormValue("make_deal")  // whether to make a deal with the miners or not
 
 		if makeDeal == "" {
 			makeDeal = "true"
@@ -400,7 +400,7 @@ func handlePinAddCarToNodeToMiners(node *core.LightNode, DeltaUploadApi string) 
 
 		file, err := c.FormFile("data")
 		minersString := c.FormValue("miners") // comma-separated list of miners to pin to
-		makeDeal := c.FormValue("makeDeal")   // whether to make a deal with the miners or not
+		makeDeal := c.FormValue("make_deal")  // whether to make a deal with the miners or not
 		if makeDeal == "" {
 			makeDeal = "true"
 		}
