@@ -259,6 +259,11 @@ func GatewayContentResolverCheckHandler(c echo.Context) error {
 	authorizationString := c.Request().Header.Get("Authorization")
 	authParts := strings.Split(authorizationString, " ")
 
+	// handle runtime error: index out of range [1] with length 1
+	if len(authParts) < 2 {
+		return errors.New("invalid authorization header")
+	}
+
 	p := c.Param("contentId")
 
 	// get the cid from the db
@@ -279,6 +284,7 @@ func GatewayContentResolverCheckHandler(c echo.Context) error {
 
 // `GatewayResolverCheckHandlerDirectPath` is a function that takes a `echo.Context` and returns an `error`
 func GatewayResolverCheckHandlerDirectPath(c echo.Context) error {
+
 	ctx := c.Request().Context()
 	p := c.Param("path")
 	req := c.Request().Clone(c.Request().Context())
