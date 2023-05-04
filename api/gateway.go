@@ -50,10 +50,10 @@ func ConfigureGatewayRouter(e *echo.Group, node *core.LightNode) {
 	gatewayHandler.bs = node.Node.Blockstore
 	gatewayHandler.db = node.DB
 
-	e.GET("/gw/ipfs/:path", GatewayResolverCheckHandlerDirectPath)
-	e.GET("/gw/:path", GatewayResolverCheckHandlerDirectPath)
+	//e.GET("/gw/ipfs/:path", GatewayResolverCheckHandlerDirectPath)
+	//e.GET("/gw/:path", GatewayResolverCheckHandlerDirectPath)
 	e.GET("/gw/content/:contentId", GatewayContentResolverCheckHandler)
-	e.GET("/ipfs/:path", GatewayResolverCheckHandlerDirectPath)
+	//e.GET("/ipfs/:path", GatewayResolverCheckHandlerDirectPath)
 }
 
 func (gw *GatewayHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -256,11 +256,14 @@ func (gw *GatewayHandler) GatewayDirResolverCheckHandler(c echo.Context) error {
 }
 
 func GatewayContentResolverCheckHandler(c echo.Context) error {
+	authorizationString := c.Request().Header.Get("Authorization")
+	authParts := strings.Split(authorizationString, " ")
+
 	p := c.Param("contentId")
 
 	// get the cid from the db
 	var content core.Content
-	err := gatewayHandler.db.Model(&content).Where("id = ?", p).First(&content).Error
+	err := gatewayHandler.db.Model(&content).Where("id = ? and requesting_api_key = ?", p, authParts[1]).First(&content).Error
 	if err != nil {
 		return err
 	}
