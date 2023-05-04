@@ -82,47 +82,7 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 					},
 				})
 			}
-			response, err := http.Post(
-				"https://estuary-auth-api.onrender.com/check-api-key",
-				"application/json",
-				strings.NewReader(fmt.Sprintf(`{"token": "%s"}`, authParts[1])),
-			)
 
-			if err != nil {
-				log.Errorf("handler error: %s", err)
-				return c.JSON(http.StatusInternalServerError, HttpErrorResponse{
-					Error: HttpError{
-						Code:    http.StatusInternalServerError,
-						Reason:  http.StatusText(http.StatusInternalServerError),
-						Details: err.Error(),
-					},
-				})
-			}
-
-			authResp, err := GetAuthResponse(response)
-			if err != nil {
-				log.Errorf("handler error: %s", err)
-				return c.JSON(http.StatusInternalServerError, HttpErrorResponse{
-					Error: HttpError{
-						Code:    http.StatusInternalServerError,
-						Reason:  http.StatusText(http.StatusInternalServerError),
-						Details: err.Error(),
-					},
-				})
-			}
-
-			if authResp.Result.Validated == false {
-				return c.JSON(http.StatusUnauthorized, HttpErrorResponse{
-					Error: HttpError{
-						Code:    http.StatusUnauthorized,
-						Reason:  http.StatusText(http.StatusUnauthorized),
-						Details: authResp.Result.Details,
-					},
-				})
-			}
-			if authResp.Result.Validated == true {
-				return next(c)
-			}
 			return next(c)
 		}
 	})

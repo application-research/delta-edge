@@ -3,7 +3,6 @@ module github.com/application-research/edge-ur
 go 1.18
 
 require (
-	github.com/application-research/whypfs-core v0.1.1
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-fil-commcid v0.1.0
@@ -35,11 +34,14 @@ require (
 	github.com/libp2p/go-libp2p v0.23.4
 	github.com/multiformats/go-multiaddr v0.8.0
 	github.com/urfave/cli/v2 v2.23.5
+	go.opentelemetry.io/otel v1.9.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 	gorm.io/driver/postgres v1.5.0
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.24.7-0.20230306060331-85eaf9eeda11
 )
+
+require github.com/application-research/whypfs-core v0.1.2-0.20230504220606-3d99cedf2fab // indirect
 
 require (
 	github.com/DataDog/zstd v1.4.1 // indirect
@@ -220,7 +222,6 @@ require (
 	github.com/whyrusleeping/timecache v0.0.0-20160911033111-cfcb2f1abfee // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/otel v1.9.0 // indirect
 	go.opentelemetry.io/otel/trace v1.9.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect

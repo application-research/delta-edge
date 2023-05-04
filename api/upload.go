@@ -8,6 +8,7 @@ import (
 	"github.com/application-research/edge-ur/utils"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-car"
+	"net/http"
 	"strings"
 	"time"
 
@@ -66,8 +67,8 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 	var DeltaUploadApi = node.Config.Delta.ApiUrl
 	content := e.Group("/content")
 	content.POST("/add", handlePinAddToNodeToMiners(node, DeltaUploadApi))
-	content.POST("/add-car", handlePinAddCarToNodeToMiners(node, DeltaUploadApi))
-	content.POST("/fetch-pin", handleFetchPinToNodeToMiners(node, DeltaUploadApi)) // foreign cids
+	//content.POST("/add-car", handlePinAddCarToNodeToMiners(node, DeltaUploadApi))
+	//content.POST("/fetch-pin", handleFetchPinToNodeToMiners(node, DeltaUploadApi)) // foreign cids
 
 }
 
@@ -247,6 +248,7 @@ func handleFetchPinToNode(node *core.LightNode, DeltaUploadApi string) func(c ec
 		return nil
 	}
 }
+
 func handlePinAddToNodeLarge(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
@@ -257,8 +259,51 @@ func handlePinAddToNodeLarge(node *core.LightNode, DeltaUploadApi string) func(c
 }
 func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
 	return func(c echo.Context) error {
+
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
+
+		response, err := http.Post(
+			"https://auth.estuary.tech/check-api-key",
+			"application/json",
+			strings.NewReader(fmt.Sprintf(`{"token": "%s"}`, authParts[1])),
+		)
+
+		if err != nil {
+			log.Errorf("handler error: %s", err)
+			return c.JSON(http.StatusInternalServerError, HttpErrorResponse{
+				Error: HttpError{
+					Code:    http.StatusInternalServerError,
+					Reason:  http.StatusText(http.StatusInternalServerError),
+					Details: err.Error(),
+				},
+			})
+		}
+
+		authResp, err := GetAuthResponse(response)
+		if err != nil {
+			log.Errorf("handler error: %s", err)
+			return c.JSON(http.StatusInternalServerError, HttpErrorResponse{
+				Error: HttpError{
+					Code:    http.StatusInternalServerError,
+					Reason:  http.StatusText(http.StatusInternalServerError),
+					Details: err.Error(),
+				},
+			})
+		}
+		fmt.Println("authResp: ", authResp)
+		if authResp.Result.Validated == false {
+			return c.JSON(http.StatusUnauthorized, HttpErrorResponse{
+				Error: HttpError{
+					Code:    http.StatusUnauthorized,
+					Reason:  http.StatusText(http.StatusUnauthorized),
+					Details: authResp.Result.Details,
+				},
+			})
+		}
+
+		fmt.Println("authResp: ", authResp)
+
 		minersString := c.FormValue("miners") // comma-separated list of miners to pin to
 		makeDeal := c.FormValue("make_deal")  // whether to make a deal with the miners or not
 

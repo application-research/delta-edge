@@ -87,7 +87,8 @@ func NewEdgeNode(ctx context.Context, cfg config.DeltaConfig) (*LightNode, error
 		panic(err)
 	}
 
-	whypfsPeer.BootstrapPeers(config.BootstrapEstuaryPeers())
+	//whypfsPeer.BootstrapPeers(config.BootstrapEstuaryPeers())
+	whypfsPeer.BootstrapPeers(nil)
 
 	// gateway
 	gw, err := NewGatewayHandler(whypfsPeer)

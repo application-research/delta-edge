@@ -258,6 +258,32 @@ func (gw *GatewayHandler) GatewayDirResolverCheckHandler(c echo.Context) error {
 func GatewayContentResolverCheckHandler(c echo.Context) error {
 	authorizationString := c.Request().Header.Get("Authorization")
 	authParts := strings.Split(authorizationString, " ")
+	response, err := http.Post(
+		"https://auth.estuary.tech/check-api-key",
+		"application/json",
+		strings.NewReader(fmt.Sprintf(`{"token": "%s"}`, authParts[1])),
+	)
+	if err != nil {
+		log.Errorf("handler error: %s", err)
+		return c.JSON(http.StatusInternalServerError, HttpErrorResponse{
+			Error: HttpError{
+				Code:    http.StatusInternalServerError,
+				Reason:  http.StatusText(http.StatusInternalServerError),
+				Details: err.Error(),
+			},
+		})
+	}
+	_, err = GetAuthResponse(response)
+	if err != nil {
+		log.Errorf("handler error: %s", err)
+		return c.JSON(http.StatusInternalServerError, HttpErrorResponse{
+			Error: HttpError{
+				Code:    http.StatusInternalServerError,
+				Reason:  http.StatusText(http.StatusInternalServerError),
+				Details: err.Error(),
+			},
+		})
+	}
 
 	// handle runtime error: index out of range [1] with length 1
 	if len(authParts) < 2 {
@@ -268,7 +294,7 @@ func GatewayContentResolverCheckHandler(c echo.Context) error {
 
 	// get the cid from the db
 	var content core.Content
-	err := gatewayHandler.db.Model(&content).Where("id = ? and requesting_api_key = ?", p, authParts[1]).First(&content).Error
+	err = gatewayHandler.db.Model(&content).Where("id = ? and requesting_api_key = ?", p, authParts[1]).First(&content).Error
 	if err != nil {
 		return err
 	}
