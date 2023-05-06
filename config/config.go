@@ -25,6 +25,7 @@ type DeltaConfig struct {
 
 	Delta struct {
 		ApiUrl            string `env:"DELTA_NODE_API" envDefault:"http://localhost:1414"`
+		AuthSvcUrl        string `env:"AUTH_SVC_URL" envDefault:"https://auth.estuary.tech"`
 		DealCheck         int    `env:"DEAL_CHECK" envDefault:"600"`
 		ReplicationFactor int    `env:"REPLICATION_FACTOR" envDefault:"3"`
 	}
