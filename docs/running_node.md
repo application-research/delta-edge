@@ -25,19 +25,19 @@ make all
 ## Create the `.env` file
 Copy the `.env.example` file to `.env` and update the values as needed.
 ```
+# node information
 NODE_NAME=edge
 NODE_DESCRIPTION=Edge node
-DB_DSN=edge-urdb.db // or 
-DELTA_NODE_API=http://localhost:1414 # or https://node.delta.store
-DEAL_CHECK=600 # 10 minutes
-REPLICATION_FACTOR=0
-REPO=./whypfs
-DS_REPO=./whypfs
+DB_DSN=edge-urdb
+
+# Service URLs
+AUTH_SVC_API=https://auth.estuary.tech
+DELTA_NODE_API=https://node.delta.store
 ```
 
 ## Running
 ```
-./edge daemon --repo=/tmp/blockstore
+./edge daemon
 
 Starting Edge daemon...
 Setting up the Edge node... 
