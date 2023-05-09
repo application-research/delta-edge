@@ -10,6 +10,5 @@ COPY . ./
 
 RUN go build -tags netgo -ldflags '-s -w' -o edge
 
+CMD [ "./edge daemon" ]
 EXPOSE 1313
-
-CMD [ "./edge daemon --repo=.whypfs" ]
