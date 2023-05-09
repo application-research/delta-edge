@@ -19,14 +19,20 @@ type DeltaConfig struct {
 		Description string `env:"NODE_DESCRIPTION"`
 		Type        string `env:"NODE_TYPE"`
 		DbDsn       string `env:"DB_DSN" envDefault:"edge-ur.db"`
-		Repo        string `env:"REPO"`
+		Repo        string `env:"REPO" envDefault:"./whypfs"`
+		DsRepo      string `env:"DS_REPO" envDefault:"./whypfs"`
 		Port        int    `env:"PORT" envDefault:"1414"`
 	}
 
 	Delta struct {
 		ApiUrl            string `env:"DELTA_NODE_API" envDefault:"http://localhost:1414"`
+		AuthSvcUrl        string `env:"AUTH_SVC_API" envDefault:"https://auth.estuary.tech"`
 		DealCheck         int    `env:"DEAL_CHECK" envDefault:"600"`
 		ReplicationFactor int    `env:"REPLICATION_FACTOR" envDefault:"3"`
+	}
+
+	UploadSigner struct {
+		UploadPublicKey string `env:"UPLOAD_PUBLIC_KEY"`
 	}
 }
 
