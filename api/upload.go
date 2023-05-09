@@ -125,7 +125,6 @@ func handleFetchPinToNodeToMiners(node *core.LightNode, DeltaUploadApi string) f
 		fmt.Println("addNode: ", addNode.Cid().String())
 
 		var contentList []core.Content
-
 		for miner := range miners {
 			newContent := core.Content{
 				Name:             addNode.Cid().String(),
@@ -144,7 +143,6 @@ func handleFetchPinToNodeToMiners(node *core.LightNode, DeltaUploadApi string) f
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			}
-
 			node.DB.Create(&newContent)
 
 			if makeDeal == "true" {

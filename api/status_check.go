@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/application-research/edge-ur/jobs"
+	"strconv"
 	"strings"
 
 	"github.com/application-research/edge-ur/core"
@@ -50,10 +51,44 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
 
-		var content []core.Content
-		node.DB.Raw("select c.name, c.id, c.estuary_content_id, c.cid, c.status,c.created_at,c.updated_at from contents as c where requesting_api_key = ?", authParts[1]).Scan(&content)
+		// get page number
+		page, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil {
+			page = 1
+		}
 
-		return c.JSON(200, content)
+		// get page size
+		pageSize, err := strconv.Atoi(c.QueryParam("page_size"))
+		if err != nil {
+			pageSize = 10
+		}
+
+		var totalContents int64
+		node.DB.Raw("select count(*) from contents where requesting_api_key = ?", authParts[1]).Scan(&totalContents)
+
+		var contents []core.Content
+		offset := (page - 1) * pageSize
+
+		// Execute query with LIMIT and OFFSET clauses for paging
+		err = node.DB.Select("name, id, delta_content_id, cid, status, last_message, created_at, updated_at").
+			Where("requesting_api_key = ?", authParts[1]).
+			Order("created_at DESC").
+			Limit(pageSize).
+			Offset(offset).
+			Find(&contents).Error
+
+		if err != nil {
+			return c.JSON(500, map[string]interface{}{
+				"message": "Error while fetching contents",
+				"error":   err.Error(),
+			})
+		}
+
+		return c.JSON(200, map[string]interface{}{
+			"total":    totalContents,
+			"page":     page,
+			"contents": contents,
+		})
 
 	})
 }
