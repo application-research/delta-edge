@@ -41,7 +41,7 @@ func OpenDatabase(cfg config.DeltaConfig) (*gorm.DB, error) {
 }
 
 func ConfigureModels(db *gorm.DB) {
-	db.AutoMigrate(&Content{}, &ContentDeal{}, &Collection{}, &CollectionRef{}, &LogEvent{})
+	db.AutoMigrate(&Content{}, &ContentDeal{}, &ContentSignatureMeta{})
 }
 
 type LogEvent struct {
@@ -72,6 +72,18 @@ type Content struct {
 	MakeDeal         bool      `json:"make_deal"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+type ContentSignatureMeta struct {
+	ID                  int64     `gorm:"primaryKey"`
+	ContentId           int64     `json:"content_id"`
+	Signature           string    `json:"signature"`
+	CurrentTimestamp    time.Time `json:"current_timestamp"`
+	ExpirationTimestamp time.Time `json:"expiration_timestamp"`
+	SignedUrl           string    `json:"signed_url"`
+	Message             string    `json:"message"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
 }
 
 type Collection struct {

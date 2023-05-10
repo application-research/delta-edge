@@ -11,4 +11,5 @@ var Gray = "\033[37m"
 var White = "\033[97m"
 
 var STATUS_PINNED = "pinned"
+var STATUS_UNPINNED = "unpinned"
 var STATUS_UPLOADED_TO_DELTA = "uploaded-to-delta"

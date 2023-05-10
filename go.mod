@@ -3,6 +3,7 @@ module github.com/application-research/edge-ur
 go 1.18
 
 require (
+	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-fil-commcid v0.1.0
@@ -32,6 +33,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.9.1
 	github.com/libp2p/go-libp2p v0.23.4
+	github.com/mr-tron/base58 v1.2.0
 	github.com/multiformats/go-multiaddr v0.8.0
 	github.com/urfave/cli/v2 v2.23.5
 	go.opentelemetry.io/otel v1.9.0
@@ -41,7 +43,7 @@ require (
 	gorm.io/gorm v1.24.7-0.20230306060331-85eaf9eeda11
 )
 
-require github.com/application-research/whypfs-core v0.1.2-0.20230504220606-3d99cedf2fab // indirect
+require github.com/application-research/whypfs-core v0.1.2-0.20230504220606-3d99cedf2fab
 
 require (
 	github.com/DataDog/zstd v1.4.1 // indirect
@@ -182,7 +184,6 @@ require (
 	github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/multiformats/go-base32 v0.1.0 // indirect
 	github.com/multiformats/go-base36 v0.1.0 // indirect
 	github.com/multiformats/go-multiaddr-dns v0.3.1 // indirect

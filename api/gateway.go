@@ -2,9 +2,13 @@
 package api
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/application-research/edge-ur/utils"
 	"gorm.io/gorm"
 	"html/template"
 	"io"
@@ -16,7 +20,6 @@ import (
 	"time"
 
 	"github.com/application-research/edge-ur/core"
-	"github.com/application-research/whypfs-core"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-merkledag"
 	"github.com/ipfs/go-path"
@@ -39,20 +42,22 @@ type GatewayHandler struct {
 	bs       blockstore.Blockstore
 	dserv    mdagipld.DAGService
 	resolver resolver.Resolver
-	node     *whypfs.Node
+	node     *core.LightNode
 	db       *gorm.DB
 }
 
 func ConfigureGatewayRouter(e *echo.Group, node *core.LightNode) {
 
 	//	api
-	gatewayHandler.node = node.Node
+	gatewayHandler.node = node
 	gatewayHandler.bs = node.Node.Blockstore
 	gatewayHandler.db = node.DB
 
 	//e.GET("/gw/ipfs/:path", GatewayResolverCheckHandlerDirectPath)
 	//e.GET("/gw/:path", GatewayResolverCheckHandlerDirectPath)
-	e.GET("/gw/content/:contentId", GatewayContentResolverCheckHandler)
+	//e.GET("/gw/content/:contentId", GatewayContentResolverCheckHandler)
+	e.GET("/gw/content/:contentId", GatewayContentSignedUrlResolverCheckHandler)
+	//e.GET("/gw/content/signed/:contentId", GatewayContentResolverCheckHandler)
 	//e.GET("/ipfs/:path", GatewayResolverCheckHandlerDirectPath)
 }
 
@@ -245,7 +250,7 @@ func (gw *GatewayHandler) GatewayDirResolverCheckHandler(c echo.Context) error {
 	}
 	//	 check if file or dir.
 
-	rscDir, err := gw.node.GetDirectoryWithCid(c.Request().Context(), cid)
+	rscDir, err := gw.node.Node.GetDirectoryWithCid(c.Request().Context(), cid)
 	if err != nil {
 		return err
 	}
@@ -254,12 +259,131 @@ func (gw *GatewayHandler) GatewayDirResolverCheckHandler(c echo.Context) error {
 
 	return nil
 }
+func validate(c echo.Context, node *core.LightNode) error {
+	authorizationString := c.Request().Header.Get("Authorization")
+	authParts := strings.Split(authorizationString, " ")
 
+	response, err := http.Post(
+		node.Config.Delta.AuthSvcUrl+"/check-api-key",
+		"application/json",
+		strings.NewReader(fmt.Sprintf(`{"token": "%s"}`, authParts[1])),
+	)
+
+	if err != nil {
+		log.Errorf("handler error: %s", err)
+		return c.JSON(http.StatusInternalServerError, HttpErrorResponse{
+			Error: HttpError{
+				Code:    http.StatusInternalServerError,
+				Reason:  http.StatusText(http.StatusInternalServerError),
+				Details: err.Error(),
+			},
+		})
+	}
+
+	authResp, err := GetAuthResponse(response)
+	if err != nil {
+		log.Errorf("handler error: %s", err)
+		return c.JSON(http.StatusInternalServerError, HttpErrorResponse{
+			Error: HttpError{
+				Code:    http.StatusInternalServerError,
+				Reason:  http.StatusText(http.StatusInternalServerError),
+				Details: err.Error(),
+			},
+		})
+	}
+	if authResp.Result.Validated == false {
+		return c.JSON(http.StatusUnauthorized, HttpErrorResponse{
+			Error: HttpError{
+				Code:    http.StatusUnauthorized,
+				Reason:  http.StatusText(http.StatusUnauthorized),
+				Details: authResp.Result.Details,
+			},
+		})
+	}
+	return nil
+}
+func GatewayContentSignedUrlResolverCheckHandler(c echo.Context) error {
+
+	signatureHex := c.QueryParam("signature")
+	if signatureHex == "" {
+		return c.JSON(http.StatusBadRequest, HttpErrorResponse{
+			Error: HttpError{
+				Code:    http.StatusBadRequest,
+				Reason:  http.StatusText(http.StatusBadRequest),
+				Details: "signature is required",
+			},
+		})
+	}
+
+	contentId := c.Param("contentId")
+
+	type ContentSignatureMetaLookup struct {
+		ID                  uint64    `json:"id"`
+		ContentId           string    `json:"content_id"`
+		Signature           string    `json:"signature"`
+		ExpirationTimestamp time.Time `json:"expiration_timestamp"`
+		Message             string    `json:"message"`
+		Cid                 string    `json:"cid"`
+	}
+	var contentSignatureMeta ContentSignatureMetaLookup
+	gatewayHandler.node.DB.Raw("SELECT * FROM content_signature_meta csm, contents c WHERE csm.content_id = ? AND c.id = csm.content_id", contentId).Scan(&contentSignatureMeta)
+
+	if contentSignatureMeta.ID == 0 {
+		return c.JSON(http.StatusUnauthorized, HttpErrorResponse{
+			Error: HttpError{
+				Code:    http.StatusUnauthorized,
+				Reason:  http.StatusText(http.StatusUnauthorized),
+				Details: "content is not signed or requesting api key does not have access to this content",
+			},
+		})
+	}
+
+	dbSignature, _ := base64.StdEncoding.DecodeString(contentSignatureMeta.Signature)
+	unhexSignature, _ := hex.DecodeString(signatureHex)
+	paramSignature, _ := base64.StdEncoding.DecodeString(string(unhexSignature))
+
+	if !bytes.Equal(dbSignature, paramSignature) {
+		return c.JSON(http.StatusUnauthorized, HttpErrorResponse{
+			Error: HttpError{
+				Code:    http.StatusUnauthorized,
+				Reason:  http.StatusText(http.StatusUnauthorized),
+				Details: "signature is not valid: " + contentSignatureMeta.Signature,
+			},
+		})
+	}
+
+	// validate expiration timestamp
+	if contentSignatureMeta.ExpirationTimestamp.Before(time.Now()) {
+		return c.JSON(http.StatusBadRequest, HttpErrorResponse{
+			Error: HttpError{
+				Code:    http.StatusBadRequest,
+				Reason:  http.StatusText(http.StatusBadRequest),
+				Details: "signed url is expired: " + contentSignatureMeta.ExpirationTimestamp.String(),
+			},
+		})
+	}
+
+	_, errorVerify := utils.VerifyEcdsaSha512Signature(contentSignatureMeta.Message, string(unhexSignature), utils.PUBLIC_KEY_PEM)
+	if errorVerify != nil {
+		return c.JSON(http.StatusBadRequest, HttpErrorResponse{
+			Error: HttpError{
+				Code:    http.StatusBadRequest,
+				Reason:  http.StatusText(http.StatusBadRequest),
+				Details: "signature is invalid: " + errorVerify.Error(),
+			},
+		})
+	}
+
+	// check content
+	c.SetParamNames("path")
+	c.SetParamValues(contentSignatureMeta.Cid)
+	return GatewayResolverCheckHandlerDirectPath(c)
+}
 func GatewayContentResolverCheckHandler(c echo.Context) error {
 	authorizationString := c.Request().Header.Get("Authorization")
 	authParts := strings.Split(authorizationString, " ")
 	response, err := http.Post(
-		"https://auth.estuary.tech/check-api-key",
+		gatewayHandler.node.Config.Delta.AuthSvcUrl+"/check-api-key",
 		"application/json",
 		strings.NewReader(fmt.Sprintf(`{"token": "%s"}`, authParts[1])),
 	)
@@ -321,7 +445,7 @@ func GatewayResolverCheckHandlerDirectPath(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	nd, err := gatewayHandler.node.Get(c.Request().Context(), cid)
+	nd, err := gatewayHandler.node.Node.Get(c.Request().Context(), cid)
 	if err != nil {
 		return err
 	}
@@ -347,7 +471,7 @@ func GatewayResolverCheckHandlerDirectPath(c echo.Context) error {
 		return errors.New("unknown node type")
 	}
 
-	dr, err := uio.NewDagReader(ctx, nd, gatewayHandler.node.DAGService)
+	dr, err := uio.NewDagReader(ctx, nd, gatewayHandler.node.Node.DAGService)
 	if err != nil {
 		return err
 	}
@@ -374,7 +498,7 @@ type CustomLinks struct {
 
 func ServeDir(ctx context.Context, n mdagipld.Node, w http.ResponseWriter, req *http.Request) error {
 
-	dir, err := uio.NewDirectoryFromNode(gatewayHandler.node.DAGService, n)
+	dir, err := uio.NewDirectoryFromNode(gatewayHandler.node.Node.DAGService, n)
 	if err != nil {
 		return err
 	}
@@ -382,7 +506,7 @@ func ServeDir(ctx context.Context, n mdagipld.Node, w http.ResponseWriter, req *
 	nd, err := dir.Find(ctx, "index.html")
 	switch {
 	case err == nil:
-		dr, err := uio.NewDagReader(ctx, nd, gatewayHandler.node.DAGService)
+		dr, err := uio.NewDagReader(ctx, nd, gatewayHandler.node.Node.DAGService)
 		if err != nil {
 			return err
 		}

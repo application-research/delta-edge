@@ -3,12 +3,14 @@ package api
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 	"github.com/application-research/edge-ur/jobs"
 	"github.com/application-research/edge-ur/utils"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-car"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -67,11 +69,225 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 	var DeltaUploadApi = node.Config.Delta.ApiUrl
 	content := e.Group("/content")
 	content.POST("/add", handlePinAddToNodeToMiners(node, DeltaUploadApi))
+	content.POST("/delete/:contentId", handlePinDeleteToNodeToMiners(node, DeltaUploadApi))
+
+	content.POST("/request-signed-url", handleRequestSignedUrl(node, DeltaUploadApi))
 	//content.POST("/add-car", handlePinAddCarToNodeToMiners(node, DeltaUploadApi))
 	//content.POST("/fetch-pin", handleFetchPinToNodeToMiners(node, DeltaUploadApi)) // foreign cids
 
 }
 
+type SignedUrlRequest struct {
+	Message             string    `json:"message"`
+	CurrentTimestamp    time.Time `json:"current_timestamp"`
+	ExpirationTimestamp time.Time `json:"expiration_timestamp"`
+	FilecoinID          int       `json:"filecoin_id"`
+	Signature           string    `json:"signature"`
+}
+
+func handleRequestSignedUrl(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		errValidate := validate(c, node)
+		if errValidate != nil {
+			return errValidate
+		}
+
+		var signedUrlRequest SignedUrlRequest
+		errBind := c.Bind(&signedUrlRequest)
+		if errBind != nil {
+			return errBind
+		}
+		fmt.Println("signedUrlRequest", signedUrlRequest)
+		fmt.Println("signedUrlRequest.Message", signedUrlRequest.Message)
+		fmt.Println("signedUrlRequest.Signature", signedUrlRequest.Signature)
+
+		// validate expiration timestamp
+		if signedUrlRequest.ExpirationTimestamp.Before(time.Now()) {
+			return c.JSON(http.StatusBadRequest, HttpErrorResponse{
+				Error: HttpError{
+					Code:    http.StatusBadRequest,
+					Reason:  http.StatusText(http.StatusBadRequest),
+					Details: "expiration timestamp is in the past",
+				},
+			})
+		}
+
+		// validate signature
+		_, errorVerify := utils.VerifyEcdsaSha512Signature(signedUrlRequest.Message, signedUrlRequest.Signature, utils.PUBLIC_KEY_PEM)
+		if errorVerify != nil {
+			return c.JSON(http.StatusBadRequest, HttpErrorResponse{
+				Error: HttpError{
+					Code:    http.StatusBadRequest,
+					Reason:  http.StatusText(http.StatusBadRequest),
+					Details: "signature is invalid: " + errorVerify.Error(),
+				},
+			})
+		}
+
+		// save this on the database
+		var contentSignatureMeta core.ContentSignatureMeta
+		contentSignatureMeta.Signature = signedUrlRequest.Signature
+		contentSignatureMeta.ContentId = int64(signedUrlRequest.FilecoinID)
+		contentSignatureMeta.ExpirationTimestamp = signedUrlRequest.ExpirationTimestamp
+		contentSignatureMeta.CurrentTimestamp = signedUrlRequest.CurrentTimestamp
+		contentSignatureMeta.Message = signedUrlRequest.Message
+		contentSignatureMeta.CreatedAt = time.Now()
+		contentSignatureMeta.UpdatedAt = time.Now()
+		// generate signed url
+		hexSignature := hex.EncodeToString([]byte(signedUrlRequest.Signature))
+		signedUrl := "/gw/content/" + strconv.Itoa(int(contentSignatureMeta.ContentId)) + "?signature=" + hexSignature
+		contentSignatureMeta.SignedUrl = signedUrl
+
+		// save it on the database
+		node.DB.Create(&contentSignatureMeta) // save it
+
+		return c.JSON(200, struct {
+			Status    string `json:"status"`
+			Message   string `json:"message"`
+			SignedUrl string `json:"signed_url"`
+		}{
+			Status:    "success",
+			Message:   "signed url generated successfully",
+			SignedUrl: signedUrl,
+		})
+	}
+}
+func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		authorizationString := c.Request().Header.Get("Authorization")
+		authParts := strings.Split(authorizationString, " ")
+		err := validate(c, node)
+		if err != nil {
+			return err
+		}
+
+		minersString := c.FormValue("miners") // comma-separated list of miners to pin to
+		makeDeal := c.FormValue("make_deal")  // whether to make a deal with the miners or not
+
+		if makeDeal == "" {
+			makeDeal = "true"
+		}
+
+		miners := make(map[string]bool)
+		for _, miner := range strings.Split(minersString, ",") {
+			miners[miner] = true
+		}
+
+		file, err := c.FormFile("data")
+		if err != nil {
+			return err
+		}
+		src, err := file.Open()
+		srcR, err := file.Open()
+		if err != nil {
+			return err
+		}
+
+		addNode, err := node.Node.AddPinFile(c.Request().Context(), src, nil)
+		if err != nil {
+			return c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error adding the file to IPFS",
+			})
+		}
+
+		var contentList []core.Content
+
+		for miner := range miners {
+			newContent := core.Content{
+				Name:             file.Filename,
+				Size:             file.Size,
+				Cid:              addNode.Cid().String(),
+				DeltaNodeUrl:     DeltaUploadApi,
+				RequestingApiKey: authParts[1],
+				Status:           utils.STATUS_PINNED,
+				Miner:            miner,
+				MakeDeal: func() bool {
+					if makeDeal == "true" {
+						return true
+					}
+					return false
+				}(),
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}
+
+			node.DB.Create(&newContent)
+
+			if makeDeal == "true" {
+				job := jobs.CreateNewDispatcher()
+				job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
+				job.Start(1)
+			}
+
+			if err != nil {
+				c.JSON(500, UploadResponse{
+					Status:  "error",
+					Message: "Error pinning the file" + err.Error(),
+				})
+			}
+			newContent.RequestingApiKey = ""
+			contentList = append(contentList, newContent)
+		}
+
+		c.JSON(200, struct {
+			Status   string         `json:"status"`
+			Message  string         `json:"message"`
+			Contents []core.Content `json:"contents"`
+		}{
+			Status:   "success",
+			Message:  "File uploaded and pinned successfully to miners. Please take note of the ids.",
+			Contents: contentList,
+		})
+
+		return nil
+	}
+}
+func handlePinDeleteToNodeToMiners(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		authorizationString := c.Request().Header.Get("Authorization")
+		authParts := strings.Split(authorizationString, " ")
+		err := validate(c, node)
+		if err != nil {
+			return err
+		}
+
+		contentIdToDelete := c.Param("contentId")
+
+		// check if the auth key owns the content id
+		var content core.Content
+		node.DB.Where("id = ? and requesting_api_key = ?", contentIdToDelete, authParts[1]).First(&content)
+
+		if content.ID == 0 {
+			return c.JSON(http.StatusUnauthorized, HttpErrorResponse{
+				Error: HttpError{
+					Code:    http.StatusUnauthorized,
+					Reason:  http.StatusText(http.StatusUnauthorized),
+					Details: "The given API key does not own this content ID",
+				},
+			})
+		}
+
+		if content.ID != 0 {
+			cidToDelete, err := cid.Decode(content.Cid)
+			if err != nil {
+				return c.JSON(500, UploadResponse{
+					Status:  "error",
+					Message: "Error decoding the CID",
+				})
+			}
+
+			// delete from blockstore
+			node.Node.Blockservice.DeleteBlock(context.Background(), cidToDelete)
+
+			// soft delete from db
+			content.LastMessage = utils.STATUS_UNPINNED
+			content.Status = utils.STATUS_UNPINNED
+
+		}
+		return nil
+	}
+}
 func handleFetchPinToNodeToMiners(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
@@ -176,7 +392,6 @@ func handleFetchPinToNodeToMiners(node *core.LightNode, DeltaUploadApi string) f
 		return nil
 	}
 }
-
 func handleFetchPinToNode(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
@@ -246,141 +461,11 @@ func handleFetchPinToNode(node *core.LightNode, DeltaUploadApi string) func(c ec
 		return nil
 	}
 }
-
 func handlePinAddToNodeLarge(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
 		fmt.Println("authParts: ", authParts[1])
-		return nil
-	}
-}
-func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
-	return func(c echo.Context) error {
-
-		authorizationString := c.Request().Header.Get("Authorization")
-		authParts := strings.Split(authorizationString, " ")
-
-		response, err := http.Post(
-			"https://auth.estuary.tech/check-api-key",
-			"application/json",
-			strings.NewReader(fmt.Sprintf(`{"token": "%s"}`, authParts[1])),
-		)
-
-		if err != nil {
-			log.Errorf("handler error: %s", err)
-			return c.JSON(http.StatusInternalServerError, HttpErrorResponse{
-				Error: HttpError{
-					Code:    http.StatusInternalServerError,
-					Reason:  http.StatusText(http.StatusInternalServerError),
-					Details: err.Error(),
-				},
-			})
-		}
-
-		authResp, err := GetAuthResponse(response)
-		if err != nil {
-			log.Errorf("handler error: %s", err)
-			return c.JSON(http.StatusInternalServerError, HttpErrorResponse{
-				Error: HttpError{
-					Code:    http.StatusInternalServerError,
-					Reason:  http.StatusText(http.StatusInternalServerError),
-					Details: err.Error(),
-				},
-			})
-		}
-		fmt.Println("authResp: ", authResp)
-		if authResp.Result.Validated == false {
-			return c.JSON(http.StatusUnauthorized, HttpErrorResponse{
-				Error: HttpError{
-					Code:    http.StatusUnauthorized,
-					Reason:  http.StatusText(http.StatusUnauthorized),
-					Details: authResp.Result.Details,
-				},
-			})
-		}
-
-		fmt.Println("authResp: ", authResp)
-
-		minersString := c.FormValue("miners") // comma-separated list of miners to pin to
-		makeDeal := c.FormValue("make_deal")  // whether to make a deal with the miners or not
-
-		if makeDeal == "" {
-			makeDeal = "true"
-		}
-
-		miners := make(map[string]bool)
-		for _, miner := range strings.Split(minersString, ",") {
-			miners[miner] = true
-		}
-
-		file, err := c.FormFile("data")
-		if err != nil {
-			return err
-		}
-		src, err := file.Open()
-		srcR, err := file.Open()
-		if err != nil {
-			return err
-		}
-
-		addNode, err := node.Node.AddPinFile(c.Request().Context(), src, nil)
-		if err != nil {
-			return c.JSON(500, UploadResponse{
-				Status:  "error",
-				Message: "Error adding the file to IPFS",
-			})
-		}
-
-		var contentList []core.Content
-
-		for miner := range miners {
-			newContent := core.Content{
-				Name:             file.Filename,
-				Size:             file.Size,
-				Cid:              addNode.Cid().String(),
-				DeltaNodeUrl:     DeltaUploadApi,
-				RequestingApiKey: authParts[1],
-				Status:           utils.STATUS_PINNED,
-				Miner:            miner,
-				MakeDeal: func() bool {
-					if makeDeal == "true" {
-						return true
-					}
-					return false
-				}(),
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-			}
-
-			node.DB.Create(&newContent)
-
-			if makeDeal == "true" {
-				job := jobs.CreateNewDispatcher()
-				job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
-				job.Start(1)
-			}
-
-			if err != nil {
-				c.JSON(500, UploadResponse{
-					Status:  "error",
-					Message: "Error pinning the file" + err.Error(),
-				})
-			}
-			newContent.RequestingApiKey = ""
-			contentList = append(contentList, newContent)
-		}
-
-		c.JSON(200, struct {
-			Status   string         `json:"status"`
-			Message  string         `json:"message"`
-			Contents []core.Content `json:"contents"`
-		}{
-			Status:   "success",
-			Message:  "File uploaded and pinned successfully to miners. Please take note of the ids.",
-			Contents: contentList,
-		})
-
 		return nil
 	}
 }
