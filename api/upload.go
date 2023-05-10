@@ -81,7 +81,7 @@ type SignedUrlRequest struct {
 	Message             string    `json:"message"`
 	CurrentTimestamp    time.Time `json:"current_timestamp"`
 	ExpirationTimestamp time.Time `json:"expiration_timestamp"`
-	FilecoinID          int       `json:"filecoin_id"`
+	EdgeContentId       int64     `json:"edge_content_id"`
 	Signature           string    `json:"signature"`
 }
 
@@ -127,7 +127,7 @@ func handleRequestSignedUrl(node *core.LightNode, DeltaUploadApi string) func(c 
 		// save this on the database
 		var contentSignatureMeta core.ContentSignatureMeta
 		contentSignatureMeta.Signature = signedUrlRequest.Signature
-		contentSignatureMeta.ContentId = int64(signedUrlRequest.FilecoinID)
+		contentSignatureMeta.ContentId = int64(signedUrlRequest.EdgeContentId)
 		contentSignatureMeta.ExpirationTimestamp = signedUrlRequest.ExpirationTimestamp
 		contentSignatureMeta.CurrentTimestamp = signedUrlRequest.CurrentTimestamp
 		contentSignatureMeta.Message = signedUrlRequest.Message
