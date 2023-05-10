@@ -30,10 +30,6 @@ type DeltaConfig struct {
 		DealCheck         int    `env:"DEAL_CHECK" envDefault:"600"`
 		ReplicationFactor int    `env:"REPLICATION_FACTOR" envDefault:"3"`
 	}
-
-	UploadSigner struct {
-		UploadPublicKey string `env:"UPLOAD_PUBLIC_KEY"`
-	}
 }
 
 func InitConfig() DeltaConfig {
