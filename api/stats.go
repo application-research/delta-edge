@@ -35,7 +35,7 @@ func ConfigureStatsRouter(e *echo.Group, node *core.LightNode) {
 			return c.JSON(500, err)
 		}
 
-		err = node.DB.Raw("select sum(sum) from(select count(*) as sum from contents group by requesting_api_key)").Scan(&s.TotalApiKeys).Error
+		err = node.DB.Raw("select count(*) as total_api_keys from (select count(*) as total_api_keys from contents group by requesting_api_key) as total_api_keys").Scan(&s.TotalApiKeys).Error
 		if err != nil {
 			return c.JSON(500, err)
 		}
