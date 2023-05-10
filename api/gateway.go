@@ -50,10 +50,10 @@ func ConfigureGatewayRouter(e *echo.Group, node *core.LightNode) {
 	gatewayHandler.bs = node.Node.Blockstore
 	gatewayHandler.db = node.DB
 
-	//e.GET("/gw/ipfs/:path", GatewayResolverCheckHandlerDirectPath)
-	//e.GET("/gw/:path", GatewayResolverCheckHandlerDirectPath)
+	e.GET("/gw/ipfs/:path", GatewayResolverCheckHandlerDirectPath)
+	e.GET("/gw/:path", GatewayResolverCheckHandlerDirectPath)
 	e.GET("/gw/content/:contentId", GatewayContentResolverCheckHandler)
-	//e.GET("/ipfs/:path", GatewayResolverCheckHandlerDirectPath)
+	e.GET("/ipfs/:path", GatewayResolverCheckHandlerDirectPath)
 }
 
 func (gw *GatewayHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
