@@ -25,7 +25,12 @@ func ConfigureStatsRouter(e *echo.Group, node *core.LightNode) {
 		}
 
 		var s Stats
-		err := node.DB.Raw("select count(*) as total_content_count, sum(size) as total_size from contents").Scan(&s).Error
+		err := node.DB.Raw("select count(total_content_count) from (select distinct(cid) as total_content_count from contents) as total_content_count").Scan(&s.TotalContentCount).Error
+		if err != nil {
+			return c.JSON(500, err)
+		}
+
+		err = node.DB.Raw("select sum(total_size) from (select distinct(cid),size as total_size from contents) as total_size").Scan(&s.TotalSize).Error
 		if err != nil {
 			return c.JSON(500, err)
 		}
