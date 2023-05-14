@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/application-research/edge-ur/jobs"
 	"github.com/application-research/edge-ur/utils"
+	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-car"
 	"strings"
@@ -65,12 +66,214 @@ type UploadResponse struct {
 func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 	var DeltaUploadApi = node.Config.Delta.ApiUrl
 	content := e.Group("/content")
-	content.POST("/add", handlePinAddToNodeToMiners(node, DeltaUploadApi))
+	content.POST("/add", handleUploadToCarBucketAndMiners(node, DeltaUploadApi))
 	content.POST("/add-car", handlePinAddCarToNodeToMiners(node, DeltaUploadApi))
 	content.POST("/fetch-pin", handleFetchPinToNodeToMiners(node, DeltaUploadApi)) // foreign cids
 
 }
 
+// upload a file
+// check an open bucket, if none create one, if there's open get the ID
+// save content with the bucket ID
+// run bucket upload checker.
+
+func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		authorizationString := c.Request().Header.Get("Authorization")
+		authParts := strings.Split(authorizationString, " ")
+		minersString := c.FormValue("miners") // comma-separated list of miners to pin to
+		makeDeal := c.FormValue("make_deal")  // whether to make a deal with the miners or not
+
+		if makeDeal == "" {
+			makeDeal = "true"
+		}
+
+		miners := make(map[string]bool)
+		for _, miner := range strings.Split(minersString, ",") {
+			miners[miner] = true
+		}
+
+		file, err := c.FormFile("data")
+		if err != nil {
+			return err
+		}
+		src, err := file.Open()
+		srcR, err := file.Open()
+		if err != nil {
+			return err
+		}
+
+		addNode, err := node.Node.AddPinFile(c.Request().Context(), src, nil)
+		if err != nil {
+			return c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error adding the file to IPFS",
+			})
+		}
+
+		// check open bucket
+
+		var contentList []core.Content
+
+		for miner := range miners {
+
+			var bucket core.CarBucket
+			node.DB.Where("status = ?", "open").First(&bucket)
+			if bucket.ID == 0 {
+				// create a new bucket
+				bucketUuid, err := uuid.NewUUID()
+				if err != nil {
+					return c.JSON(500, UploadResponse{
+						Status:  "error",
+						Message: "Error creating bucket",
+					})
+				}
+				bucket = core.CarBucket{
+					Status:    "open",
+					Uuid:      bucketUuid.String(),
+					Miner:     miner,
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				}
+				node.DB.Create(&bucket)
+			}
+
+			newContent := core.Content{
+				Name:             file.Filename,
+				Size:             file.Size,
+				Cid:              addNode.Cid().String(),
+				DeltaNodeUrl:     DeltaUploadApi,
+				RequestingApiKey: authParts[1],
+				Status:           utils.STATUS_PINNED,
+				Miner:            miner,
+				CarBucket:        bucket.ID,
+				MakeDeal: func() bool {
+					if makeDeal == "true" {
+						return true
+					}
+					return false
+				}(),
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}
+
+			node.DB.Create(&newContent)
+
+			if makeDeal == "true" {
+				job := jobs.CreateNewDispatcher()
+				job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
+				job.Start(1)
+			}
+
+			if err != nil {
+				c.JSON(500, UploadResponse{
+					Status:  "error",
+					Message: "Error pinning the file" + err.Error(),
+				})
+			}
+			newContent.RequestingApiKey = ""
+			contentList = append(contentList, newContent)
+		}
+
+		c.JSON(200, struct {
+			Status   string         `json:"status"`
+			Message  string         `json:"message"`
+			Contents []core.Content `json:"contents"`
+		}{
+			Status:   "success",
+			Message:  "File uploaded and pinned successfully to miners. Please take note of the ids.",
+			Contents: contentList,
+		})
+
+		return nil
+	}
+}
+func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		authorizationString := c.Request().Header.Get("Authorization")
+		authParts := strings.Split(authorizationString, " ")
+		minersString := c.FormValue("miners") // comma-separated list of miners to pin to
+		makeDeal := c.FormValue("make_deal")  // whether to make a deal with the miners or not
+
+		if makeDeal == "" {
+			makeDeal = "true"
+		}
+
+		miners := make(map[string]bool)
+		for _, miner := range strings.Split(minersString, ",") {
+			miners[miner] = true
+		}
+
+		file, err := c.FormFile("data")
+		if err != nil {
+			return err
+		}
+		src, err := file.Open()
+		srcR, err := file.Open()
+		if err != nil {
+			return err
+		}
+
+		addNode, err := node.Node.AddPinFile(c.Request().Context(), src, nil)
+		if err != nil {
+			return c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error adding the file to IPFS",
+			})
+		}
+
+		var contentList []core.Content
+
+		for miner := range miners {
+			newContent := core.Content{
+				Name:             file.Filename,
+				Size:             file.Size,
+				Cid:              addNode.Cid().String(),
+				DeltaNodeUrl:     DeltaUploadApi,
+				RequestingApiKey: authParts[1],
+				Status:           utils.STATUS_PINNED,
+				Miner:            miner,
+				MakeDeal: func() bool {
+					if makeDeal == "true" {
+						return true
+					}
+					return false
+				}(),
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}
+
+			node.DB.Create(&newContent)
+
+			if makeDeal == "true" {
+				job := jobs.CreateNewDispatcher()
+				job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
+				job.Start(1)
+			}
+
+			if err != nil {
+				c.JSON(500, UploadResponse{
+					Status:  "error",
+					Message: "Error pinning the file" + err.Error(),
+				})
+			}
+			newContent.RequestingApiKey = ""
+			contentList = append(contentList, newContent)
+		}
+
+		c.JSON(200, struct {
+			Status   string         `json:"status"`
+			Message  string         `json:"message"`
+			Contents []core.Content `json:"contents"`
+		}{
+			Status:   "success",
+			Message:  "File uploaded and pinned successfully to miners. Please take note of the ids.",
+			Contents: contentList,
+		})
+
+		return nil
+	}
+}
 func handleFetchPinToNodeToMiners(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
@@ -172,222 +375,6 @@ func handleFetchPinToNodeToMiners(node *core.LightNode, DeltaUploadApi string) f
 			Contents: contentList,
 		})
 
-		return nil
-	}
-}
-
-func handleFetchPinToNode(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
-	return func(c echo.Context) error {
-		authorizationString := c.Request().Header.Get("Authorization")
-		authParts := strings.Split(authorizationString, " ")
-		cidToFetch := c.FormValue("cid")
-		miner := c.FormValue("miner")
-		source := c.FormValue("source") // multiaddress where to pull. This can be empty.
-		// if the source is given, peer to it. (optional but recommended)
-		node.ConnectToDelegates(context.Background(), []string{source}) // connects to the specified IPFS node multiaddress
-		cidToFetchCid, err := cid.Decode(cidToFetch)
-		if err != nil {
-			return c.JSON(500, UploadResponse{
-				Status:  "error",
-				Message: "Invalid CID",
-			})
-		}
-
-		addNode, err := node.Node.Get(c.Request().Context(), cidToFetchCid)
-		if err != nil {
-			return c.JSON(500, UploadResponse{
-				Status:  "error",
-				Message: "Error getting the file from the source or network",
-			})
-		}
-		addNodeSize, err := addNode.Size()
-		if err != nil {
-			return c.JSON(500, UploadResponse{
-				Status:  "error",
-				Message: "Error getting the file size",
-			})
-		}
-
-		fmt.Println("addNode: ", addNode.Cid().String())
-		newContent := core.Content{
-			Name:             addNode.Cid().String(),
-			Size:             int64(addNodeSize),
-			Cid:              addNode.Cid().String(),
-			DeltaNodeUrl:     DeltaUploadApi,
-			RequestingApiKey: authParts[1],
-			Status:           "fetching",
-			Miner:            miner,
-			CreatedAt:        time.Now(),
-			UpdatedAt:        time.Now(),
-		}
-
-		node.DB.Create(&newContent)
-
-		srcR := bytes.NewReader(addNode.RawData())
-
-		job := jobs.CreateNewDispatcher()
-		job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
-		job.Start(1)
-
-		if err != nil {
-			c.JSON(500, UploadResponse{
-				Status:  "error",
-				Message: "Error pinning the file" + err.Error(),
-			})
-		}
-
-		c.JSON(200, UploadResponse{
-			Status:  "success",
-			Message: "File uploaded and pinned successfully. Please take note of the id.",
-			ID:      newContent.ID,
-			Cid:     newContent.Cid,
-		})
-		return nil
-	}
-}
-func handlePinAddToNodeLarge(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
-	return func(c echo.Context) error {
-		authorizationString := c.Request().Header.Get("Authorization")
-		authParts := strings.Split(authorizationString, " ")
-		fmt.Println("authParts: ", authParts[1])
-		return nil
-	}
-}
-func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
-	return func(c echo.Context) error {
-		authorizationString := c.Request().Header.Get("Authorization")
-		authParts := strings.Split(authorizationString, " ")
-		minersString := c.FormValue("miners") // comma-separated list of miners to pin to
-		makeDeal := c.FormValue("make_deal")  // whether to make a deal with the miners or not
-
-		if makeDeal == "" {
-			makeDeal = "true"
-		}
-
-		miners := make(map[string]bool)
-		for _, miner := range strings.Split(minersString, ",") {
-			miners[miner] = true
-		}
-
-		file, err := c.FormFile("data")
-		if err != nil {
-			return err
-		}
-		src, err := file.Open()
-		srcR, err := file.Open()
-		if err != nil {
-			return err
-		}
-
-		addNode, err := node.Node.AddPinFile(c.Request().Context(), src, nil)
-		if err != nil {
-			return c.JSON(500, UploadResponse{
-				Status:  "error",
-				Message: "Error adding the file to IPFS",
-			})
-		}
-
-		var contentList []core.Content
-
-		for miner := range miners {
-			newContent := core.Content{
-				Name:             file.Filename,
-				Size:             file.Size,
-				Cid:              addNode.Cid().String(),
-				DeltaNodeUrl:     DeltaUploadApi,
-				RequestingApiKey: authParts[1],
-				Status:           utils.STATUS_PINNED,
-				Miner:            miner,
-				MakeDeal: func() bool {
-					if makeDeal == "true" {
-						return true
-					}
-					return false
-				}(),
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-			}
-
-			node.DB.Create(&newContent)
-
-			if makeDeal == "true" {
-				job := jobs.CreateNewDispatcher()
-				job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
-				job.Start(1)
-			}
-
-			if err != nil {
-				c.JSON(500, UploadResponse{
-					Status:  "error",
-					Message: "Error pinning the file" + err.Error(),
-				})
-			}
-			newContent.RequestingApiKey = ""
-			contentList = append(contentList, newContent)
-		}
-
-		c.JSON(200, struct {
-			Status   string         `json:"status"`
-			Message  string         `json:"message"`
-			Contents []core.Content `json:"contents"`
-		}{
-			Status:   "success",
-			Message:  "File uploaded and pinned successfully to miners. Please take note of the ids.",
-			Contents: contentList,
-		})
-
-		return nil
-	}
-}
-func handlePinAddToNode(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
-	return func(c echo.Context) error {
-		authorizationString := c.Request().Header.Get("Authorization")
-		authParts := strings.Split(authorizationString, " ")
-		miner := c.FormValue("miner")
-
-		file, err := c.FormFile("data")
-		if err != nil {
-			return err
-		}
-		src, err := file.Open()
-		srcR, err := file.Open()
-		if err != nil {
-			return err
-		}
-
-		addNode, err := node.Node.AddPinFile(c.Request().Context(), src, nil)
-		fmt.Println("addNode: ", addNode.Cid().String())
-		newContent := core.Content{
-			Name:             file.Filename,
-			Size:             file.Size,
-			Cid:              addNode.Cid().String(),
-			DeltaNodeUrl:     DeltaUploadApi,
-			RequestingApiKey: authParts[1],
-			Status:           utils.STATUS_PINNED,
-			Miner:            miner,
-			CreatedAt:        time.Now(),
-			UpdatedAt:        time.Now(),
-		}
-
-		node.DB.Create(&newContent)
-
-		job := jobs.CreateNewDispatcher()
-		job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
-		job.Start(1)
-
-		if err != nil {
-			c.JSON(500, UploadResponse{
-				Status:  "error",
-				Message: "Error pinning the file" + err.Error(),
-			})
-		}
-
-		c.JSON(200, UploadResponse{
-			Status:  "success",
-			Message: "File uploaded and pinned successfully. Please take note of the id.",
-			ID:      newContent.ID,
-			Cid:     newContent.Cid,
-		})
 		return nil
 	}
 }
