@@ -78,7 +78,7 @@ type Content struct {
 	RequestingApiKey string    `json:"requesting_api_key,omitempty"`
 	DeltaContentId   int64     `json:"delta_content_id"`
 	DeltaNodeUrl     string    `json:"delta_node_url"`
-	CarBucket        int64     `json:"car_bucket"`
+	CarBucketUuid    string    `json:"car_bucket_uuid"`
 	Status           string    `json:"status"`
 	LastMessage      string    `json:"last_message"`
 	Miner            string    `json:"miner"`

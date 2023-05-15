@@ -146,7 +146,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 				RequestingApiKey: authParts[1],
 				Status:           utils.STATUS_PINNED,
 				Miner:            miner,
-				CarBucket:        bucket.ID,
+				CarBucketUuid:    bucket.Uuid,
 				MakeDeal: func() bool {
 					if makeDeal == "true" {
 						return true
