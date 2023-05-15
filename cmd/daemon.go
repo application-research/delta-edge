@@ -48,6 +48,8 @@ func DaemonCmd(cfg *config.DeltaConfig) []*cli.Command {
 			port := c.String("port")
 			if repo == "" {
 				repo = cfg.Node.Repo
+			} else {
+				cfg.Node.Repo = repo
 			}
 			if port != "" {
 				portInt, err := strconv.Atoi(port)

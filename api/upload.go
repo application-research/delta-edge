@@ -131,7 +131,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 				bucket = core.CarBucket{
 					Status:    "open",
 					Uuid:      bucketUuid.String(),
-					Miner:     miner,
+					Miner:     miner, // blank
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),
 				}
@@ -161,7 +161,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 
 			if makeDeal == "true" {
 				job := jobs.CreateNewDispatcher()
-				job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
+				job.AddJob(jobs.NewUploadToDeltaProcessor(node, newContent, srcR))
 				job.Start(1)
 			}
 
@@ -247,7 +247,7 @@ func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) fun
 
 			if makeDeal == "true" {
 				job := jobs.CreateNewDispatcher()
-				job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
+				job.AddJob(jobs.NewUploadToDeltaProcessor(node, newContent, srcR))
 				job.Start(1)
 			}
 
@@ -351,7 +351,7 @@ func handleFetchPinToNodeToMiners(node *core.LightNode, DeltaUploadApi string) f
 			if makeDeal == "true" {
 				srcR := bytes.NewReader(addNode.RawData())
 				job := jobs.CreateNewDispatcher()
-				job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
+				job.AddJob(jobs.NewUploadToDeltaProcessor(node, newContent, srcR))
 				job.Start(1)
 			}
 
@@ -443,7 +443,7 @@ func handlePinAddCarToNodeToMiners(node *core.LightNode, DeltaUploadApi string) 
 
 			if makeDeal == "true" {
 				job := jobs.CreateNewDispatcher()
-				job.AddJob(jobs.NewUploadToEstuaryProcessor(node, newContent, srcR))
+				job.AddJob(jobs.NewUploadToDeltaProcessor(node, newContent, srcR))
 				job.Start(1)
 			}
 

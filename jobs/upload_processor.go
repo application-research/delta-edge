@@ -124,7 +124,7 @@ type DealE2EUploadResponse struct {
 	} `json:"replicated_contents"`
 }
 
-func NewUploadToEstuaryProcessor(ln *core.LightNode, contentToProcess core.Content, fileNode io.Reader) IProcessor {
+func NewUploadToDeltaProcessor(ln *core.LightNode, contentToProcess core.Content, fileNode io.Reader) IProcessor {
 	DELTA_UPLOAD_API = ln.Config.Delta.ApiUrl
 	REPLICATION_FACTOR = string(ln.Config.Delta.ReplicationFactor)
 	return &UploadToDeltaProcessor{
@@ -144,7 +144,6 @@ func (r *UploadToDeltaProcessor) Run() error {
 
 	// if network connection is not available or delta node is not available, then we need to skip and
 	// let the upload retry consolidate the content until it is available
-	// check if there are open bucket. if there are, generate a car for them,
 
 	maxRetries := 5
 	retryInterval := 5 * time.Second

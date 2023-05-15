@@ -74,7 +74,7 @@ func NewEdgeNode(ctx context.Context, cfg config.DeltaConfig) (*LightNode, error
 			"/ip4/" + publicIp + "/tcp/6745",
 		},
 	}
-
+	fmt.Println("cfg.Node.Repo is: ", cfg.Node.Repo)
 	params := whypfs.NewNodeParams{
 		Ctx:       ctx,
 		Datastore: datastore.NewMapDatastore(),
