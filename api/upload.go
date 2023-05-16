@@ -118,7 +118,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 		for miner := range miners {
 
 			var bucket core.CarBucket
-			node.DB.Where("status = ?", "open").First(&bucket)
+			node.DB.Where("status = ? and miner = ?", "open", miner).First(&bucket)
 			if bucket.ID == 0 {
 				// create a new bucket
 				bucketUuid, err := uuid.NewUUID()

@@ -71,7 +71,8 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 	r.LightNode.DB.Model(&core.Content{}).Where("car_bucket_uuid = ?", bucketUuid).Find(&content)
 
 	// for each content, generate a node and a raw
-	var nodeLayers []merkledag.ProtoNode
+	var totalBucketSize uint64
+	var nodeLayers []*merkledag.ProtoNode
 	for _, c := range content {
 
 		cCid, err := cid.Decode(c.Cid)
@@ -83,20 +84,31 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 			panic(errCData)
 		}
 		cNode := &merkledag.ProtoNode{}
+		fmt.Println("Cid: ", cCid.String())
+		fmt.Println(cData.Size())
+		contentSize, err := cData.Size()
+		if err != nil {
+			panic(err)
+		}
+		totalBucketSize += contentSize
+		fmt.Println("Total bucket size: ", totalBucketSize)
 		cRaw := merkledag.NewRawNode(cData.RawData())
 		cNode.SetCidBuilder(GetCidBuilderDefault())
 		cNode.AddNodeLink("raw", cRaw)
 
 		if len(nodeLayers) == 0 {
-			nodeLayers = append(nodeLayers, *cNode)
+			cNodeN := &merkledag.ProtoNode{}
+			cNodeN.SetCidBuilder(GetCidBuilderDefault())
+			nodeLayers = append(nodeLayers, cNodeN)
 			continue
 		}
+
 		lastNodelayer := nodeLayers[len(nodeLayers)-1]
-		cNode.AddNodeLink("node", &lastNodelayer)
-		nodeLayers = append(nodeLayers, *cNode)
+		cNode.AddNodeLink("node", lastNodelayer)
+		nodeLayers = append(nodeLayers, cNode)
 
 		// add to the dag service
-		r.LightNode.Node.DAGService.Add(context.Background(), &lastNodelayer)
+		r.LightNode.Node.DAGService.Add(context.Background(), lastNodelayer)
 		r.LightNode.Node.DAGService.Add(context.Background(), cNode)
 		r.LightNode.Node.DAGService.Add(context.Background(), cRaw)
 
@@ -121,6 +133,7 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 	})
 
 	// load the car
+	fmt.Println("buf: ", buf.Len())
 	ch, err := car.LoadCar(context.Background(), r.LightNode.Node.BlockStore(), buf)
 	if err != nil {
 		panic(err)
@@ -145,7 +158,7 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 	r.LightNode.DB.Model(&core.CarBucket{}).Where("uuid = ?", bucketUuid).First(&bucket)
 	bucket.Cid = ch.Roots[0].String()
 	bucket.RequestingApiKey = r.Content.RequestingApiKey
-	bucket.Size = int64(len(combinedData))
+	bucket.Size = int64(totalBucketSize)
 	r.LightNode.DB.Save(&bucket)
 
 	// upload to delta

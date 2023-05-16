@@ -11,7 +11,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"time"
 )
 
@@ -22,13 +21,9 @@ func OpenDatabase(cfg config.DeltaConfig) (*gorm.DB, error) {
 	var err error
 
 	if cfg.Node.DbDsn[:8] == "postgres" {
-		DB, err = gorm.Open(postgres.Open(cfg.Node.DbDsn), &gorm.Config{
-			Logger: logger.Default.LogMode(logger.Silent),
-		})
+		DB, err = gorm.Open(postgres.Open(cfg.Node.DbDsn), &gorm.Config{})
 	} else {
-		DB, err = gorm.Open(sqlite.Open(cfg.Node.DbDsn), &gorm.Config{
-			Logger: logger.Default.LogMode(logger.Silent),
-		})
+		DB, err = gorm.Open(sqlite.Open(cfg.Node.DbDsn), &gorm.Config{})
 	}
 
 	sqldb, err := DB.DB()
