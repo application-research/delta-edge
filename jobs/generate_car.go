@@ -3,8 +3,10 @@ package jobs
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"github.com/application-research/edge-ur/core"
 	"github.com/ipfs/go-cid"
+	format "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-merkledag"
 	"github.com/ipld/go-car"
 	selectorparse "github.com/ipld/go-ipld-prime/traversal/selector/parse"
@@ -38,13 +40,27 @@ func (r *GenerateCarProcessor) Run() error {
 	var buckets []core.CarBucket
 	r.LightNode.DB.Model(&core.CarBucket{}).Where("status = ?", "open").Find(&buckets)
 
-	// only process if the bucket is more than 5GB
 	// get all open buckets and process
 	for _, bucket := range buckets {
-		r.GenerateCarForBucket(bucket.Uuid)
+
+		// only process if the bucket is more than 5GB
+		var content []core.Content
+		r.LightNode.DB.Model(&core.Content{}).Where("car_bucket_uuid = ?", bucket.Uuid).Find(&content)
+
+		var totalSize int64
+		for _, c := range content {
+			fmt.Println(c.Cid, c.Size)
+			totalSize += c.Size
+		}
+		fmt.Println("Total size: ", totalSize)
+		fmt.Println("Total hit size: ", 5*1024*1024)
+		if totalSize > 5*1024*1024 {
+			r.GenerateCarForBucket(bucket.Uuid)
+		}
 	}
 
-	panic("implement me")
+	return nil
+	//	panic("implement me")
 }
 
 func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
@@ -66,39 +82,41 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 		if errCData != nil {
 			panic(errCData)
 		}
-		cNode := merkledag.ProtoNode{}
+		cNode := &merkledag.ProtoNode{}
 		cRaw := merkledag.NewRawNode(cData.RawData())
 		cNode.SetCidBuilder(GetCidBuilderDefault())
+		cNode.AddNodeLink("raw", cRaw)
 
-		// get last node from nodelayers
 		if len(nodeLayers) == 0 {
-			// add raw to the last node
-			cNode.AddNodeLink("raw", cRaw)
-
-			// then add the last node to the nodelayers
-			nodeLayers = append(nodeLayers, cNode)
+			nodeLayers = append(nodeLayers, *cNode)
 			continue
-		} else {
-
-			lastNodelayer := nodeLayers[len(nodeLayers)-1]
-
-			// add raw to the last node
-			lastNodelayer.AddNodeLink("raw", cRaw)
-
-			// then add the last node to the nodelayers
-			nodeLayers = append(nodeLayers, cNode)
 		}
+		lastNodelayer := nodeLayers[len(nodeLayers)-1]
+		cNode.AddNodeLink("node", &lastNodelayer)
+		nodeLayers = append(nodeLayers, *cNode)
+
+		// add to the dag service
+		r.LightNode.Node.DAGService.Add(context.Background(), &lastNodelayer)
+		r.LightNode.Node.DAGService.Add(context.Background(), cNode)
+		r.LightNode.Node.DAGService.Add(context.Background(), cRaw)
 
 	}
 
 	// get the selective car
 	// get the last node
+	fmt.Println("Node layers: " + fmt.Sprint(len(nodeLayers)))
+	for _, n := range nodeLayers {
+		fmt.Println(n.Cid())
+	}
+
 	lastNode := nodeLayers[len(nodeLayers)-1]
 	sc := car.NewSelectiveCar(context.Background(), r.LightNode.Node.BlockStore(), []car.Dag{{Root: lastNode.Cid(), Selector: selectorparse.CommonSelector_ExploreAllRecursively}})
 	buf := new(bytes.Buffer)
+	blockCount := 0
 	var oneStepBlocks []car.Block
 	err := sc.Write(buf, func(block car.Block) error {
 		oneStepBlocks = append(oneStepBlocks, block)
+		blockCount++
 		return nil
 	})
 
@@ -108,12 +126,33 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 		panic(err)
 	}
 
+	var combinedData []byte
+	for _, c := range ch.Roots {
+		fmt.Println("Root CID before: ", c.String())
+		rootCid, err := r.LightNode.Node.Get(context.Background(), c)
+		fmt.Println("Root CID after: ", rootCid.String())
+		if err != nil {
+			panic(err)
+		}
+		//traverseLinks(context.Background(), r.LightNode.Node.DAGService, rootCid)
+		combinedData, err = traverseLinks(context.Background(), r.LightNode.Node.DAGService, rootCid)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	var bucket core.CarBucket
 	r.LightNode.DB.Model(&core.CarBucket{}).Where("uuid = ?", bucketUuid).First(&bucket)
 	bucket.Cid = ch.Roots[0].String()
-	bucket.Status = "car-generated"
+	bucket.RequestingApiKey = r.Content.RequestingApiKey
+	bucket.Size = int64(len(combinedData))
 	r.LightNode.DB.Save(&bucket)
 
+	// upload to delta
+	fmt.Println("combinedData: ", len(combinedData))
+	job := CreateNewDispatcher()
+	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, bytes.NewBuffer(combinedData)))
+	job.Start(1)
 }
 
 func GetCidBuilderDefault() cid.Builder {
@@ -124,4 +163,24 @@ func GetCidBuilderDefault() cid.Builder {
 	cidBuilder.MhType = uint64(multihash.SHA2_256)
 	cidBuilder.MhLength = -1
 	return cidBuilder
+}
+
+func traverseLinks(ctx context.Context, ds format.DAGService, nd format.Node) ([]byte, error) {
+	var combinedData []byte
+	fmt.Println("Node: ", nd.Cid().String())
+	for _, link := range nd.Links() {
+		fmt.Println("Link: ", link.Cid.String())
+		node, err := link.GetNode(ctx, ds)
+		if err != nil {
+			return nil, err
+		}
+		combinedData = append(combinedData, node.RawData()...)
+		data, err := traverseLinks(ctx, ds, node)
+		if err != nil {
+			return nil, err
+		}
+		combinedData = append(combinedData, data...)
+	}
+
+	return combinedData, nil
 }
