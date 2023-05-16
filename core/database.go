@@ -31,6 +31,15 @@ func OpenDatabase(cfg config.DeltaConfig) (*gorm.DB, error) {
 		})
 	}
 
+	sqldb, err := DB.DB()
+	if err != nil {
+		return nil, err
+	}
+	sqldb.SetMaxIdleConns(250)
+	sqldb.SetMaxOpenConns(250)
+	sqldb.SetConnMaxIdleTime(time.Hour)
+	sqldb.SetConnMaxLifetime(time.Hour)
+
 	// generate new models.
 	ConfigureModels(DB) // create models.
 
