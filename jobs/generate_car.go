@@ -1,15 +1,13 @@
 package jobs
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"github.com/application-research/edge-ur/core"
+	"github.com/application-research/filclient"
 	"github.com/ipfs/go-cid"
-	format "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-merkledag"
-	"github.com/ipld/go-car"
-	selectorparse "github.com/ipld/go-ipld-prime/traversal/selector/parse"
+	uio "github.com/ipfs/go-unixfs/io"
 	"github.com/multiformats/go-multihash"
 	"io"
 )
@@ -53,10 +51,12 @@ func (r *GenerateCarProcessor) Run() error {
 			totalSize += c.Size
 		}
 		fmt.Println("Total size: ", totalSize)
-		fmt.Println("Total hit size: ", 5*1024*1024)
-		if totalSize > 5*1024*1024 {
+		fmt.Println("Total hit size: ", r.LightNode.Config.Common.AggregateSize)
+		if totalSize > r.LightNode.Config.Common.AggregateSize && len(content) > 1 {
 			r.GenerateCarForBucket(bucket.Uuid)
+			continue
 		}
+
 	}
 
 	return nil
@@ -71,8 +71,8 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 	r.LightNode.DB.Model(&core.Content{}).Where("car_bucket_uuid = ?", bucketUuid).Find(&content)
 
 	// for each content, generate a node and a raw
-	var totalBucketSize uint64
-	var nodeLayers []*merkledag.ProtoNode
+	dir := uio.NewDirectory(r.LightNode.Node.DAGService)
+	dir.SetCidBuilder(GetCidBuilderDefault())
 	for _, c := range content {
 
 		cCid, err := cid.Decode(c.Cid)
@@ -83,88 +83,69 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 		if errCData != nil {
 			panic(errCData)
 		}
-		cNode := &merkledag.ProtoNode{}
-		fmt.Println("Cid: ", cCid.String())
-		fmt.Println(cData.Size())
-		contentSize, err := cData.Size()
+		dir.AddChild(context.Background(), fmt.Sprintf("%d-%s", c.ID, c.Name), cData)
+
+		// add a piece info per child.
+
+		//cDataReader, err := uio.NewDagReader(context.Background(), cData, r.LightNode.Node.DAGService)
+		//pieceInfo, err := core.FastCommp(cDataReader)
+		pieceCid, padded, _, err := filclient.GeneratePieceCommitment(context.Background(), cData.Cid(), r.LightNode.Node.Blockstore)
 		if err != nil {
 			panic(err)
 		}
-		totalBucketSize += contentSize
-		fmt.Println("Total bucket size: ", totalBucketSize)
-		cRaw := merkledag.NewRawNode(cData.RawData())
-		cNode.SetCidBuilder(GetCidBuilderDefault())
-		cNode.AddNodeLink("raw", cRaw)
 
-		if len(nodeLayers) == 0 {
-			cNodeN := &merkledag.ProtoNode{}
-			cNodeN.SetCidBuilder(GetCidBuilderDefault())
-			nodeLayers = append(nodeLayers, cNodeN)
-			continue
+		fmt.Println("Piece info: ", pieceCid)
+		fmt.Println("Piece info: ", padded)
+
+		c.PieceCid = pieceCid.String()
+		c.PieceSize = int64(padded)
+
+		r.LightNode.DB.Save(&c)
+
+		if err != nil {
+			panic(err)
 		}
 
-		lastNodelayer := nodeLayers[len(nodeLayers)-1]
-		cNode.AddNodeLink("node", lastNodelayer)
-		nodeLayers = append(nodeLayers, cNode)
-
-		// add to the dag service
-		r.LightNode.Node.DAGService.Add(context.Background(), lastNodelayer)
-		r.LightNode.Node.DAGService.Add(context.Background(), cNode)
-		r.LightNode.Node.DAGService.Add(context.Background(), cRaw)
-
 	}
-
-	// get the selective car
-	// get the last node
-	fmt.Println("Node layers: " + fmt.Sprint(len(nodeLayers)))
-	for _, n := range nodeLayers {
-		fmt.Println(n.Cid())
+	dirNd, err := dir.GetNode()
+	if err != nil {
+		panic(err)
 	}
+	dirSize, err := dirNd.Size()
+	// add to the dag service
+	r.LightNode.Node.DAGService.Add(context.Background(), dirNd)
 
-	lastNode := nodeLayers[len(nodeLayers)-1]
-	sc := car.NewSelectiveCar(context.Background(), r.LightNode.Node.BlockStore(), []car.Dag{{Root: lastNode.Cid(), Selector: selectorparse.CommonSelector_ExploreAllRecursively}})
-	buf := new(bytes.Buffer)
-	blockCount := 0
-	var oneStepBlocks []car.Block
-	err := sc.Write(buf, func(block car.Block) error {
-		oneStepBlocks = append(oneStepBlocks, block)
-		blockCount++
-		return nil
-	})
+	var bucket core.CarBucket
+	r.LightNode.DB.Model(&core.CarBucket{}).Where("uuid = ?", bucketUuid).First(&bucket)
+	bucket.Cid = dirNd.Cid().String()
+	bucket.RequestingApiKey = r.Content.RequestingApiKey
+	bucket.Name = dirNd.Cid().String()
+	// fast comp of the bucket
+	//cDataReader, err := uio.NewDagReader(context.Background(), dirNd, r.LightNode.Node.DAGService)
+	//pieceInfoRoot, err := core.FastCommp(cDataReader)
 
-	// load the car
-	fmt.Println("buf: ", buf.Len())
-	ch, err := car.LoadCar(context.Background(), r.LightNode.Node.BlockStore(), buf)
+	pieceCid, padded, _, err := filclient.GeneratePieceCommitment(context.Background(), dirNd.Cid(), r.LightNode.Node.Blockstore)
 	if err != nil {
 		panic(err)
 	}
 
-	var combinedData []byte
-	for _, c := range ch.Roots {
-		fmt.Println("Root CID before: ", c.String())
-		rootCid, err := r.LightNode.Node.Get(context.Background(), c)
-		fmt.Println("Root CID after: ", rootCid.String())
-		if err != nil {
-			panic(err)
-		}
-		//traverseLinks(context.Background(), r.LightNode.Node.DAGService, rootCid)
-		combinedData, err = traverseLinks(context.Background(), r.LightNode.Node.DAGService, rootCid)
-		if err != nil {
-			panic(err)
-		}
-	}
+	fmt.Println("Piece info: ", pieceCid)
+	fmt.Println("Piece info: ", padded)
 
-	var bucket core.CarBucket
-	r.LightNode.DB.Model(&core.CarBucket{}).Where("uuid = ?", bucketUuid).First(&bucket)
-	bucket.Cid = ch.Roots[0].String()
-	bucket.RequestingApiKey = r.Content.RequestingApiKey
-	bucket.Size = int64(totalBucketSize)
+	bucket.PieceCid = pieceCid.String()
+	bucket.PieceSize = int64(padded)
+
+	bucket.Size = int64(dirSize)
 	r.LightNode.DB.Save(&bucket)
 
-	// upload to delta
-	fmt.Println("combinedData: ", len(combinedData))
+	// compute piece info per user
+	// compute piece info per bucket
+
+	fmt.Println("Bucket CID: ", bucket.Cid)
+	fmt.Println("Bucket Size: ", bucket.Size)
+
 	job := CreateNewDispatcher()
-	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, bytes.NewBuffer(combinedData)))
+	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, nil, bucket.Cid))
 	job.Start(1)
 }
 
@@ -176,24 +157,4 @@ func GetCidBuilderDefault() cid.Builder {
 	cidBuilder.MhType = uint64(multihash.SHA2_256)
 	cidBuilder.MhLength = -1
 	return cidBuilder
-}
-
-func traverseLinks(ctx context.Context, ds format.DAGService, nd format.Node) ([]byte, error) {
-	var combinedData []byte
-	fmt.Println("Node: ", nd.Cid().String())
-	for _, link := range nd.Links() {
-		fmt.Println("Link: ", link.Cid.String())
-		node, err := link.GetNode(ctx, ds)
-		if err != nil {
-			return nil, err
-		}
-		combinedData = append(combinedData, node.RawData()...)
-		data, err := traverseLinks(ctx, ds, node)
-		if err != nil {
-			return nil, err
-		}
-		combinedData = append(combinedData, data...)
-	}
-
-	return combinedData, nil
 }

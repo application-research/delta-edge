@@ -2,9 +2,11 @@ package jobs
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/application-research/edge-ur/utils"
+	"github.com/ipfs/go-cid"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -17,15 +19,17 @@ import (
 type UploadCarToDeltaProcessor struct {
 	CarBucket core.CarBucket `json:"car_bucket"`
 	File      io.Reader      `json:"file"`
+	RootCid   string         `json:"root_cid"`
 	Processor
 }
 
-func NewUploadCarToDeltaProcessor(ln *core.LightNode, bucket core.CarBucket, fileNode io.Reader) IProcessor {
-	DELTA_UPLOAD_API = ln.Config.Delta.ApiUrl
-	REPLICATION_FACTOR = string(ln.Config.Delta.ReplicationFactor)
+func NewUploadCarToDeltaProcessor(ln *core.LightNode, bucket core.CarBucket, fileNode io.Reader, rootCid string) IProcessor {
+	DELTA_UPLOAD_API = ln.Config.ExternalApi.ApiUrl
+	REPLICATION_FACTOR = string(ln.Config.Common.ReplicationFactor)
 	return &UploadCarToDeltaProcessor{
 		bucket,
 		fileNode,
+		rootCid,
 		Processor{
 			LightNode: ln,
 		},
@@ -65,8 +69,18 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 		fmt.Println("CreateFormFile error: ", err)
 		return nil
 	}
+	cidToGet, err := cid.Decode(r.CarBucket.Cid)
+	if err != nil {
+		fmt.Println("Error decoding cid: ", err)
+		return nil
+	}
+	rootNd, err := r.LightNode.Node.DAGService.Get(context.Background(), cidToGet)
+	if err != nil {
+		fmt.Println("Error getting root node: ", err)
+		return nil
+	}
 
-	_, err = io.Copy(partFile, r.File)
+	_, err = io.Copy(partFile, bytes.NewReader(rootNd.RawData()))
 	if err != nil {
 		fmt.Println("Copy error: ", err)
 		return nil
@@ -75,7 +89,7 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 		fmt.Println("CreateFormField error: ", err)
 		return nil
 	}
-	repFactor := r.LightNode.Config.Delta.ReplicationFactor
+	repFactor := r.LightNode.Config.Common.ReplicationFactor
 	partMetadata := fmt.Sprintf(`{"auto_retry":true,"miner":"%s","replication":%d}`, r.CarBucket.Miner, repFactor)
 
 	fmt.Println("partMetadata: ", partMetadata)

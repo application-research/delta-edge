@@ -125,8 +125,8 @@ type DealE2EUploadResponse struct {
 }
 
 func NewUploadToDeltaProcessor(ln *core.LightNode, contentToProcess core.Content, fileNode io.Reader) IProcessor {
-	DELTA_UPLOAD_API = ln.Config.Delta.ApiUrl
-	REPLICATION_FACTOR = string(ln.Config.Delta.ReplicationFactor)
+	DELTA_UPLOAD_API = ln.Config.ExternalApi.ApiUrl
+	REPLICATION_FACTOR = string(ln.Config.Common.ReplicationFactor)
 	return &UploadToDeltaProcessor{
 		contentToProcess,
 		fileNode,
@@ -166,7 +166,7 @@ func (r *UploadToDeltaProcessor) Run() error {
 		fmt.Println("CreateFormField error: ", err)
 		return nil
 	}
-	repFactor := r.LightNode.Config.Delta.ReplicationFactor
+	repFactor := r.LightNode.Config.Common.ReplicationFactor
 	partMetadata := fmt.Sprintf(`{"auto_retry":true,"miner":"%s","replication":%d}`, r.Content.Miner, repFactor)
 
 	fmt.Println("partMetadata: ", partMetadata)

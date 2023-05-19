@@ -64,7 +64,7 @@ type UploadResponse struct {
 }
 
 func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
-	var DeltaUploadApi = node.Config.Delta.ApiUrl
+	var DeltaUploadApi = node.Config.ExternalApi.ApiUrl
 	content := e.Group("/content")
 	content.POST("/add", handleUploadToCarBucketAndMiners(node, DeltaUploadApi))
 	content.POST("/add-car", handlePinAddCarToNodeToMiners(node, DeltaUploadApi))
@@ -130,6 +130,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 				}
 				bucket = core.CarBucket{
 					Status:    "open",
+					Name:      bucketUuid.String(),
 					Uuid:      bucketUuid.String(),
 					Miner:     miner, // blank
 					CreatedAt: time.Now(),

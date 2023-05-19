@@ -96,7 +96,7 @@ func DaemonCmd(cfg *config.DeltaConfig) []*cli.Command {
 }
 
 func runProcessors(ln *core.LightNode) {
-	dealCheckFreq := ln.Config.Delta.DealCheck
+	dealCheckFreq := ln.Config.Common.DealCheck
 	dealCheckFreqTick := time.NewTicker(time.Duration(dealCheckFreq) * time.Second)
 
 	for {

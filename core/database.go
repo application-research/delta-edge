@@ -70,6 +70,9 @@ type CarBucket struct {
 	DeltaContentId   int64     `json:"delta_content_id"`
 	DeltaNodeUrl     string    `json:"delta_node_url"`
 	Miner            string    `json:"miner"`
+	PieceCid         string    `json:"piece_cid"`
+	PieceSize        int64     `json:"piece_size"`
+	InclusionProof   string    `json:"inclusion_proof"`
 	Cid              string    `json:"cid"`
 	Status           string    `json:"status"`
 	LastMessage      string    `json:"last_message"`
@@ -88,6 +91,9 @@ type Content struct {
 	DeltaNodeUrl     string    `json:"delta_node_url"`
 	CarBucketUuid    string    `json:"car_bucket_uuid"`
 	Status           string    `json:"status"`
+	PieceCid         string    `json:"piece_cid"`
+	PieceSize        int64     `json:"piece_size"`
+	InclusionProof   string    `json:"inclusion_proof"`
 	LastMessage      string    `json:"last_message"`
 	Miner            string    `json:"miner"`
 	MakeDeal         bool      `json:"make_deal"`
