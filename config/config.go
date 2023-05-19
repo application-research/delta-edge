@@ -27,7 +27,7 @@ type DeltaConfig struct {
 	Common struct {
 		AggregateSize     int64 `env:"AGGREGATE_SIZE" envDefault:"1048576"`
 		DealCheck         int   `env:"DEAL_CHECK" envDefault:"600"`
-		ReplicationFactor int   `env:"REPLICATION_FACTOR" envDefault:"6"`
+		ReplicationFactor int   `env:"REPLICATION_FACTOR" envDefault:"0"`
 	}
 
 	ExternalApi struct {

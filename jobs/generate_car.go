@@ -53,6 +53,9 @@ func (r *GenerateCarProcessor) Run() error {
 		fmt.Println("Total size: ", totalSize)
 		fmt.Println("Total hit size: ", r.LightNode.Config.Common.AggregateSize)
 		if totalSize > r.LightNode.Config.Common.AggregateSize && len(content) > 1 {
+			bucket.Status = "processing"
+			r.LightNode.DB.Save(&bucket)
+
 			r.GenerateCarForBucket(bucket.Uuid)
 			continue
 		}
