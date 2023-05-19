@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/application-research/edge-ur/core"
 	"github.com/application-research/filclient"
+	"github.com/filecoin-project/go-data-segment/datasegment"
+	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-merkledag"
 	uio "github.com/ipfs/go-unixfs/io"
@@ -76,6 +78,8 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 	// for each content, generate a node and a raw
 	dir := uio.NewDirectory(r.LightNode.Node.DAGService)
 	dir.SetCidBuilder(GetCidBuilderDefault())
+
+	var subPieceInfo []abi.PieceInfo
 	for _, c := range content {
 
 		cCid, err := cid.Decode(c.Cid)
@@ -104,7 +108,10 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 		c.PieceSize = int64(padded)
 
 		r.LightNode.DB.Save(&c)
-
+		subPieceInfo = append(subPieceInfo, abi.PieceInfo{
+			Size:     abi.PaddedPieceSize(padded),
+			PieceCID: pieceCid,
+		})
 		if err != nil {
 			panic(err)
 		}
@@ -153,7 +160,11 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 	//}
 
 	// create proofs HERE and persist that on the database.
-	//aggregate, err := datasegment.NewAggregate(paddedPieceSize, []abi.PieceInfo{pieceInfo})
+	aggregate, err := datasegment.NewAggregate(abi.PaddedPieceSize(bucket.Size), subPieceInfo)
+	fmt.Println("Aggregate: ", aggregate)
+	//aggCid, _ := aggregate.IndexPieceCID()
+	//fmt.Println("Aggregate: ", aggCid.String())
+	//fmt.Println("OwnPiece: ", pieceCid.String())
 
 	// process the deal
 	job := CreateNewDispatcher()
