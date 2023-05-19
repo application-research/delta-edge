@@ -1,7 +1,10 @@
 package api
 
 import (
+	"context"
 	"github.com/application-research/edge-ur/jobs"
+	"github.com/ipfs/go-cid"
+	format "github.com/ipfs/go-ipld-format"
 	"strconv"
 	"strings"
 
@@ -46,6 +49,41 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		})
 	})
 
+	e.GET("/bucket/:uuid", func(c echo.Context) error {
+
+		authorizationString := c.Request().Header.Get("Authorization")
+		authParts := strings.Split(authorizationString, " ")
+
+		var bucket core.CarBucket
+		node.DB.Model(&core.CarBucket{}).Where("requesting_api_key = ? and uuid = ?", authParts[1], c.Param("uuid")).Scan(&bucket)
+
+		// get the cid
+		bucketCid, err := cid.Decode(bucket.Cid)
+		if err != nil {
+			return c.JSON(404, map[string]interface{}{
+				"message": "Bucket not found. Please check if you have the proper API key or if the bucket id is valid",
+			})
+		}
+		dirNdRaw, err := node.Node.DAGService.Get(context.Background(), bucketCid)
+		if err != nil {
+			return c.JSON(404, map[string]interface{}{
+				"message": "Bucket not found. Please check if you have the proper API key or if the bucket id is valid",
+			})
+		}
+
+		var links []format.Link
+		for _, link := range dirNdRaw.Links() {
+			if link.Name == "data" {
+				bucket.Cid = link.Cid.String()
+			}
+			links = append(links, *link)
+		}
+
+		return c.JSON(200, map[string]interface{}{
+			"bucket": bucket,
+			"links":  links,
+		})
+	})
 	e.GET("/list", func(c echo.Context) error {
 
 		authorizationString := c.Request().Header.Get("Authorization")

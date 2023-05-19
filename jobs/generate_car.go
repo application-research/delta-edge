@@ -147,6 +147,15 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 	fmt.Println("Bucket CID: ", bucket.Cid)
 	fmt.Println("Bucket Size: ", bucket.Size)
 
+	//abi.PieceInfo{
+	//	Size:     uint64(padded),
+	//	PieceCID: pieceCid,
+	//}
+
+	// create proofs HERE and persist that on the database.
+	//aggregate, err := datasegment.NewAggregate(paddedPieceSize, []abi.PieceInfo{pieceInfo})
+
+	// process the deal
 	job := CreateNewDispatcher()
 	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, nil, bucket.Cid))
 	job.Start(1)
