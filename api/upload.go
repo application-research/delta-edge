@@ -112,68 +112,105 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 		}
 
 		// check open bucket
-
 		var contentList []core.Content
 
 		for miner := range miners {
 
-			var bucket core.CarBucket
-			node.DB.Where("status = ? and miner = ?", "open", miner).First(&bucket)
-			if bucket.ID == 0 {
-				// create a new bucket
-				bucketUuid, err := uuid.NewUUID()
-				if err != nil {
-					return c.JSON(500, UploadResponse{
-						Status:  "error",
-						Message: "Error creating bucket",
-					})
-				}
-				bucket = core.CarBucket{
-					Status:    "open",
-					Name:      bucketUuid.String(),
-					Uuid:      bucketUuid.String(),
-					Miner:     miner, // blank
+			if file.Size > node.Config.Common.AggregateSize {
+				newContent := core.Content{
+					Name:             file.Filename,
+					Size:             file.Size,
+					Cid:              addNode.Cid().String(),
+					DeltaNodeUrl:     DeltaUploadApi,
+					RequestingApiKey: authParts[1],
+					Status:           utils.STATUS_PINNED,
+					Miner:            miner,
+					MakeDeal: func() bool {
+						if makeDeal == "true" {
+							return true
+						}
+						return false
+					}(),
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),
 				}
-				node.DB.Create(&bucket)
-			}
 
-			newContent := core.Content{
-				Name:             file.Filename,
-				Size:             file.Size,
-				Cid:              addNode.Cid().String(),
-				DeltaNodeUrl:     DeltaUploadApi,
-				RequestingApiKey: authParts[1],
-				Status:           utils.STATUS_PINNED,
-				Miner:            miner,
-				CarBucketUuid:    bucket.Uuid,
-				MakeDeal: func() bool {
-					if makeDeal == "true" {
-						return true
+				node.DB.Create(&newContent)
+
+				if makeDeal == "true" {
+					job := jobs.CreateNewDispatcher()
+					job.AddJob(jobs.NewUploadToDeltaProcessor(node, newContent, srcR))
+					job.Start(1)
+				}
+
+				if err != nil {
+					c.JSON(500, UploadResponse{
+						Status:  "error",
+						Message: "Error pinning the file" + err.Error(),
+					})
+				}
+				newContent.RequestingApiKey = ""
+				contentList = append(contentList, newContent)
+			} else {
+
+				var bucket core.CarBucket
+				node.DB.Where("status = ? and miner = ?", "open", miner).First(&bucket)
+				if bucket.ID == 0 {
+					// create a new bucket
+					bucketUuid, err := uuid.NewUUID()
+					if err != nil {
+						return c.JSON(500, UploadResponse{
+							Status:  "error",
+							Message: "Error creating bucket",
+						})
 					}
-					return false
-				}(),
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-			}
+					bucket = core.CarBucket{
+						Status:    "open",
+						Name:      bucketUuid.String(),
+						Uuid:      bucketUuid.String(),
+						Miner:     miner, // blank
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
+					}
+					node.DB.Create(&bucket)
+				}
 
-			node.DB.Create(&newContent)
+				newContent := core.Content{
+					Name:             file.Filename,
+					Size:             file.Size,
+					Cid:              addNode.Cid().String(),
+					DeltaNodeUrl:     DeltaUploadApi,
+					RequestingApiKey: authParts[1],
+					Status:           utils.STATUS_PINNED,
+					Miner:            miner,
+					CarBucketUuid:    bucket.Uuid,
+					MakeDeal: func() bool {
+						if makeDeal == "true" {
+							return true
+						}
+						return false
+					}(),
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				}
 
-			if makeDeal == "true" {
-				job := jobs.CreateNewDispatcher()
-				job.AddJob(jobs.NewGenerateCarProcessor(node, newContent, srcR))
-				job.Start(1)
-			}
+				node.DB.Create(&newContent)
 
-			if err != nil {
-				c.JSON(500, UploadResponse{
-					Status:  "error",
-					Message: "Error pinning the file" + err.Error(),
-				})
+				if makeDeal == "true" {
+					job := jobs.CreateNewDispatcher()
+					job.AddJob(jobs.NewGenerateCarProcessor(node, newContent, srcR))
+					job.Start(1)
+				}
+
+				if err != nil {
+					c.JSON(500, UploadResponse{
+						Status:  "error",
+						Message: "Error pinning the file" + err.Error(),
+					})
+				}
+				newContent.RequestingApiKey = ""
+				contentList = append(contentList, newContent)
 			}
-			newContent.RequestingApiKey = ""
-			contentList = append(contentList, newContent)
 		}
 
 		c.JSON(200, struct {
