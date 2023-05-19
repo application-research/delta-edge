@@ -8,7 +8,7 @@ require (
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-commp-utils v0.1.3
-	github.com/filecoin-project/go-data-segment v0.0.0-20230426133954-21861aa41012
+	github.com/filecoin-project/go-data-segment v0.0.0-20230519173755-91ef00b18be0
 	github.com/filecoin-project/go-fil-commcid v0.1.0
 	github.com/filecoin-project/go-fil-commp-hashhash v0.1.0
 	github.com/filecoin-project/go-state-types v0.9.9

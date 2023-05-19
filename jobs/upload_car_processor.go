@@ -52,17 +52,6 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
-	//carCid, err := cid.Decode(r.CarBucket.Cid)
-	//if err != nil {
-	//	fmt.Println("Error decoding car cid: ", err)
-	//	return nil
-	//}
-	//
-	//carNode, err := r.LightNode.Node.Get(context.Background(), carCid)
-	//if err != nil {
-	//	fmt.Println("Error getting car node: ", err)
-	//	return nil
-	//}
 
 	partFile, err := writer.CreateFormFile("data", r.CarBucket.Cid)
 	if err != nil {
