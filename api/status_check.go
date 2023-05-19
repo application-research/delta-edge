@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/application-research/edge-ur/jobs"
 	"github.com/ipfs/go-cid"
-	format "github.com/ipfs/go-ipld-format"
 	"strconv"
 	"strings"
 
@@ -71,17 +70,32 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 			})
 		}
 
-		var links []format.Link
-		for _, link := range dirNdRaw.Links() {
-			if link.Name == "data" {
-				bucket.Cid = link.Cid.String()
+		var contents []core.Content
+		node.DB.Model(&core.Content{}).Where("requesting_api_key = ? and car_bucket_uuid = ?", authParts[1], c.Param("uuid")).Scan(&contents)
+
+		var contentResponse []core.Content
+		for _, content := range contents {
+			content.RequestingApiKey = ""
+
+			for _, link := range dirNdRaw.Links() {
+				cidFromDb, err := cid.Decode(content.Cid)
+				if err != nil {
+					continue
+				}
+				if link.Cid == cidFromDb {
+					content.Cid = link.Cid.String()
+					content.RequestingApiKey = ""
+					contentResponse = append(contentResponse, content)
+				}
+
 			}
-			links = append(links, *link)
+
 		}
 
+		bucket.RequestingApiKey = ""
 		return c.JSON(200, map[string]interface{}{
-			"bucket": bucket,
-			"links":  links,
+			"bucket":        bucket,
+			"content_links": contentResponse,
 		})
 	})
 	e.GET("/list", func(c echo.Context) error {
