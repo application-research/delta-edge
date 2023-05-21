@@ -164,9 +164,6 @@ func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
 	fmt.Println("Bucket Piece CID: ", bucket.PieceCid)
 	fmt.Println("Bucket Piece Size: ", bucket.PieceSize)
 
-	// dealSize := abi.PaddedPieceSize(1 << 20)
-
-	// create proofs HERE and persist that on the database.
 	aggregate, err := datasegment.NewAggregate(abi.PaddedPieceSize(bucket.PieceSize), subPieceInfos)
 	if err != nil {
 		fmt.Println("Err", err.Error())

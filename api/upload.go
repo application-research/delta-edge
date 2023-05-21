@@ -76,7 +76,6 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 // check an open bucket, if none create one, if there's open get the ID
 // save content with the bucket ID
 // run bucket upload checker.
-
 func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
@@ -155,8 +154,8 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 				node.DB.Where("status = ? and miner = ?", "open", miner).First(&bucket)
 				if bucket.ID == 0 {
 					// create a new bucket
-					bucketUuid, err := uuid.NewUUID()
-					if err != nil {
+					bucketUuid, errUuid := uuid.NewUUID()
+					if errUuid != nil {
 						return c.JSON(500, UploadResponse{
 							Status:  "error",
 							Message: "Error creating bucket",
