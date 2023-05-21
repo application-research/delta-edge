@@ -89,8 +89,14 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 				}
 
 			}
+			job := jobs.CreateNewDispatcher()
+			job.AddJob(jobs.NewDealItemChecker(node, content))
 
 		}
+		// trigger status check
+		job := jobs.CreateNewDispatcher()
+		job.AddJob(jobs.NewCarDealItemChecker(node, bucket))
+		job.Start(len(contents) + 1)
 
 		bucket.RequestingApiKey = ""
 		return c.JSON(200, map[string]interface{}{

@@ -62,7 +62,6 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 		return nil
 	}
 
-	fmt.Println("cidToGet: ", cidToGet)
 	rootNd, err := r.LightNode.Node.DAGService.Get(context.Background(), cidToGet)
 	if err != nil {
 		fmt.Println("Error getting root node: ", err)
@@ -70,13 +69,11 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 	}
 
 	for _, v := range rootNd.Links() {
-		fmt.Println("v.Cid", v.Cid)
 		// get node
 		lNd, err := v.GetNode(context.Background(), r.LightNode.Node.DAGService)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println("v.RawData", string(lNd.RawData()))
 		bufFile.Write(lNd.RawData())
 	}
 
