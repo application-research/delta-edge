@@ -47,8 +47,6 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 
 	maxRetries := 5
 	retryInterval := 5 * time.Second
-	//var content []core.Content
-	//r.LightNode.DB.Model(&core.Bucket{}).Where("id = ?", r.Bucket.ID).Find(&content)
 
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
