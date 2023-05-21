@@ -210,7 +210,40 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 				newContent.RequestingApiKey = ""
 				contentList = append(contentList, newContent)
 			} else if file.Size > node.Config.Common.MaxSizeToSplit {
-				// split the file to chunks
+				newContent := core.Content{
+					Name:             file.Filename,
+					Size:             file.Size,
+					Cid:              addNode.Cid().String(),
+					DeltaNodeUrl:     DeltaUploadApi,
+					RequestingApiKey: authParts[1],
+					Status:           utils.STATUS_PINNED,
+					Miner:            miner,
+					MakeDeal: func() bool {
+						if makeDeal == "true" {
+							return true
+						}
+						return false
+					}(),
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				}
+
+				node.DB.Create(&newContent)
+
+				if makeDeal == "true" {
+					job := jobs.CreateNewDispatcher()
+					job.AddJob(jobs.NewSplitterProcessor(node, newContent, srcR))
+					job.Start(1)
+				}
+
+				if err != nil {
+					c.JSON(500, UploadResponse{
+						Status:  "error",
+						Message: "Error pinning the file" + err.Error(),
+					})
+				}
+				newContent.RequestingApiKey = ""
+				contentList = append(contentList, newContent)
 			}
 		}
 

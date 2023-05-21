@@ -5,12 +5,15 @@ import (
 	"context"
 	"fmt"
 	"github.com/application-research/edge-ur/core"
+	"github.com/application-research/edge-ur/utils"
 	"github.com/application-research/filclient"
 	"github.com/filecoin-project/go-data-segment/datasegment"
 	"github.com/filecoin-project/go-state-types/abi"
+	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
 	uio "github.com/ipfs/go-unixfs/io"
 	"io"
+	"time"
 )
 
 type SplitterProcessor struct {
@@ -38,46 +41,49 @@ func (r *SplitterProcessor) Run() error {
 	// split the file.
 	fileSplitter := new(core.FileSplitter)
 	fileSplitter.ChuckSize = r.LightNode.Config.Common.MaxSizeToSplit
-	_, err := fileSplitter.SplitFileFromReader(r.File) // nice split.
+	arrBts, err := fileSplitter.SplitFileFromReader(r.File) // nice split.
 	if err != nil {
 		panic(err)
 	}
 
 	// create a bucket
+	bucketUuid, err := uuid.NewUUID()
+	bucket := core.Bucket{
+		Status:           "open",
+		Name:             bucketUuid.String(),
+		RequestingApiKey: r.Content.RequestingApiKey,
+		Uuid:             bucketUuid.String(),
+		Miner:            r.Content.Miner,
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+	}
+	r.LightNode.DB.Create(&bucket)
 
 	// create a content for each split
-
-	// check the bucket
-
-	// run the same logic
-
-	var buckets []core.Bucket
-	r.LightNode.DB.Model(&core.Bucket{}).Where("status = ?", "open").Find(&buckets)
-
-	// get all open buckets and process
-	for _, bucket := range buckets {
-		var content []core.Content
-		r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid = ? and requesting_api_key = ?", bucket.Uuid, bucket.RequestingApiKey).Find(&content)
-
-		var totalSize int64
-		var aggContent []core.Content
-		for _, c := range content {
-			fmt.Println(c.Cid, c.Size)
-			totalSize += c.Size
-			aggContent = append(aggContent, c)
+	for i, b := range arrBts {
+		bNd, err := r.LightNode.Node.AddPinFile(context.Background(), bytes.NewReader(b), nil)
+		if err != nil {
+			panic(err)
 		}
-		fmt.Println("Total size: ", totalSize)
-		fmt.Println("Total hit size: ", r.LightNode.Config.Common.AggregateSize)
-		if totalSize > r.LightNode.Config.Common.AggregateSize && len(content) > 1 {
-			bucket.Status = "processing"
-			r.LightNode.DB.Save(&bucket)
-			r.GenerateCarForBucket(bucket.Uuid)
-			continue
+		newContent := core.Content{
+			Name:             "split-" + string(i),
+			Size:             int64(len(b)),
+			Cid:              bNd.Cid().String(),
+			DeltaNodeUrl:     r.Content.DeltaNodeUrl,
+			RequestingApiKey: r.Content.RequestingApiKey,
+			Status:           utils.STATUS_PINNED,
+			Miner:            r.Content.Miner,
+			BucketUuid:       bucket.Uuid,
+			MakeDeal:         true,
+			CreatedAt:        time.Now(),
+			UpdatedAt:        time.Now(),
 		}
+		r.LightNode.DB.Create(&newContent)
 	}
 
+	r.GenerateCarForBucket(bucket.Uuid)
+
 	return nil
-	//	panic("implement me")
 }
 
 func (r *SplitterProcessor) GenerateCarForBucket(bucketUuid string) {
