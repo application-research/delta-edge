@@ -12,6 +12,7 @@ import (
 	"github.com/ipfs/go-merkledag"
 	uio "github.com/ipfs/go-unixfs/io"
 	"github.com/multiformats/go-multihash"
+	"gorm.io/gorm"
 	"io"
 )
 
@@ -44,8 +45,13 @@ func (r *AggregateProcessor) Run() error {
 	// get all open buckets and process
 	for _, bucket := range buckets {
 		var content []core.Content
-		r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid = ? and requesting_api_key = ?", bucket.Uuid, bucket.RequestingApiKey).Find(&content)
-
+		r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid = ?",
+			bucket.Uuid).Where(func(db *gorm.DB) *gorm.DB {
+			if r.LightNode.Config.Common.AggregatePerApiKey && bucket.RequestingApiKey != "" {
+				return db.Where("requesting_api_key = ?", bucket.RequestingApiKey)
+			}
+			return db
+		}).Find(&content)
 		var totalSize int64
 		var aggContent []core.Content
 		for _, c := range content {
