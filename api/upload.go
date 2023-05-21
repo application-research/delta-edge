@@ -115,7 +115,6 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 		var contentList []core.Content
 
 		for miner := range miners {
-
 			if file.Size > node.Config.Common.AggregateSize {
 				newContent := core.Content{
 					Name:             file.Filename,
@@ -151,9 +150,8 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 				}
 				newContent.RequestingApiKey = ""
 				contentList = append(contentList, newContent)
-			} else {
-
-				var bucket core.CarBucket
+			} else if file.Size > node.Config.Common.AggregateSize && file.Size < node.Config.Common.MaxSizeToSplit {
+				var bucket core.Bucket
 				node.DB.Where("status = ? and miner = ?", "open", miner).First(&bucket)
 				if bucket.ID == 0 {
 					// create a new bucket
@@ -164,7 +162,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 							Message: "Error creating bucket",
 						})
 					}
-					bucket = core.CarBucket{
+					bucket = core.Bucket{
 						Status:           "open",
 						Name:             bucketUuid.String(),
 						RequestingApiKey: authParts[1],
@@ -184,7 +182,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 					RequestingApiKey: authParts[1],
 					Status:           utils.STATUS_PINNED,
 					Miner:            miner,
-					CarBucketUuid:    bucket.Uuid,
+					BucketUuid:       bucket.Uuid,
 					MakeDeal: func() bool {
 						if makeDeal == "true" {
 							return true
@@ -211,6 +209,8 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 				}
 				newContent.RequestingApiKey = ""
 				contentList = append(contentList, newContent)
+			} else if file.Size > node.Config.Common.MaxSizeToSplit {
+				// split the file to chunks
 			}
 		}
 

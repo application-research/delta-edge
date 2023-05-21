@@ -45,7 +45,7 @@ func OpenDatabase(cfg config.DeltaConfig) (*gorm.DB, error) {
 }
 
 func ConfigureModels(db *gorm.DB) {
-	db.AutoMigrate(&Content{}, &ContentDeal{}, &Collection{}, &CollectionRef{}, &LogEvent{}, &CarBucket{})
+	db.AutoMigrate(&Content{}, &ContentDeal{}, &Collection{}, &CollectionRef{}, &LogEvent{}, &Bucket{})
 }
 
 type LogEvent struct {
@@ -61,7 +61,7 @@ type LogEvent struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
-type CarBucket struct {
+type Bucket struct {
 	ID               int64     `gorm:"primaryKey"`
 	Uuid             string    `gorm:"index" json:"uuid"`
 	Name             string    `json:"name"`
@@ -89,7 +89,7 @@ type Content struct {
 	RequestingApiKey string    `json:"requesting_api_key,omitempty"`
 	DeltaContentId   int64     `json:"delta_content_id"`
 	DeltaNodeUrl     string    `json:"delta_node_url"`
-	CarBucketUuid    string    `json:"car_bucket_uuid"`
+	BucketUuid       string    `json:"bucket_uuid"`
 	Status           string    `json:"status"`
 	PieceCid         string    `json:"piece_cid"`
 	PieceSize        int64     `json:"piece_size"`

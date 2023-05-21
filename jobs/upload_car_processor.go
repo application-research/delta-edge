@@ -17,13 +17,13 @@ import (
 )
 
 type UploadCarToDeltaProcessor struct {
-	CarBucket core.CarBucket `json:"car_bucket"`
-	File      io.Reader      `json:"file"`
-	RootCid   string         `json:"root_cid"`
+	CarBucket core.Bucket `json:"car_bucket"`
+	File      io.Reader   `json:"file"`
+	RootCid   string      `json:"root_cid"`
 	Processor
 }
 
-func NewUploadCarToDeltaProcessor(ln *core.LightNode, bucket core.CarBucket, fileNode io.Reader, rootCid string) IProcessor {
+func NewUploadCarToDeltaProcessor(ln *core.LightNode, bucket core.Bucket, fileNode io.Reader, rootCid string) IProcessor {
 	DELTA_UPLOAD_API = ln.Config.ExternalApi.ApiUrl
 	REPLICATION_FACTOR = string(ln.Config.Common.ReplicationFactor)
 	return &UploadCarToDeltaProcessor{
@@ -48,7 +48,7 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 	maxRetries := 5
 	retryInterval := 5 * time.Second
 	//var content []core.Content
-	//r.LightNode.DB.Model(&core.CarBucket{}).Where("id = ?", r.CarBucket.ID).Find(&content)
+	//r.LightNode.DB.Model(&core.Bucket{}).Where("id = ?", r.Bucket.ID).Find(&content)
 
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
@@ -82,8 +82,6 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 		bufFile.Write(lNd.RawData())
 	}
 
-	//multipart.NewReader(r.File, "data")
-	//fmt.Println("r.File Size: ", r.File.Read())
 	_, err = io.Copy(partFile, bufFile)
 	if err != nil {
 		fmt.Println("Copy error: ", err)
@@ -146,25 +144,6 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 						r.CarBucket.Status = utils.STATUS_UPLOADED_TO_DELTA
 						r.CarBucket.DeltaContentId = int64(dealE2EUploadResponse.ContentID)
 						r.LightNode.DB.Save(&r.CarBucket)
-
-						// insert each replicated content into the database
-						for _, replicatedContent := range dealE2EUploadResponse.ReplicatedContents {
-							var replicatedContentModel core.Content
-							//r.LightNode.DB.Model(&core.Content{}).Where("cid = ?", replicatedContent.Cid).Find(&replicatedContentModel)
-							//if replicatedContentModel.ID == 0 {
-							replicatedContentModel.Name = r.CarBucket.Name
-							replicatedContentModel.Cid = r.CarBucket.Cid
-							replicatedContentModel.Size = r.CarBucket.Size
-							replicatedContentModel.Status = replicatedContent.Status
-							replicatedContentModel.LastMessage = replicatedContent.Message
-							replicatedContentModel.DeltaNodeUrl = DELTA_UPLOAD_API
-							replicatedContentModel.CreatedAt = time.Now()
-							replicatedContentModel.UpdatedAt = time.Now()
-							replicatedContentModel.RequestingApiKey = r.CarBucket.RequestingApiKey
-							replicatedContentModel.DeltaContentId = int64(replicatedContent.ContentID)
-							r.LightNode.DB.Save(&replicatedContentModel)
-							//}
-						}
 						break
 					}
 				}

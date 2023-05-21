@@ -25,9 +25,11 @@ type DeltaConfig struct {
 	}
 
 	Common struct {
-		AggregateSize     int64 `env:"AGGREGATE_SIZE" envDefault:"1048576"`
-		DealCheck         int   `env:"DEAL_CHECK" envDefault:"600"`
-		ReplicationFactor int   `env:"REPLICATION_FACTOR" envDefault:"0"`
+		AggregateSize      int64 `env:"AGGREGATE_SIZE" envDefault:"3048576"`
+		AggregatePerApiKey bool  `env:"AGGREGATE_PER_API_KEY" envDefault:"true"`
+		MaxSizeToSplit     int64 `env:"MAX_SIZE_TO_SPLIT" envDefault:"10000000000"`
+		DealCheck          int   `env:"DEAL_CHECK" envDefault:"600"`
+		ReplicationFactor  int   `env:"REPLICATION_FACTOR" envDefault:"0"`
 	}
 
 	ExternalApi struct {

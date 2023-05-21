@@ -9,20 +9,18 @@ import (
 	"github.com/filecoin-project/go-data-segment/datasegment"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/ipfs/go-cid"
-	"github.com/ipfs/go-merkledag"
 	uio "github.com/ipfs/go-unixfs/io"
-	"github.com/multiformats/go-multihash"
 	"io"
 )
 
-type AggregateProcessor struct {
+type SplitterProcessor struct {
 	Content core.Content `json:"content"`
 	File    io.Reader    `json:"file"`
 	Processor
 }
 
-func NewAggregateProcessor(ln *core.LightNode, contentToProcess core.Content, fileNode io.Reader) IProcessor {
-	return &AggregateProcessor{
+func NewSplitterProcessor(ln *core.LightNode, contentToProcess core.Content, fileNode io.Reader) IProcessor {
+	return &SplitterProcessor{
 		contentToProcess,
 		fileNode,
 		Processor{
@@ -31,12 +29,27 @@ func NewAggregateProcessor(ln *core.LightNode, contentToProcess core.Content, fi
 	}
 }
 
-func (r *AggregateProcessor) Info() error {
+func (r *SplitterProcessor) Info() error {
 	panic("implement me")
 }
 
-func (r *AggregateProcessor) Run() error {
-	// check if there are open bucket. if there are, generate the car file for the bucket.
+func (r *SplitterProcessor) Run() error {
+
+	// split the file.
+	fileSplitter := new(core.FileSplitter)
+	fileSplitter.ChuckSize = r.LightNode.Config.Common.MaxSizeToSplit
+	_, err := fileSplitter.SplitFileFromReader(r.File) // nice split.
+	if err != nil {
+		panic(err)
+	}
+
+	// create a bucket
+
+	// create a content for each split
+
+	// check the bucket
+
+	// run the same logic
 
 	var buckets []core.Bucket
 	r.LightNode.DB.Model(&core.Bucket{}).Where("status = ?", "open").Find(&buckets)
@@ -67,7 +80,7 @@ func (r *AggregateProcessor) Run() error {
 	//	panic("implement me")
 }
 
-func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
+func (r *SplitterProcessor) GenerateCarForBucket(bucketUuid string) {
 	// [node4 > raw4, node3 > [raw3, node2 > [raw2, node1 > raw1]]]
 
 	// create node and raw per file (layer them)
@@ -180,14 +193,4 @@ func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
 	job := CreateNewDispatcher()
 	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, buf, bucket.Cid))
 	job.Start(1)
-}
-
-func GetCidBuilderDefault() cid.Builder {
-	cidBuilder, err := merkledag.PrefixForCidVersion(1)
-	if err != nil {
-		panic(err)
-	}
-	cidBuilder.MhType = uint64(multihash.SHA2_256)
-	cidBuilder.MhLength = -1
-	return cidBuilder
 }
