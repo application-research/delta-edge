@@ -43,9 +43,8 @@ func (r *AggregateProcessor) Run() error {
 
 	// get all open buckets and process
 	for _, bucket := range buckets {
-		// only process if the bucket is more than 5GB
 		var content []core.Content
-		r.LightNode.DB.Model(&core.Content{}).Where("car_bucket_uuid = ?", bucket.Uuid).Find(&content)
+		r.LightNode.DB.Model(&core.Content{}).Where("car_bucket_uuid = ? and requesting_api_key = ?", bucket.Uuid, bucket.RequestingApiKey).Find(&content)
 
 		var totalSize int64
 		var aggContent []core.Content

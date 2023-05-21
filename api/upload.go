@@ -165,12 +165,13 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 						})
 					}
 					bucket = core.CarBucket{
-						Status:    "open",
-						Name:      bucketUuid.String(),
-						Uuid:      bucketUuid.String(),
-						Miner:     miner, // blank
-						CreatedAt: time.Now(),
-						UpdatedAt: time.Now(),
+						Status:           "open",
+						Name:             bucketUuid.String(),
+						RequestingApiKey: authParts[1],
+						Uuid:             bucketUuid.String(),
+						Miner:            miner, // blank
+						CreatedAt:        time.Now(),
+						UpdatedAt:        time.Now(),
 					}
 					node.DB.Create(&bucket)
 				}
