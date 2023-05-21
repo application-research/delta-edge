@@ -5,9 +5,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/application-research/edge-ur/core"
-	"github.com/application-research/filclient"
-	"github.com/filecoin-project/go-data-segment/datasegment"
-	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-merkledag"
 	uio "github.com/ipfs/go-unixfs/io"
@@ -82,7 +79,7 @@ func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
 	dir := uio.NewDirectory(r.LightNode.Node.DAGService)
 	dir.SetCidBuilder(GetCidBuilderDefault())
 	buf := new(bytes.Buffer)
-	var subPieceInfos []abi.PieceInfo
+
 	for _, c := range content {
 
 		cCid, err := cid.Decode(c.Cid)
@@ -98,36 +95,8 @@ func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
 		if err != nil {
 			panic(err)
 		}
-		pieceCid, payloadSize, unpadded, err := filclient.GeneratePieceCommitment(context.Background(), cData.Cid(), r.LightNode.Node.Blockstore)
-		if err != nil {
-			panic(err)
-		}
-
-		fmt.Println("Piece cid: ", pieceCid)
-		fmt.Println("Payload size: ", payloadSize)
-		fmt.Println("Padded Piece: ", unpadded.Padded())
-
-		c.PieceCid = pieceCid.String()
-		c.PieceSize = int64(unpadded.Padded())
 
 		r.LightNode.DB.Save(&c)
-
-		// if pieceCid is already on the subPieceInfos, skip
-		// if not, add to the subPieceInfos
-		for _, subPieceInfo := range subPieceInfos {
-			if subPieceInfo.PieceCID == pieceCid {
-				continue
-			}
-
-			subPieceInfos = append(subPieceInfos, abi.PieceInfo{
-				Size:     unpadded.Padded(),
-				PieceCID: pieceCid,
-			})
-		}
-
-		if err != nil {
-			panic(err)
-		}
 
 	}
 	dirNd, err := dir.GetNode()
@@ -149,36 +118,11 @@ func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
 	bucket.RequestingApiKey = r.Content.RequestingApiKey
 	bucket.Name = dirNd.Cid().String()
 
-	pieceCid, _, unpadded, err := filclient.GeneratePieceCommitment(context.Background(), aggNd.Cid(), r.LightNode.Node.Blockstore)
-	if err != nil {
-		panic(err)
-	}
-
-	bucket.PieceCid = pieceCid.String()
-	bucket.PieceSize = int64(unpadded.Padded())
-
 	bucket.Size = int64(dirSize)
 	r.LightNode.DB.Save(&bucket)
 
 	fmt.Println("Bucket CID: ", bucket.Cid)
 	fmt.Println("Bucket Size: ", bucket.Size)
-	fmt.Println("Bucket Piece CID: ", bucket.PieceCid)
-	fmt.Println("Bucket Piece Size: ", bucket.PieceSize)
-
-	// dealSize := abi.PaddedPieceSize(1 << 20)
-
-	// create proofs HERE and persist that on the database.
-	aggregate, err := datasegment.NewAggregate(abi.PaddedPieceSize(bucket.PieceSize), subPieceInfos)
-	if err != nil {
-		fmt.Println("Err", err.Error())
-	}
-	fmt.Println("Aggregate: ", aggregate)
-	aggCid, _ := aggregate.PieceCID()
-	indexPieceCid, _ := aggregate.IndexPieceCID()
-	aggregate.Index.ValidEntries()
-	fmt.Println("Aggregate: ", aggCid.String())
-	fmt.Println("OwnPiece: ", pieceCid.String())
-	fmt.Println("aggregate.IndexPieceCID(): ", indexPieceCid.String())
 
 	// process the deal
 	job := CreateNewDispatcher()
