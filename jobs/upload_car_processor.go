@@ -50,8 +50,8 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
-	bufFile := new(bytes.Buffer)
-	partFile, err := writer.CreateFormFile("data", r.CarBucket.Cid+".car")
+
+	partFile, err := writer.CreateFormFile("data", r.CarBucket.Cid)
 	if err != nil {
 		fmt.Println("CreateFormFile error: ", err)
 		return nil
@@ -67,21 +67,21 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 		fmt.Println("Error getting root node: ", err)
 		return nil
 	}
-
+	//bufFile := new(bytes.Buffer)
 	for _, v := range rootNd.Links() {
 		// get node
 		lNd, err := v.GetNode(context.Background(), r.LightNode.Node.DAGService)
 		if err != nil {
 			panic(err)
 		}
-		bufFile.Write(lNd.RawData())
+		partFile.Write(lNd.RawData())
 	}
 
-	_, err = io.Copy(partFile, bufFile)
-	if err != nil {
-		fmt.Println("Copy error: ", err)
-		return nil
-	}
+	//_, err = io.Copy(partFile, bufFile)
+	//if err != nil {
+	//	fmt.Println("Copy error: ", err)
+	//	return nil
+	//}
 	if partFile, err = writer.CreateFormField("metadata"); err != nil {
 		fmt.Println("CreateFormField error: ", err)
 		return nil
@@ -101,6 +101,7 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 	}
 
 	fmt.Println("payload: ", payload)
+	fmt.Println("payload size: ", payload.Len())
 	req, err := http.NewRequest("POST",
 		DELTA_UPLOAD_API+"/api/v1/deal/end-to-end",
 		payload)

@@ -147,7 +147,6 @@ func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
 	r.LightNode.DB.Model(&core.Bucket{}).Where("uuid = ?", bucketUuid).First(&bucket)
 	bucket.Cid = dirNd.Cid().String()
 	bucket.RequestingApiKey = r.Content.RequestingApiKey
-	bucket.Name = dirNd.Cid().String()
 
 	pieceCid, _, unpadded, err := filclient.GeneratePieceCommitment(context.Background(), aggNd.Cid(), r.LightNode.Node.Blockstore)
 	if err != nil {
