@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/application-research/edge-ur/core"
@@ -77,9 +78,10 @@ func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
 	// for each content, generate a node and a raw
 	dir := uio.NewDirectory(r.LightNode.Node.DAGService)
 	dir.SetCidBuilder(GetCidBuilderDefault())
-
+	buf := new(bytes.Buffer)
+	//buf.Truncate(int(abi.PaddedPieceSize(1 << 20).Unpadded()))
 	var subPieceInfos []abi.PieceInfo
-	for i, c := range content {
+	for _, c := range content {
 
 		cCid, err := cid.Decode(c.Cid)
 		if err != nil {
@@ -89,8 +91,11 @@ func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
 		if errCData != nil {
 			panic(errCData)
 		}
-		dir.AddChild(context.Background(), fmt.Sprintf("index %d", i), cData)
-
+		dir.AddChild(context.Background(), c.Name, cData)
+		_, err = io.Copy(buf, bytes.NewReader(cData.RawData()))
+		if err != nil {
+			panic(err)
+		}
 		pieceCid, payloadSize, unpadded, err := filclient.GeneratePieceCommitment(context.Background(), cData.Cid(), r.LightNode.Node.Blockstore)
 		if err != nil {
 			panic(err)
@@ -129,18 +134,20 @@ func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
 	}
 	dirSize, err := dirNd.Size()
 	// add to the dag service
+	aggNd, err := r.LightNode.Node.AddPinFile(context.Background(), buf, nil)
+	if err != nil {
+		panic(err)
+	}
 	r.LightNode.Node.DAGService.Add(context.Background(), dirNd)
+	r.LightNode.Node.DAGService.Add(context.Background(), aggNd)
 
 	var bucket core.CarBucket
 	r.LightNode.DB.Model(&core.CarBucket{}).Where("uuid = ?", bucketUuid).First(&bucket)
 	bucket.Cid = dirNd.Cid().String()
 	bucket.RequestingApiKey = r.Content.RequestingApiKey
 	bucket.Name = dirNd.Cid().String()
-	// fast comp of the bucket
-	//cDataReader, err := uio.NewDagReader(context.Background(), dirNd, r.LightNode.Node.DAGService)
-	//pieceInfoRoot, err := core.FastCommp(cDataReader)
 
-	pieceCid, _, unpadded, err := filclient.GeneratePieceCommitment(context.Background(), dirNd.Cid(), r.LightNode.Node.Blockstore)
+	pieceCid, _, unpadded, err := filclient.GeneratePieceCommitment(context.Background(), aggNd.Cid(), r.LightNode.Node.Blockstore)
 	if err != nil {
 		panic(err)
 	}
@@ -151,13 +158,12 @@ func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
 	bucket.Size = int64(dirSize)
 	r.LightNode.DB.Save(&bucket)
 
-	// compute piece info per user
-	// compute piece info per bucket
-
 	fmt.Println("Bucket CID: ", bucket.Cid)
 	fmt.Println("Bucket Size: ", bucket.Size)
 	fmt.Println("Bucket Piece CID: ", bucket.PieceCid)
 	fmt.Println("Bucket Piece Size: ", bucket.PieceSize)
+
+	// dealSize := abi.PaddedPieceSize(1 << 20)
 
 	// create proofs HERE and persist that on the database.
 	aggregate, err := datasegment.NewAggregate(abi.PaddedPieceSize(bucket.PieceSize), subPieceInfos)
@@ -174,7 +180,7 @@ func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
 
 	// process the deal
 	job := CreateNewDispatcher()
-	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, nil, bucket.Cid))
+	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, buf, bucket.Cid))
 	job.Start(1)
 }
 
