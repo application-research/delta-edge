@@ -81,7 +81,7 @@ func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
 	// for each content, generate a node and a raw
 	dir := uio.NewDirectory(r.LightNode.Node.DAGService)
 	dir.SetCidBuilder(GetCidBuilderDefault())
-	buf := new(bytes.Buffer)
+	buf := &bytes.Buffer{}
 	var subPieceInfos []abi.PieceInfo
 	for _, c := range content {
 
@@ -89,16 +89,18 @@ func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
 		if err != nil {
 			panic(err)
 		}
-		cData, errCData := r.LightNode.Node.Get(context.Background(), cCid)
+		cData, errCData := r.LightNode.Node.GetFile(context.Background(), cCid) // get the node
+		cDataNode, errCData := r.LightNode.Node.Get(context.Background(), cCid) // get the file
 		if errCData != nil {
 			panic(errCData)
 		}
-		dir.AddChild(context.Background(), c.Name, cData)
-		_, err = io.Copy(buf, bytes.NewReader(cData.RawData()))
+		dir.AddChild(context.Background(), c.Name, cDataNode)
+
+		cData.WriteTo(buf)
 		if err != nil {
 			panic(err)
 		}
-		pieceCid, payloadSize, unpadded, err := filclient.GeneratePieceCommitment(context.Background(), cData.Cid(), r.LightNode.Node.Blockstore)
+		pieceCid, payloadSize, unpadded, err := filclient.GeneratePieceCommitment(context.Background(), cCid, r.LightNode.Node.Blockstore)
 		if err != nil {
 			panic(err)
 		}
@@ -134,7 +136,7 @@ func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
 	if err != nil {
 		panic(err)
 	}
-	dirSize, err := dirNd.Size()
+	//	dirSize, err := dirNd.Size()
 	// add to the dag service
 	aggNd, err := r.LightNode.Node.AddPinFile(context.Background(), buf, nil)
 	if err != nil {
@@ -156,7 +158,7 @@ func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
 	bucket.PieceCid = pieceCid.String()
 	bucket.PieceSize = int64(unpadded.Padded())
 
-	bucket.Size = int64(dirSize)
+	bucket.Size = int64(buf.Len())
 	r.LightNode.DB.Save(&bucket)
 
 	fmt.Println("Bucket CID: ", bucket.Cid)

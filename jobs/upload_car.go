@@ -67,41 +67,31 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 		fmt.Println("Error getting root node: ", err)
 		return nil
 	}
-	//bufFile := new(bytes.Buffer)
+	bufFile := &bytes.Buffer{}
 	for _, v := range rootNd.Links() {
 		// get node
-		lNd, err := v.GetNode(context.Background(), r.LightNode.Node.DAGService)
+		lNd, err := r.LightNode.Node.GetFile(context.Background(), v.Cid)
 		if err != nil {
 			panic(err)
 		}
-		partFile.Write(lNd.RawData())
+		lNd.WriteTo(bufFile)
 	}
 
-	//_, err = io.Copy(partFile, bufFile)
-	//if err != nil {
-	//	fmt.Println("Copy error: ", err)
-	//	return nil
-	//}
-	if partFile, err = writer.CreateFormField("metadata"); err != nil {
-		fmt.Println("CreateFormField error: ", err)
+	_, err = io.Copy(partFile, bufFile)
+	if err != nil {
+		fmt.Println("Copy error: ", err)
 		return nil
 	}
+
 	repFactor := r.LightNode.Config.Common.ReplicationFactor
 	partMetadata := fmt.Sprintf(`{"auto_retry":true,"miner":"%s","replication":%d}`, r.CarBucket.Miner, repFactor)
+	writer.WriteField("metadata", partMetadata)
 
-	fmt.Println("partMetadata: ", partMetadata)
-
-	if _, err = partFile.Write([]byte(partMetadata)); err != nil {
-		fmt.Println("Write error: ", err)
-		return nil
-	}
 	if err = writer.Close(); err != nil {
 		fmt.Println("Close error: ", err)
 		return nil
 	}
 
-	fmt.Println("payload: ", payload)
-	fmt.Println("payload size: ", payload.Len())
 	req, err := http.NewRequest("POST",
 		DELTA_UPLOAD_API+"/api/v1/deal/end-to-end",
 		payload)

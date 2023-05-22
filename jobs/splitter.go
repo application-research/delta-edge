@@ -96,7 +96,7 @@ func (r *SplitterProcessor) GenerateCarForBucket(bucketUuid string) {
 	// for each content, generate a node and a raw
 	dir := uio.NewDirectory(r.LightNode.Node.DAGService)
 	dir.SetCidBuilder(GetCidBuilderDefault())
-	buf := new(bytes.Buffer)
+	buf := &bytes.Buffer{}
 	var subPieceInfos []abi.PieceInfo
 	for _, c := range content {
 

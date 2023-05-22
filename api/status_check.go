@@ -60,7 +60,7 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		bucketCid, err := cid.Decode(bucket.Cid)
 		if err != nil {
 			return c.JSON(404, map[string]interface{}{
-				"message": "Bucket not found. Please check if you have the proper API key or if the bucket id is valid",
+				"message": "Bucket not found. Please check if you have the proper API key or if the bucket uuid is valid",
 			})
 		}
 		dirNdRaw, err := node.Node.DAGService.Get(context.Background(), bucketCid)

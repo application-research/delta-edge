@@ -68,7 +68,7 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 	content := e.Group("/content")
 	content.POST("/add", handleUploadToCarBucketAndMiners(node, DeltaUploadApi))
 	content.POST("/add-car", handlePinAddCarToNodeToMiners(node, DeltaUploadApi))
-	content.POST("/fetch-pin", handleFetchPinToNodeToMiners(node, DeltaUploadApi)) // foreign cids
+	content.POST("/fetch-pin", handleFetchPinToNodeToMiners(node, DeltaUploadApi))
 
 }
 
@@ -102,6 +102,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 			return err
 		}
 
+		fmt.Println("file.Size", file.Size)
 		addNode, err := node.Node.AddPinFile(c.Request().Context(), src, nil)
 		if err != nil {
 			return c.JSON(500, UploadResponse{

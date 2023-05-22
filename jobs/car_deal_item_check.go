@@ -16,8 +16,7 @@ type CarDealItemChecker struct {
 }
 
 func (r *CarDealItemChecker) Info() error {
-	//TODO implement me
-	panic("implement me")
+	return nil
 }
 
 func NewCarDealItemChecker(ln *core.LightNode, bucket core.Bucket) IProcessor {
@@ -62,7 +61,6 @@ func (r *CarDealItemChecker) Run() error {
 	}
 	c.Status = dealResult.Content.Status
 	r.LightNode.DB.Save(&c)
-	//}
 
 	// if the updated date is 1 day old, then we should just retry the request
 	if c.Status == "transfer-started" {
