@@ -23,7 +23,7 @@ type StatusCheckResponse struct {
 }
 
 func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
-	e.GET("/status/:id", func(c echo.Context) error {
+	e.GET("/status/content/:id", func(c echo.Context) error {
 
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
@@ -47,7 +47,7 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 			"content": content,
 		})
 	})
-	e.GET("/status/bucket/content/:uuid", func(c echo.Context) error {
+	e.GET("/status/bucket/contents/:uuid", func(c echo.Context) error {
 
 		var bucket core.Bucket
 		node.DB.Model(&core.Bucket{}).Where("uuid = ?", c.Param("uuid")).Scan(&bucket)
