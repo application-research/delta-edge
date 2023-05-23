@@ -49,11 +49,25 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 	})
 	e.GET("/status/bucket/contents/:uuid", func(c echo.Context) error {
 
+		authorizationString := c.Request().Header.Get("Authorization")
+		authParts := strings.Split(authorizationString, " ")
+
 		var bucket core.Bucket
-		node.DB.Model(&core.Bucket{}).Where("uuid = ?", c.Param("uuid")).Scan(&bucket)
+		node.DB.Model(&core.Bucket{}).Where("uuid = ? and requesting_api_key = ?", c.Param("uuid"), authParts[1]).Scan(&bucket)
+		if bucket.ID == 0 {
+			return c.JSON(404, map[string]interface{}{
+				"message": "Bucket not found. Please check if you have the proper API key or if the bucket uuid is valid",
+			})
+		}
 
 		var contents []core.Content
 		node.DB.Model(&core.Content{}).Where("bucket_uuid = ?", c.Param("uuid")).Scan(&contents)
+
+		if len(contents) == 0 {
+			return c.JSON(404, map[string]interface{}{
+				"message": "Bucket has no contents",
+			})
+		}
 
 		var contentResponse []core.Content
 		for _, content := range contents {
@@ -77,8 +91,17 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 	})
 	e.GET("/status/bucket/dag/:uuid", func(c echo.Context) error {
 
+		authorizationString := c.Request().Header.Get("Authorization")
+		authParts := strings.Split(authorizationString, " ")
+
 		var bucket core.Bucket
-		node.DB.Model(&core.Bucket{}).Where("uuid = ?", c.Param("uuid")).Scan(&bucket)
+		node.DB.Model(&core.Bucket{}).Where("uuid = ? and requesting_api_key = ?", c.Param("uuid"), authParts[1]).Scan(&bucket)
+
+		if bucket.ID == 0 {
+			return c.JSON(404, map[string]interface{}{
+				"message": "Bucket not found or has no DAGs. Please check if you have the proper API key or if the bucket uuid is valid",
+			})
+		}
 
 		// get the cid
 		bucketCid, err := cid.Decode(bucket.Cid)
