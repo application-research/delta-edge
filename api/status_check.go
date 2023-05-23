@@ -47,8 +47,35 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 			"content": content,
 		})
 	})
+	e.GET("/status/bucket/content/:uuid", func(c echo.Context) error {
 
-	e.GET("/bucket/:uuid", func(c echo.Context) error {
+		var bucket core.Bucket
+		node.DB.Model(&core.Bucket{}).Where("uuid = ?", c.Param("uuid")).Scan(&bucket)
+
+		var contents []core.Content
+		node.DB.Model(&core.Content{}).Where("bucket_uuid = ?", c.Param("uuid")).Scan(&contents)
+
+		var contentResponse []core.Content
+		for _, content := range contents {
+			content.RequestingApiKey = ""
+			contentResponse = append(contentResponse, content)
+			job := jobs.CreateNewDispatcher()
+			job.AddJob(jobs.NewDealItemChecker(node, content))
+
+		}
+
+		// trigger status check of the bucket
+		job := jobs.CreateNewDispatcher()
+		job.AddJob(jobs.NewCarDealItemChecker(node, bucket))
+		job.Start(len(contents) + 1)
+
+		bucket.RequestingApiKey = ""
+		return c.JSON(200, map[string]interface{}{
+			"bucket":          bucket,
+			"content_entries": contentResponse,
+		})
+	})
+	e.GET("/status/bucket/dag/:uuid", func(c echo.Context) error {
 
 		var bucket core.Bucket
 		node.DB.Model(&core.Bucket{}).Where("uuid = ?", c.Param("uuid")).Scan(&bucket)
