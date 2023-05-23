@@ -50,11 +50,8 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 
 	e.GET("/bucket/:uuid", func(c echo.Context) error {
 
-		authorizationString := c.Request().Header.Get("Authorization")
-		authParts := strings.Split(authorizationString, " ")
-
 		var bucket core.Bucket
-		node.DB.Model(&core.Bucket{}).Where("requesting_api_key = ? and uuid = ?", authParts[1], c.Param("uuid")).Scan(&bucket)
+		node.DB.Model(&core.Bucket{}).Where("uuid = ?", c.Param("uuid")).Scan(&bucket)
 
 		// get the cid
 		bucketCid, err := cid.Decode(bucket.Cid)
@@ -71,7 +68,7 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		}
 
 		var contents []core.Content
-		node.DB.Model(&core.Content{}).Where("requesting_api_key = ? and bucket_uuid = ?", authParts[1], c.Param("uuid")).Scan(&contents)
+		node.DB.Model(&core.Content{}).Where("bucket_uuid = ?", c.Param("uuid")).Scan(&contents)
 
 		var contentResponse []core.Content
 		for _, content := range contents {
