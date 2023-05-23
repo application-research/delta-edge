@@ -30,6 +30,23 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 			"content": content,
 		})
 	})
+
+	e.GET("/status/bucket/:uuid", func(c echo.Context) error {
+		var bucket core.Bucket
+		node.DB.Model(&core.Bucket{}).Where("uuid = ?", c.Param("uuid")).Scan(&bucket)
+		if bucket.ID == 0 {
+			return c.JSON(404, map[string]interface{}{
+				"message": "Bucket not found. Please check if you have the proper API key or if the bucket uuid is valid",
+			})
+		}
+
+		bucket.RequestingApiKey = ""
+		return c.JSON(200, map[string]interface{}{
+			"bucket": bucket,
+		})
+		return nil
+	})
+
 	e.GET("/status/bucket/contents/:uuid", func(c echo.Context) error {
 		var bucket core.Bucket
 		node.DB.Model(&core.Bucket{}).Where("uuid = ?", c.Param("uuid")).Scan(&bucket)

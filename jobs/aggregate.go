@@ -49,7 +49,7 @@ func (r *AggregateProcessor) Run() error {
 
 	for _, bucket := range buckets {
 		var content []core.Content
-		r.LightNode.DB.Model(&core.Content{}).Where(query, bucket.Uuid, bucket.RequestingApiKey).Find(&content)
+		r.LightNode.DB.Model(&core.Content{}).Where(query, bucket.Uuid, r.Content.RequestingApiKey).Find(&content)
 		var totalSize int64
 		var aggContent []core.Content
 		for _, c := range content {
