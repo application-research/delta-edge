@@ -68,6 +68,7 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 	ConfigureNodeInfoRouter(defaultOpenRoute, ln)
 
 	apiGroup := e.Group("/api/v1")
+	openApiGroup := e.Group("/open")
 	apiGroup.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			authorizationString := c.Request().Header.Get("Authorization")
@@ -128,7 +129,9 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 	})
 	ConfigureRetrieveRouter(apiGroup, ln)
 	ConfigurePinningRouter(apiGroup, ln)
+
 	ConfigureStatusCheckRouter(apiGroup, ln)
+	ConfigureOpenStatusCheckRouter(openApiGroup, ln)
 
 	// Start server
 
