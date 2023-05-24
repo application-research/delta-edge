@@ -253,7 +253,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 			Contents []core.Content `json:"contents"`
 		}{
 			Status:   "success",
-			Message:  "File uploaded and pinned successfully to miners. Please take note of the ids.",
+			Message:  "File uploaded and pinned successfully. Please take note of the ids.",
 			Contents: contentList,
 		})
 
@@ -339,7 +339,7 @@ func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) fun
 			Contents []core.Content `json:"contents"`
 		}{
 			Status:   "success",
-			Message:  "File uploaded and pinned successfully to miners. Please take note of the ids.",
+			Message:  "File uploaded and pinned successfully. Please take note of the ids.",
 			Contents: contentList,
 		})
 
@@ -443,7 +443,7 @@ func handleFetchPinToNodeToMiners(node *core.LightNode, DeltaUploadApi string) f
 			Contents []core.Content `json:"contents"`
 		}{
 			Status:   "success",
-			Message:  "File uploaded and pinned successfully to miners. Please take note of the ids.",
+			Message:  "File uploaded and pinned successfully. Please take note of the ids.",
 			Contents: contentList,
 		})
 
@@ -535,7 +535,7 @@ func handlePinAddCarToNodeToMiners(node *core.LightNode, DeltaUploadApi string) 
 			Contents []core.Content `json:"contents"`
 		}{
 			Status:   "success",
-			Message:  "File uploaded and pinned successfully to miners. Please take note of the ids.",
+			Message:  "File uploaded and pinned successfully. Please take note of the ids.",
 			Contents: contentList,
 		})
 

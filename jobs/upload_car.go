@@ -60,16 +60,22 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 		return nil
 	}
 
-	rootNd, err := r.LightNode.Node.DAGService.Get(context.Background(), cidToGet)
+	rootNd, err := r.LightNode.Node.GetDirectoryWithCid(context.Background(), cidToGet)
 	if err != nil {
 		fmt.Println("Error getting root node: ", err)
 		return nil
 	}
+
 	bufFile := &bytes.Buffer{}
-	for _, v := range rootNd.Links() {
+	rootNdLinks, errNdLinks := rootNd.Links(context.Background())
+	if errNdLinks != nil {
+		fmt.Println("Error getting root node links: ", errNdLinks)
+		return nil
+	}
+	for _, v := range rootNdLinks {
 		// get node
-		lNd, err := r.LightNode.Node.GetFile(context.Background(), v.Cid)
-		if err != nil {
+		lNd, errNd := r.LightNode.Node.GetFile(context.Background(), v.Cid)
+		if errNd != nil {
 			panic(err)
 		}
 		lNd.WriteTo(bufFile)

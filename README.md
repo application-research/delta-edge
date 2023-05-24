@@ -34,7 +34,7 @@ curl --location 'http://localhost:3000/api/v1/content/add' \
 --form 'miners="f0137168,f0717969"' // list of miners (optional)
 {
     "status": "success",
-    "message": "File uploaded and pinned successfully to miners. Please take note of the ids.",
+    "message": "File uploaded and pinned successfully. Please take note of the ids.",
     "contents": [
         {
             "ID": 53,

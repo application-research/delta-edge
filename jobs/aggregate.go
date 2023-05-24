@@ -47,9 +47,18 @@ func (r *AggregateProcessor) Run() error {
 		var totalSize int64
 		var aggContent []core.Content
 		for _, c := range content {
-			fmt.Println(c.Cid, c.Size)
-			totalSize += c.Size
-			aggContent = append(aggContent, c)
+
+			var isContentExists bool
+			for _, existingContent := range aggContent {
+				if existingContent.Cid == c.Cid {
+					isContentExists = true
+					break
+				}
+			}
+			if !isContentExists {
+				totalSize += c.Size
+				aggContent = append(aggContent, c)
+			}
 		}
 		fmt.Println("Total size: ", totalSize)
 		fmt.Println("Total hit size: ", r.LightNode.Config.Common.AggregateSize)

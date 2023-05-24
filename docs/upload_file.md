@@ -18,7 +18,7 @@ curl --location 'http://localhost:1313/api/v1/content/add' \
 
 {
     "status": "success",
-    "message": "File uploaded and pinned successfully to miners. Please take note of the ids.",
+    "message": "File uploaded and pinned successfully. Please take note of the ids.",
     "contents": [
         {
             "ID": 51,

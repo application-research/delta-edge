@@ -18,7 +18,6 @@ type GenerateCarProcessor struct {
 }
 
 func (g GenerateCarProcessor) Info() error {
-	//TODO implement me
 	panic("implement me")
 }
 
@@ -46,6 +45,7 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 	// for each content, generate a node and a raw
 	dir := uio.NewDirectory(r.LightNode.Node.DAGService)
 	dir.SetCidBuilder(GetCidBuilderDefault())
+
 	buf := &bytes.Buffer{}
 	var subPieceInfos []abi.PieceInfo
 	for _, c := range content {
@@ -76,11 +76,9 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 
 		c.PieceCid = pieceCid.String()
 		c.PieceSize = int64(unpadded.Padded())
-
 		r.LightNode.DB.Save(&c)
 
-		// if pieceCid is already on the subPieceInfos, skip
-		// if not, add to the subPieceInfos
+		// subPieceInfo
 		for _, subPieceInfo := range subPieceInfos {
 			if subPieceInfo.PieceCID == pieceCid {
 				continue
@@ -107,8 +105,6 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 	if err != nil {
 		panic(err)
 	}
-	r.LightNode.Node.DAGService.Add(context.Background(), dirNd)
-	r.LightNode.Node.DAGService.Add(context.Background(), aggNd)
 
 	var bucket core.Bucket
 	r.LightNode.DB.Model(&core.Bucket{}).Where("uuid = ?", bucketUuid).First(&bucket)
