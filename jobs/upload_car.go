@@ -60,28 +60,32 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 		return nil
 	}
 
-	rootNd, err := r.LightNode.Node.GetDirectoryWithCid(context.Background(), cidToGet)
+	rootNd, err := r.LightNode.Node.GetFile(context.Background(), cidToGet)
 	if err != nil {
 		fmt.Println("Error getting root node: ", err)
 		return nil
 	}
 
-	bufFile := &bytes.Buffer{}
-	rootNdLinks, errNdLinks := rootNd.Links(context.Background())
-	if errNdLinks != nil {
-		fmt.Println("Error getting root node links: ", errNdLinks)
-		return nil
-	}
-	for _, v := range rootNdLinks {
-		// get node
-		lNd, errNd := r.LightNode.Node.GetFile(context.Background(), v.Cid)
-		if errNd != nil {
-			panic(err)
-		}
-		lNd.WriteTo(bufFile)
-	}
+	fmt.Println("........")
+	fmt.Println(rootNd)
+	fmt.Println("........")
+	//bufFile := &bytes.Buffer{}
+	//rootNdLinks, errNdLinks := rootNd.Links(context.Background())
+	//if errNdLinks != nil {
+	//	fmt.Println("Error getting root node links: ", errNdLinks)
+	//	return nil
+	//}
+	//for _, v := range rootNdLinks {
+	//	// get node
+	//	lNd, errNd := r.LightNode.Node.GetFile(context.Background(), v.Cid)
+	//	if errNd != nil {
+	//		panic(err)
+	//	}
+	//	lNd.WriteTo(bufFile)
+	//}
 
-	_, err = io.Copy(partFile, bufFile)
+	//rootNd.WriteTo(partFile)
+	_, err = io.Copy(partFile, rootNd)
 	if err != nil {
 		fmt.Println("Copy error: ", err)
 		return nil
@@ -89,8 +93,14 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 
 	repFactor := r.LightNode.Config.Common.ReplicationFactor
 	partMetadata := fmt.Sprintf(`{"auto_retry":true,"miner":"%s","replication":%d}`, r.CarBucket.Miner, repFactor)
-	writer.WriteField("metadata", partMetadata)
-
+	if partFile, err = writer.CreateFormField("metadata"); err != nil {
+		fmt.Println("CreateFormField error: ", err)
+		return nil
+	}
+	if _, err = partFile.Write([]byte(partMetadata)); err != nil {
+		fmt.Println("Write error: ", err)
+		return nil
+	}
 	if err = writer.Close(); err != nil {
 		fmt.Println("Close error: ", err)
 		return nil
@@ -122,6 +132,7 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 		}
 		res, err = client.Do(clonedReq)
 		if err != nil || res.StatusCode != http.StatusOK {
+			fmt.Println("Error uploading car to delta: ", err)
 			time.Sleep(retryInterval)
 			continue
 		} else {

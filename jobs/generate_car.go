@@ -95,10 +95,10 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 		}
 
 	}
-	dirNd, err := dir.GetNode()
-	if err != nil {
-		panic(err)
-	}
+	//dirNd, err := dir.GetNode()
+	//if err != nil {
+	//	panic(err)
+	//}
 	//	dirSize, err := dirNd.Size()
 	// add to the dag service
 	aggNd, err := r.LightNode.Node.AddPinFile(context.Background(), buf, nil)
@@ -108,7 +108,7 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 
 	var bucket core.Bucket
 	r.LightNode.DB.Model(&core.Bucket{}).Where("uuid = ?", bucketUuid).First(&bucket)
-	bucket.Cid = dirNd.Cid().String()
+	bucket.Cid = aggNd.Cid().String()
 	bucket.RequestingApiKey = r.Bucket.RequestingApiKey
 
 	pieceCid, _, unpadded, err := filclient.GeneratePieceCommitment(context.Background(), aggNd.Cid(), r.LightNode.Node.Blockstore)
