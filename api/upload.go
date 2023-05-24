@@ -174,6 +174,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 						Status:           "open",
 						Name:             bucketUuid.String(),
 						RequestingApiKey: authParts[1],
+						DeltaNodeUrl:     DeltaUploadApi,
 						Uuid:             bucketUuid.String(),
 						Miner:            miner, // blank
 						CreatedAt:        time.Now(),
