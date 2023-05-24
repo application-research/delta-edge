@@ -7,6 +7,7 @@ Currently, the aggregate size is 1GB per USER (API_KEY). This means that each us
 ## Pre-requisites
 - make sure you have a edge node running either locally or remote. Use this guide [running a node](running_node.md) to run a node.
 - identify the edge node host.
+  - There is a running live edge node at https://edge.estuary.tech
 - get a API key using this guide [getting an API key](getting-api-key.md)
 
 ## Upload a file
@@ -48,13 +49,99 @@ Once the bucket is filled (i.e 1GB) the edge node will aggregate the files into 
 You can check the status of the bucket using the following command:
 ```bash
 curl --location 'http://localhost:1313/open/status/bucket/b1e3e0fe-f9ea-11ed-b6d3-d21437f11a21'
-{"bucket":{"ID":11,"uuid":"b1e3e0fe-f9ea-11ed-b6d3-d21437f11a21","name":"b1e3e0fe-f9ea-11ed-b6d3-d21437f11a21","size":0,"delta_content_id":0,"delta_node_url":"https://node.delta.store","miner":"f01963614","piece_cid":"","piece_size":0,"inclusion_proof":"","cid":"","status":"open","last_message":"","created_at":"2023-05-24T04:34:01.463498Z","updated_at":"2023-05-24T04:34:01.463498Z"}}
+{
+   "bucket":{
+      "ID":11,
+      "uuid":"b1e3e0fe-f9ea-11ed-b6d3-d21437f11a21",
+      "name":"b1e3e0fe-f9ea-11ed-b6d3-d21437f11a21",
+      "size":0,
+      "delta_content_id":0,
+      "delta_node_url":"https://node.delta.store",
+      "miner":"f01963614",
+      "piece_cid":"",
+      "piece_size":0,
+      "inclusion_proof":"",
+      "cid":"",
+      "status":"open",
+      "last_message":"",
+      "created_at":"2023-05-24T04:34:01.463498Z",
+      "updated_at":"2023-05-24T04:34:01.463498Z"
+   }
+}
 ````
 
 **Bucket has the following state**
 - Open - this means the bucket is still accepting files
 - Processing - this means the bucket is now closed and is being processed to make a deal.
 - Uploaded-to-Delta - this means the bucket has been uploaded to Delta and is waiting for the deal to be made.
+
+## Check the bucket contents
+This will return the bucket contents and each of the inclusion proofs, piece information.
+```bash
+curl --location 'https://edge.estuary.tech/open/status/bucket/contents/34f83574-f9ec-11ed-acf1-3ea42151d434'
+{
+   "bucket":{
+      "ID":11,
+      "uuid":"34f83574-f9ec-11ed-acf1-3ea42151d434",
+      "name":"34f83574-f9ec-11ed-acf1-3ea42151d434",
+      "size":0,
+      "delta_content_id":0,
+      "delta_node_url":"https://delta.estuary.tech",
+      "miner":"f01963614",
+      "piece_cid":"",
+      "piece_size":0,
+      "inclusion_proof":"",
+      "cid":"",
+      "status":"open",
+      "last_message":"",
+      "created_at":"2023-05-24T04:34:01.463498Z",
+      "updated_at":"2023-05-24T04:34:01.463498Z"
+   },
+   "content_entries":[
+      {
+         "ID":15266,
+         "name":"random_1684902841610594172.dat",
+         "size":500000000,
+         "cid":"bafybeigoerpsqkprcjsoj2h3uf65slqdepeqgvpbreswrxsojumxsjt2ga",
+         "delta_content_id":0,
+         "delta_node_url":"https://delta.estuary.tech",
+         "bucket_uuid":"34f83574-f9ec-11ed-acf1-3ea42151d434",
+         "status":"pinned",
+         "piece_cid":"",
+         "piece_size":0,
+         "inclusion_proof":"",
+         "last_message":"",
+         "miner":"f01963614",
+         "make_deal":true,
+         "created_at":"2023-05-24T04:39:56.378946Z",
+         "updated_at":"2023-05-24T04:39:56.378947Z"
+      },
+      {
+         "ID":15265,
+         "name":"random_1684902498077061439.dat",
+         "size":500000000,
+         "cid":"bafybeiazb4e7dhxtiovo5fquaqnzs52udjvjeo2uco53eu7cae7f7bzdfu",
+         "delta_content_id":0,
+         "delta_node_url":"https://delta.estuary.tech",
+         "bucket_uuid":"34f83574-f9ec-11ed-acf1-3ea42151d434",
+         "status":"pinned",
+         "piece_cid":"",
+         "piece_size":0,
+         "inclusion_proof":"",
+         "last_message":"",
+         "miner":"f01963614",
+         "make_deal":true,
+         "created_at":"2023-05-24T04:34:01.465705Z",
+         "updated_at":"2023-05-24T04:34:01.465705Z"
+      }
+   ],
+   "pagination":{
+      "page":1,
+      "perPage":10,
+      "totalCount":2
+   }
+} 
+```
 
 ## Checking the status of the content
 You can check the status of the file using the following command:
@@ -78,7 +165,7 @@ curl --location --request GET 'http://localhost:1313/api/v1/status/1' \
 ```
 
 ## View the file using the gateway url
-```
+```bash
 http://localhost:1313/gw/<cid>
 http://localhost:1313/gw/content/<content_id>
 ```
