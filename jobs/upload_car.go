@@ -18,17 +18,15 @@ import (
 
 type UploadCarToDeltaProcessor struct {
 	CarBucket core.Bucket `json:"car_bucket"`
-	File      io.Reader   `json:"file"`
 	RootCid   string      `json:"root_cid"`
 	Processor
 }
 
-func NewUploadCarToDeltaProcessor(ln *core.LightNode, bucket core.Bucket, fileNode io.Reader, rootCid string) IProcessor {
+func NewUploadCarToDeltaProcessor(ln *core.LightNode, bucket core.Bucket, rootCid string) IProcessor {
 	DELTA_UPLOAD_API = ln.Config.ExternalApi.ApiUrl
 	REPLICATION_FACTOR = string(ln.Config.Common.ReplicationFactor)
 	return &UploadCarToDeltaProcessor{
 		bucket,
-		fileNode,
 		rootCid,
 		Processor{
 			LightNode: ln,
@@ -105,9 +103,19 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 	client := &http.Client{}
 	var res *http.Response
 	for j := 0; j < maxRetries; j++ {
-		res, err = client.Do(req)
+		// Create a new http.Request instance
+		clonedReq := &http.Request{}
+
+		// Copy the properties from the original request
+		*clonedReq = *req
+
+		// Copy the headers
+		clonedReq.Header = make(http.Header)
+		for k, v := range req.Header {
+			clonedReq.Header[k] = append([]string(nil), v...)
+		}
+		res, err = client.Do(clonedReq)
 		if err != nil || res.StatusCode != http.StatusOK {
-			fmt.Printf("Error sending request (attempt %d): %v\n", j+1, err)
 			time.Sleep(retryInterval)
 			continue
 		} else {

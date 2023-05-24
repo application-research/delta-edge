@@ -5,88 +5,38 @@ import (
 	"context"
 	"fmt"
 	"github.com/application-research/edge-ur/core"
-	"github.com/application-research/edge-ur/utils"
 	"github.com/application-research/filclient"
 	"github.com/filecoin-project/go-data-segment/datasegment"
 	"github.com/filecoin-project/go-state-types/abi"
-	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
 	uio "github.com/ipfs/go-unixfs/io"
-	"io"
-	"time"
 )
 
-type SplitterProcessor struct {
-	Content core.Content `json:"content"`
-	File    io.Reader    `json:"file"`
+type GenerateCarProcessor struct {
+	Bucket core.Bucket
 	Processor
 }
 
-func NewSplitterProcessor(ln *core.LightNode, contentToProcess core.Content, fileNode io.Reader) IProcessor {
-	return &SplitterProcessor{
-		contentToProcess,
-		fileNode,
+func (g GenerateCarProcessor) Info() error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (g GenerateCarProcessor) Run() error {
+	g.GenerateCarForBucket(g.Bucket.Uuid)
+	return nil
+}
+
+func NewGenerateCarProcessor(ln *core.LightNode, bucketToProcess core.Bucket) IProcessor {
+	return &GenerateCarProcessor{
+		bucketToProcess,
 		Processor{
 			LightNode: ln,
 		},
 	}
 }
 
-func (r *SplitterProcessor) Info() error {
-	panic("implement me")
-}
-
-func (r *SplitterProcessor) Run() error {
-
-	// split the file.
-	fileSplitter := new(core.FileSplitter)
-	fileSplitter.ChuckSize = r.LightNode.Config.Common.MaxSizeToSplit
-	arrBts, err := fileSplitter.SplitFileFromReader(r.File) // nice split.
-	if err != nil {
-		panic(err)
-	}
-
-	// create a bucket
-	bucketUuid, err := uuid.NewUUID()
-	bucket := core.Bucket{
-		Status:           "open",
-		Name:             bucketUuid.String(),
-		RequestingApiKey: r.Content.RequestingApiKey,
-		Uuid:             bucketUuid.String(),
-		Miner:            r.Content.Miner,
-		CreatedAt:        time.Now(),
-		UpdatedAt:        time.Now(),
-	}
-	r.LightNode.DB.Create(&bucket)
-
-	// create a content for each split
-	for i, b := range arrBts {
-		bNd, err := r.LightNode.Node.AddPinFile(context.Background(), bytes.NewReader(b), nil)
-		if err != nil {
-			panic(err)
-		}
-		newContent := core.Content{
-			Name:             "split-" + string(i),
-			Size:             int64(len(b)),
-			Cid:              bNd.Cid().String(),
-			DeltaNodeUrl:     r.Content.DeltaNodeUrl,
-			RequestingApiKey: r.Content.RequestingApiKey,
-			Status:           utils.STATUS_PINNED,
-			Miner:            r.Content.Miner,
-			BucketUuid:       bucket.Uuid,
-			MakeDeal:         true,
-			CreatedAt:        time.Now(),
-			UpdatedAt:        time.Now(),
-		}
-		r.LightNode.DB.Create(&newContent)
-	}
-
-	r.GenerateCarForBucket(bucket.Uuid)
-
-	return nil
-}
-
-func (r *SplitterProcessor) GenerateCarForBucket(bucketUuid string) {
+func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 	// [node4 > raw4, node3 > [raw3, node2 > [raw2, node1 > raw1]]]
 
 	// create node and raw per file (layer them)
@@ -104,16 +54,18 @@ func (r *SplitterProcessor) GenerateCarForBucket(bucketUuid string) {
 		if err != nil {
 			panic(err)
 		}
-		cData, errCData := r.LightNode.Node.Get(context.Background(), cCid)
+		cData, errCData := r.LightNode.Node.GetFile(context.Background(), cCid) // get the node
+		cDataNode, errCData := r.LightNode.Node.Get(context.Background(), cCid) // get the file
 		if errCData != nil {
 			panic(errCData)
 		}
-		dir.AddChild(context.Background(), c.Name, cData)
-		_, err = io.Copy(buf, bytes.NewReader(cData.RawData()))
+		dir.AddChild(context.Background(), c.Name, cDataNode)
+
+		cData.WriteTo(buf)
 		if err != nil {
 			panic(err)
 		}
-		pieceCid, payloadSize, unpadded, err := filclient.GeneratePieceCommitment(context.Background(), cData.Cid(), r.LightNode.Node.Blockstore)
+		pieceCid, payloadSize, unpadded, err := filclient.GeneratePieceCommitment(context.Background(), cCid, r.LightNode.Node.Blockstore)
 		if err != nil {
 			panic(err)
 		}
@@ -149,7 +101,7 @@ func (r *SplitterProcessor) GenerateCarForBucket(bucketUuid string) {
 	if err != nil {
 		panic(err)
 	}
-	dirSize, err := dirNd.Size()
+	//	dirSize, err := dirNd.Size()
 	// add to the dag service
 	aggNd, err := r.LightNode.Node.AddPinFile(context.Background(), buf, nil)
 	if err != nil {
@@ -161,8 +113,7 @@ func (r *SplitterProcessor) GenerateCarForBucket(bucketUuid string) {
 	var bucket core.Bucket
 	r.LightNode.DB.Model(&core.Bucket{}).Where("uuid = ?", bucketUuid).First(&bucket)
 	bucket.Cid = dirNd.Cid().String()
-	bucket.RequestingApiKey = r.Content.RequestingApiKey
-	bucket.Name = dirNd.Cid().String()
+	bucket.RequestingApiKey = r.Bucket.RequestingApiKey
 
 	pieceCid, _, unpadded, err := filclient.GeneratePieceCommitment(context.Background(), aggNd.Cid(), r.LightNode.Node.Blockstore)
 	if err != nil {
@@ -172,7 +123,7 @@ func (r *SplitterProcessor) GenerateCarForBucket(bucketUuid string) {
 	bucket.PieceCid = pieceCid.String()
 	bucket.PieceSize = int64(unpadded.Padded())
 
-	bucket.Size = int64(dirSize)
+	bucket.Size = int64(unpadded)
 	r.LightNode.DB.Save(&bucket)
 
 	fmt.Println("Bucket CID: ", bucket.Cid)
@@ -180,9 +131,6 @@ func (r *SplitterProcessor) GenerateCarForBucket(bucketUuid string) {
 	fmt.Println("Bucket Piece CID: ", bucket.PieceCid)
 	fmt.Println("Bucket Piece Size: ", bucket.PieceSize)
 
-	// dealSize := abi.PaddedPieceSize(1 << 20)
-
-	// create proofs HERE and persist that on the database.
 	aggregate, err := datasegment.NewAggregate(abi.PaddedPieceSize(bucket.PieceSize), subPieceInfos)
 	if err != nil {
 		fmt.Println("Err", err.Error())

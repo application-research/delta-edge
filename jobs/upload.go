@@ -169,8 +169,6 @@ func (r *UploadToDeltaProcessor) Run() error {
 	repFactor := r.LightNode.Config.Common.ReplicationFactor
 	partMetadata := fmt.Sprintf(`{"auto_retry":true,"miner":"%s","replication":%d}`, r.Content.Miner, repFactor)
 
-	fmt.Println("partMetadata: ", partMetadata)
-
 	if _, err = partFile.Write([]byte(partMetadata)); err != nil {
 		fmt.Println("Write error: ", err)
 		return nil
@@ -194,7 +192,18 @@ func (r *UploadToDeltaProcessor) Run() error {
 	client := &http.Client{}
 	var res *http.Response
 	for j := 0; j < maxRetries; j++ {
-		res, err = client.Do(req)
+		// Create a new http.Request instance
+		clonedReq := &http.Request{}
+
+		// Copy the properties from the original request
+		*clonedReq = *req
+
+		// Copy the headers
+		clonedReq.Header = make(http.Header)
+		for k, v := range req.Header {
+			clonedReq.Header[k] = append([]string(nil), v...)
+		}
+		res, err = client.Do(clonedReq)
 		if err != nil || res.StatusCode != http.StatusOK {
 			fmt.Printf("Error sending request (attempt %d): %v\n", j+1, err)
 			time.Sleep(retryInterval)
