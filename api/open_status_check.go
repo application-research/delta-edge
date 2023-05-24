@@ -41,6 +41,10 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 			})
 		}
 
+		job := jobs.CreateNewDispatcher()
+		job.AddJob(jobs.NewCarDealItemChecker(node, bucket))
+		job.Start(1)
+
 		bucket.RequestingApiKey = ""
 		return c.JSON(200, map[string]interface{}{
 			"bucket": bucket,
