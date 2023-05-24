@@ -66,9 +66,9 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 		return nil
 	}
 
-	fmt.Println("........")
-	fmt.Println(rootNd)
-	fmt.Println("........")
+	r.CarBucket.Status = "uploading"
+	r.LightNode.DB.Save(&r.CarBucket)
+
 	//bufFile := &bytes.Buffer{}
 	//rootNdLinks, errNdLinks := rootNd.Links(context.Background())
 	//if errNdLinks != nil {
@@ -133,6 +133,9 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 		res, err = client.Do(clonedReq)
 		if err != nil || res.StatusCode != http.StatusOK {
 			fmt.Println("Error uploading car to delta: ", err)
+			r.CarBucket.Status = "error, retrying"
+			r.CarBucket.LastMessage = err.Error()
+			r.LightNode.DB.Save(&r.CarBucket)
 			time.Sleep(retryInterval)
 			continue
 		} else {
@@ -140,18 +143,24 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 				var dealE2EUploadResponse DealE2EUploadResponse
 				body, err := ioutil.ReadAll(res.Body)
 				if err != nil {
+					r.CarBucket.Status = "error, reading response body"
+					r.CarBucket.LastMessage = err.Error()
+					r.LightNode.DB.Save(&r.CarBucket)
 					fmt.Println(err)
 					continue
 				}
 				err = json.Unmarshal(body, &dealE2EUploadResponse)
 				if err != nil {
-					fmt.Println(err)
+					r.CarBucket.Status = "error, unmarshalling response body"
+					r.CarBucket.LastMessage = err.Error()
+					r.LightNode.DB.Save(&r.CarBucket)
 					continue
 				} else {
 					if dealE2EUploadResponse.ContentID == 0 {
 						continue
 					} else {
 						r.CarBucket.UpdatedAt = time.Now()
+						r.CarBucket.LastMessage = utils.STATUS_UPLOADED_TO_DELTA
 						r.CarBucket.Status = utils.STATUS_UPLOADED_TO_DELTA
 						r.CarBucket.DeltaContentId = int64(dealE2EUploadResponse.ContentID)
 						r.LightNode.DB.Save(&r.CarBucket)

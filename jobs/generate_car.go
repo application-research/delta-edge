@@ -118,7 +118,7 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 
 	bucket.PieceCid = pieceCid.String()
 	bucket.PieceSize = int64(unpadded.Padded())
-
+	bucket.Status = "aggregated"
 	bucket.Size = int64(unpadded)
 	r.LightNode.DB.Save(&bucket)
 
