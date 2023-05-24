@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/application-research/edge-ur/core"
 	"github.com/application-research/filclient"
-	"github.com/filecoin-project/go-data-segment/datasegment"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/ipfs/go-cid"
 	uio "github.com/ipfs/go-unixfs/io"
@@ -100,7 +99,7 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 	//	panic(err)
 	//}
 	//	dirSize, err := dirNd.Size()
-	// add to the dag service
+
 	aggNd, err := r.LightNode.Node.AddPinFile(context.Background(), buf, nil)
 	if err != nil {
 		panic(err)
@@ -127,17 +126,19 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 	fmt.Println("Bucket Piece CID: ", bucket.PieceCid)
 	fmt.Println("Bucket Piece Size: ", bucket.PieceSize)
 
-	aggregate, err := datasegment.NewAggregate(abi.PaddedPieceSize(bucket.PieceSize), subPieceInfos)
-	if err != nil {
-		fmt.Println("Err", err.Error())
-	}
-	fmt.Println("Aggregate: ", aggregate)
-	aggCid, _ := aggregate.PieceCID()
-	indexPieceCid, _ := aggregate.IndexPieceCID()
-	aggregate.Index.ValidEntries()
-	fmt.Println("Aggregate: ", aggCid.String())
-	fmt.Println("OwnPiece: ", pieceCid.String())
-	fmt.Println("aggregate.IndexPieceCID(): ", indexPieceCid.String())
+	//aggregate, err := datasegment.NewAggregate(abi.PaddedPieceSize(bucket.PieceSize), subPieceInfos)
+	//if err != nil {
+	//	fmt.Println("Err", err.Error())
+	//}
+	//
+	//bufNice := &bytes.Buffer{}
+	//for _, c := range dirNd.Links() {
+	//	nd, err := c.GetNode(context.Background(), r.LightNode.Node.DAGService)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//	buf.Write(nd.RawData())
+	//}
 
 	// process the deal
 	job := CreateNewDispatcher()

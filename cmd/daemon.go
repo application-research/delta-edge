@@ -80,6 +80,10 @@ func DaemonCmd(cfg *config.DeltaConfig) []*cli.Command {
    \ \_______\\ \_______\\ \_______\\ \_______\                \ \_______\\ \__\\ _\ 
     \|_______| \|_______| \|_______| \|_______|                 \|_______| \|__|\|__|
 `)
+			fmt.Println("Cleaning up and retrying...")
+			cleanUpAndRetry(ln)
+			fmt.Println("Cleaning up and retrying... Done")
+
 			fmt.Println("Starting API server")
 			api.InitializeEchoRouterConfig(ln)
 			api.LoopForever()
@@ -116,4 +120,10 @@ func runProcessors(ln *core.LightNode) {
 			}()
 		}
 	}
+}
+
+func cleanUpAndRetry(ln *core.LightNode) {
+	dispatcher := jobs.CreateNewDispatcher()
+	dispatcher.AddJob(jobs.NewRetryProcessor(ln))
+	dispatcher.Start(1)
 }
