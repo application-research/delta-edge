@@ -45,7 +45,7 @@ func OpenDatabase(cfg config.DeltaConfig) (*gorm.DB, error) {
 }
 
 func ConfigureModels(db *gorm.DB) {
-	db.AutoMigrate(&Content{}, &ContentDeal{}, &Collection{}, &CollectionRef{}, &LogEvent{}, &Bucket{})
+	db.AutoMigrate(&Content{}, &ContentDeal{}, &Collection{}, &CollectionRef{}, &LogEvent{}, &Bucket{}, &Bundle{})
 }
 
 type LogEvent struct {
@@ -62,22 +62,24 @@ type LogEvent struct {
 }
 
 type Bundle struct {
-	ID             int64     `gorm:"primaryKey"`
-	Uuid           string    `gorm:"index" json:"uuid"`
-	Name           string    `json:"name"`
-	Size           int64     `json:"size"`
-	DeltaContentId int64     `json:"delta_content_id"`
-	DeltaNodeUrl   string    `json:"delta_node_url"`
-	Miner          string    `json:"miner"`
-	Cid            string    `json:"cid"`
-	Status         string    `json:"status"`
-	LastMessage    string    `json:"last_message"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	ID               int64     `gorm:"primaryKey"`
+	Uuid             string    `gorm:"index" json:"uuid"`
+	Name             string    `json:"name"`
+	Size             int64     `json:"size"`
+	DeltaContentId   int64     `json:"delta_content_id"`
+	DeltaNodeUrl     string    `json:"delta_node_url"`
+	RequestingApiKey string    `json:"requesting_api_key,omitempty"`
+	Miner            string    `json:"miner"`
+	Cid              string    `json:"cid"`
+	Status           string    `json:"status"` // open, processing, filled, uploaded-to-delta
+	LastMessage      string    `json:"last_message"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
 }
 type Bucket struct {
 	ID               int64     `gorm:"primaryKey"`
 	Uuid             string    `gorm:"index" json:"uuid"`
+	BundleUuid       string    `gorm:"index" json:"bundle_uuid"`
 	Name             string    `json:"name"`
 	Size             int64     `json:"size"`
 	RequestingApiKey string    `json:"requesting_api_key,omitempty"`
@@ -88,7 +90,7 @@ type Bucket struct {
 	PieceSize        int64     `json:"piece_size"`
 	InclusionProof   string    `json:"inclusion_proof"`
 	Cid              string    `json:"cid"`
-	Status           string    `json:"status"`
+	Status           string    `json:"status"` // open, processing, filled, bundled
 	LastMessage      string    `json:"last_message"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`

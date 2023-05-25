@@ -47,6 +47,7 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 			"content": content,
 		})
 	})
+
 	e.GET("/status/bucket/contents/:uuid", func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
@@ -103,7 +104,7 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		}
 
 		job := jobs.CreateNewDispatcher()
-		job.AddJob(jobs.NewCarDealItemChecker(node, bucket))
+		job.AddJob(jobs.NewBucketChecker(node, bucket))
 		job.Start(len(contents) + 1)
 
 		bucket.RequestingApiKey = ""
@@ -171,7 +172,7 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		}
 		// trigger status check
 		job := jobs.CreateNewDispatcher()
-		job.AddJob(jobs.NewCarDealItemChecker(node, bucket))
+		job.AddJob(jobs.NewBucketChecker(node, bucket))
 		job.Start(len(contents) + 1)
 
 		bucket.RequestingApiKey = ""

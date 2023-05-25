@@ -7,8 +7,10 @@ import (
 	"github.com/filecoin-project/go-data-segment/datasegment"
 	"github.com/filecoin-project/go-data-segment/util"
 	"github.com/filecoin-project/go-state-types/abi"
+	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
 	"io"
+	"time"
 )
 
 type BucketCarBundler struct {
@@ -30,6 +32,21 @@ func (b BucketCarBundler) Run() error {
 		return nil
 	}
 
+	// create one bundle
+	bundleUuid, err := uuid.NewUUID()
+	if err != nil {
+		panic(err)
+	}
+
+	bundle := core.Bundle{
+		Uuid:      bundleUuid.String(),
+		Name:      bundleUuid.String(),
+		Status:    "open",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	b.LightNode.DB.Create(&bundle)
+
 	var intTotalSize int64
 	// create piece info of each bucket
 	var subPieceInfos []abi.PieceInfo
@@ -42,6 +59,7 @@ func (b BucketCarBundler) Run() error {
 		})
 		intTotalSize += bucket.PieceSize
 
+		bucket.BundleUuid = bundle.Uuid
 		if err != nil {
 			panic(err)
 		}
@@ -52,8 +70,10 @@ func (b BucketCarBundler) Run() error {
 		panic(err)
 	}
 
+	bundle.Status = "processing"
+	b.LightNode.DB.Save(&bundle)
+	
 	//create the aggregate object
-	fmt.Println("intTotalSize", intTotalSize)
 	a, err := datasegment.NewAggregate(abi.PaddedPieceSize(totalSizePow2), subPieceInfos)
 	if err != nil {
 		panic(err)
@@ -93,12 +113,19 @@ func (b BucketCarBundler) Run() error {
 	fmt.Println("rootReader", rootReader)
 
 	// add this to the node
-	b.LightNode.Node.AddPinFile(context.Background(), rootReader, nil)
+	rootBundle, err := b.LightNode.Node.AddPinFile(context.Background(), rootReader, nil)
+	if err != nil {
+		panic(err)
+	}
 
-	//job := CreateNewDispatcher()
-	//job.AddJob(NewUploadToDeltaProcessor(b.LightNode, rootReader))
-	//job.Start(1)
-	
+	bundle.Cid = rootBundle.Cid().String()
+	bundle.Status = "filled"
+	b.LightNode.DB.Save(&bundle)
+
+	job := CreateNewDispatcher()
+	job.AddJob(NewUploadBundleToDeltaProcessor(b.LightNode, rootReader, bundle))
+	job.Start(1)
+
 	return nil
 }
 

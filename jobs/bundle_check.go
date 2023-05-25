@@ -10,32 +10,32 @@ import (
 	"time"
 )
 
-type CarDealItemChecker struct {
-	Bucket core.Bucket `json:"bucket"`
+type BundleChecker struct {
+	Bundle core.Bundle `json:"bundle"`
 	Processor
 }
 
-func (r *CarDealItemChecker) Info() error {
+func (r *BundleChecker) Info() error {
 	return nil
 }
 
-func NewCarDealItemChecker(ln *core.LightNode, bucket core.Bucket) IProcessor {
+func NewBundleChecker(ln *core.LightNode, bucket core.Bundle) IProcessor {
 	DELTA_UPLOAD_API = ln.Config.ExternalApi.ApiUrl
-	return &CarDealItemChecker{
-		Bucket: bucket,
+	return &BundleChecker{
+		Bundle: bucket,
 		Processor: Processor{
 			LightNode: ln,
 		},
 	}
 }
 
-func (r *CarDealItemChecker) Run() error {
+func (r *BundleChecker) Run() error {
 
 	// run thru the DIR contents and add them to the DB
-	var bucket core.Bucket
-	r.LightNode.DB.Raw("select * from buckets where id = ?", r.Bucket.ID).Scan(&bucket)
+	var bundle core.Bundle
+	r.LightNode.DB.Raw("select * from bundles where id = ?", r.Bundle.ID).Scan(&bundle)
 
-	c := bucket
+	c := bundle
 	//for _, c := range content {
 	contentId := strconv.Itoa(int(c.DeltaContentId))
 	resp, err := http.Get(c.DeltaNodeUrl + "/open/stats/content/" + contentId)
