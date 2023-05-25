@@ -27,7 +27,7 @@ func (b BucketCarBundler) Run() error {
 	var buckets []core.Bucket
 	b.LightNode.DB.Model(&core.Bucket{}).Where("status = ?", "filled").Find(&buckets)
 
-	if len(buckets) < 1 {
+	if len(buckets) < 3 {
 		fmt.Println("Not enough buckets to aggregate")
 		return nil
 	}
@@ -98,20 +98,15 @@ func (b BucketCarBundler) Run() error {
 		panic(err)
 	}
 
-	cidIPC, errPiece := a.IndexPieceCID()
-	if errPiece != nil {
-		fmt.Printf("%+v\n", errPiece)
-	}
-	fmt.Println("a.IndexPieceCid()", cidIPC)
+	//cidIPC, errPiece := a.IndexPieceCID()
+	//if errPiece != nil {
+	//	fmt.Printf("%+v\n", errPiece)
+	//}
 
 	cidPC, errP := a.PieceCID()
-	fmt.Println("a.PieceCID()", cidPC)
 	if errP != nil {
 		fmt.Printf("%+v\n", errP)
 	}
-
-	// process the deal
-	fmt.Println("rootReader", rootReader)
 
 	// add this to the node
 	rootBundle, err := b.LightNode.Node.AddPinFile(context.Background(), rootReader, nil)
@@ -144,9 +139,12 @@ func (b BucketCarBundler) Run() error {
 
 		bucketX.CommPa = aux.CommPa.String()
 		bucketX.SizePa = int64(aux.SizePa)
+
 		if err != nil {
 			panic(err)
 		}
+
+		b.LightNode.DB.Save(bucketX)
 
 	}
 

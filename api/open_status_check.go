@@ -10,6 +10,43 @@ import (
 )
 
 func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
+
+	e.GET("/status/content/by-cid/:cid", func(c echo.Context) error {
+
+		var content core.Content
+		node.DB.Raw("select * from contents as c where cid = ?", c.Param("cid")).Scan(&content)
+		content.RequestingApiKey = ""
+
+		var buckets []core.Bucket
+		node.DB.Model(&core.Bucket{}).Where("uuid = ?", content.BucketUuid).Find(&buckets)
+
+		var bundles []core.Bundle
+		for _, bucket := range buckets {
+			bucket.RequestingApiKey = ""
+			node.DB.Model(&core.Bundle{}).Where("	uuid = ?", bucket.BundleUuid).Find(&bundles)
+			for _, bundle := range bundles {
+				bundle.RequestingApiKey = ""
+			}
+		}
+
+		if content.ID == 0 {
+			return c.JSON(404, map[string]interface{}{
+				"message": "Content not found. Please check if you have the proper API key or if the content id is valid",
+			})
+		}
+		// associated bundle
+
+		// trigger status check
+		job := jobs.CreateNewDispatcher()
+		job.AddJob(jobs.NewDealItemChecker(node, content))
+		job.Start(1)
+
+		return c.JSON(200, map[string]interface{}{
+			"content": content,
+			"buckets": buckets,
+			"bundles": bundles,
+		})
+	})
 	e.GET("/status/content/:id", func(c echo.Context) error {
 
 		var content core.Content
@@ -21,6 +58,7 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 				"message": "Content not found. Please check if you have the proper API key or if the content id is valid",
 			})
 		}
+		// associated bundle
 
 		// trigger status check
 		job := jobs.CreateNewDispatcher()
