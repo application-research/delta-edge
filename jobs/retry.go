@@ -49,7 +49,7 @@ func (r RetryProcessor) Run() error {
 
 			// process the car generator
 			job := CreateNewDispatcher()
-			genCar := NewGenerateCarProcessor(r.LightNode, bucket)
+			genCar := NewBucketCarGenerator(r.LightNode, bucket)
 			job.AddJob(genCar)
 			job.Start(1)
 			continue

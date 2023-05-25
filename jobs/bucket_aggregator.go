@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"fmt"
 	"github.com/application-research/edge-ur/core"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-merkledag"
@@ -9,14 +8,14 @@ import (
 	"io"
 )
 
-type AggregateProcessor struct {
+type BucketAggregator struct {
 	Content core.Content `json:"content"`
 	File    io.Reader    `json:"file"`
 	Processor
 }
 
-func NewAggregateProcessor(ln *core.LightNode, contentToProcess core.Content, fileNode io.Reader) IProcessor {
-	return &AggregateProcessor{
+func NewBucketAggregator(ln *core.LightNode, contentToProcess core.Content, fileNode io.Reader) IProcessor {
+	return &BucketAggregator{
 		contentToProcess,
 		fileNode,
 		Processor{
@@ -25,11 +24,11 @@ func NewAggregateProcessor(ln *core.LightNode, contentToProcess core.Content, fi
 	}
 }
 
-func (r *AggregateProcessor) Info() error {
+func (r *BucketAggregator) Info() error {
 	panic("implement me")
 }
 
-func (r *AggregateProcessor) Run() error {
+func (r *BucketAggregator) Run() error {
 	// check if there are open bucket. if there are, generate the car file for the bucket.
 
 	var buckets []core.Bucket
@@ -60,15 +59,14 @@ func (r *AggregateProcessor) Run() error {
 				aggContent = append(aggContent, c)
 			}
 		}
-		fmt.Println("Total size: ", totalSize)
-		fmt.Println("Total hit size: ", r.LightNode.Config.Common.AggregateSize)
+
 		if totalSize > r.LightNode.Config.Common.AggregateSize && len(content) > 1 {
 			bucket.Status = "processing"
 			r.LightNode.DB.Save(&bucket)
 
 			// process the car generator
 			job := CreateNewDispatcher()
-			genCar := NewGenerateCarProcessor(r.LightNode, bucket)
+			genCar := NewBucketCarGenerator(r.LightNode, bucket)
 			job.AddJob(genCar)
 			job.Start(1)
 			continue

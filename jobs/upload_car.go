@@ -69,21 +69,6 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 	r.CarBucket.Status = "uploading"
 	r.LightNode.DB.Save(&r.CarBucket)
 
-	//bufFile := &bytes.Buffer{}
-	//rootNdLinks, errNdLinks := rootNd.Links(context.Background())
-	//if errNdLinks != nil {
-	//	fmt.Println("Error getting root node links: ", errNdLinks)
-	//	return nil
-	//}
-	//for _, v := range rootNdLinks {
-	//	// get node
-	//	lNd, errNd := r.LightNode.Node.GetFile(context.Background(), v.Cid)
-	//	if errNd != nil {
-	//		panic(err)
-	//	}
-	//	lNd.WriteTo(bufFile)
-	//}
-
 	//rootNd.WriteTo(partFile)
 	_, err = io.Copy(partFile, rootNd)
 	if err != nil {

@@ -11,22 +11,27 @@ import (
 	uio "github.com/ipfs/go-unixfs/io"
 )
 
-type GenerateCarProcessor struct {
+// The BucketCarGenerator type has a Bucket field and implements the Processor interface.
+// @property Bucket - The `Bucket` property is a field of type `core.Bucket`. It is likely used to store or retrieve data
+// related to cars, such as their make, model, year, and other attributes. The `BucketCarGenerator` struct likely
+// represents a component or module that is responsible for generating new
+// @property {Processor}  - The `BucketCarGenerator` struct has two properties:
+type BucketCarGenerator struct {
 	Bucket core.Bucket
 	Processor
 }
 
-func (g GenerateCarProcessor) Info() error {
+func (g BucketCarGenerator) Info() error {
 	panic("implement me")
 }
 
-func (g GenerateCarProcessor) Run() error {
+func (g BucketCarGenerator) Run() error {
 	g.GenerateCarForBucket(g.Bucket.Uuid)
 	return nil
 }
 
-func NewGenerateCarProcessor(ln *core.LightNode, bucketToProcess core.Bucket) IProcessor {
-	return &GenerateCarProcessor{
+func NewBucketCarGenerator(ln *core.LightNode, bucketToProcess core.Bucket) IProcessor {
+	return &BucketCarGenerator{
 		bucketToProcess,
 		Processor{
 			LightNode: ln,
@@ -34,8 +39,7 @@ func NewGenerateCarProcessor(ln *core.LightNode, bucketToProcess core.Bucket) IP
 	}
 }
 
-func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
-	// [node4 > raw4, node3 > [raw3, node2 > [raw2, node1 > raw1]]]
+func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 
 	// create node and raw per file (layer them)
 	var content []core.Content
@@ -132,6 +136,6 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 	//job.Start(1)
 
 	job := CreateNewDispatcher()
-	job.AddJob(NewBucketsAggregator(r.LightNode))
+	job.AddJob(NewBucketCarBundler(r.LightNode))
 	job.Start(1)
 }

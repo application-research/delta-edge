@@ -206,7 +206,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 
 				if makeDeal == "true" {
 					job := jobs.CreateNewDispatcher()
-					job.AddJob(jobs.NewAggregateProcessor(node, newContent, srcR))
+					job.AddJob(jobs.NewBucketAggregator(node, newContent, srcR))
 					job.Start(1)
 				}
 

@@ -61,6 +61,20 @@ type LogEvent struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
+type Bundle struct {
+	ID             int64     `gorm:"primaryKey"`
+	Uuid           string    `gorm:"index" json:"uuid"`
+	Name           string    `json:"name"`
+	Size           int64     `json:"size"`
+	DeltaContentId int64     `json:"delta_content_id"`
+	DeltaNodeUrl   string    `json:"delta_node_url"`
+	Miner          string    `json:"miner"`
+	Cid            string    `json:"cid"`
+	Status         string    `json:"status"`
+	LastMessage    string    `json:"last_message"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
 type Bucket struct {
 	ID               int64     `gorm:"primaryKey"`
 	Uuid             string    `gorm:"index" json:"uuid"`

@@ -276,8 +276,8 @@ github.com/filecoin-project/go-commp-utils/nonffi v0.0.0-20220905160352-62059082
 github.com/filecoin-project/go-crypto v0.0.0-20191218222705-effae4ea9f03/go.mod h1:+viYnvGtUTgJRdy6oaeF4MTFKAfatX071MPDPBL11EQ=
 github.com/filecoin-project/go-crypto v0.0.1 h1:AcvpSGGCgjaY8y1az6AMfKQWreF/pWO2JJGLl6gCq6o=
 github.com/filecoin-project/go-crypto v0.0.1/go.mod h1:+viYnvGtUTgJRdy6oaeF4MTFKAfatX071MPDPBL11EQ=
-github.com/filecoin-project/go-data-segment v0.0.0-20230519181224-dc0ae4a657ac h1:u8JaDZU8loC78HjLjxRdDf6PV/7AwX9BRq1vlLAv6p4=
-github.com/filecoin-project/go-data-segment v0.0.0-20230519181224-dc0ae4a657ac/go.mod h1:c+ALiziYNWQCOKeoMBczxM9kOCcgUtZU1CBXzHVlUGs=
+github.com/filecoin-project/go-data-segment v0.0.0-20230525150903-2fa63e124541 h1:mgaJvz2DMuVSx84dUYSTg5KrC1qf8YK/KT3lh9FFI40=
+github.com/filecoin-project/go-data-segment v0.0.0-20230525150903-2fa63e124541/go.mod h1:U/5tAWMNzdO82d0y+sTAaaKWWD2f/UuHqTEe1S5tV8s=
 github.com/filecoin-project/go-data-transfer v1.15.2 h1:PzqsFr2Q/onMGKrGh7TtRT0dKsJcVJrioJJnjnKmxlk=
 github.com/filecoin-project/go-data-transfer v1.15.2/go.mod h1:qXOJ3IF5dEJQHykXXTwcaRxu17bXAxr+LglXzkL6bZQ=
 github.com/filecoin-project/go-ds-versioning v0.1.1 h1:JiyBqaQlwC+UM0WhcBtVEeT3XrX59mQhT8U3p7nu86o=
