@@ -16,7 +16,6 @@ type BucketCarBundler struct {
 }
 
 func (b BucketCarBundler) Info() error {
-	//TODO implement me
 	panic("implement me")
 }
 
