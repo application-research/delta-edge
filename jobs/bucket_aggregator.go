@@ -9,13 +9,15 @@ import (
 )
 
 type BucketAggregator struct {
+	Force   bool         `json:"force"`
 	Content core.Content `json:"content"`
 	File    io.Reader    `json:"file"`
 	Processor
 }
 
-func NewBucketAggregator(ln *core.LightNode, contentToProcess core.Content, fileNode io.Reader) IProcessor {
+func NewBucketAggregator(ln *core.LightNode, contentToProcess core.Content, fileNode io.Reader, force bool) IProcessor {
 	return &BucketAggregator{
+		force,
 		contentToProcess,
 		fileNode,
 		Processor{
@@ -60,7 +62,7 @@ func (r *BucketAggregator) Run() error {
 			}
 		}
 
-		if totalSize > r.LightNode.Config.Common.AggregateSize && len(content) > 1 {
+		if r.Force || totalSize > r.LightNode.Config.Common.AggregateSize && len(content) > 1 {
 			bucket.Status = "processing"
 			r.LightNode.DB.Save(&bucket)
 

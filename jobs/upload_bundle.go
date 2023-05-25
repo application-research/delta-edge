@@ -23,7 +23,7 @@ type UploadBundleToDeltaProcessor struct {
 }
 
 func NewUploadBundleToDeltaProcessor(ln *core.LightNode, reader io.Reader, bundle core.Bundle) IProcessor {
-	DELTA_UPLOAD_API = ln.Config.ExternalApi.ApiUrl
+	DELTA_UPLOAD_API = ln.Config.ExternalApi.DeltaNodeApiUrl
 	REPLICATION_FACTOR = string(ln.Config.Common.ReplicationFactor)
 	return &UploadBundleToDeltaProcessor{
 
@@ -50,12 +50,12 @@ func (r *UploadBundleToDeltaProcessor) Run() error {
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
 
-	partFile, err := writer.CreateFormFile("data", r.Bundle.Cid)
+	partFile, err := writer.CreateFormFile("data", r.Bundle.FileCid)
 	if err != nil {
 		fmt.Println("CreateFormFile error: ", err)
 		return nil
 	}
-	cidToGet, err := cid.Decode(r.Bundle.Cid)
+	cidToGet, err := cid.Decode(r.Bundle.FileCid)
 	if err != nil {
 		fmt.Println("Error decoding cid: ", err)
 		return nil
@@ -120,7 +120,7 @@ func (r *UploadBundleToDeltaProcessor) Run() error {
 		if err != nil || res.StatusCode != http.StatusOK {
 			fmt.Println("Error uploading car to delta: ", err)
 			r.Bundle.Status = "error"
-			r.Bundle.LastMessage = err.Error()
+			r.Bundle.LastMessage = "Error uploading car to delta"
 			r.LightNode.DB.Save(&r.Bundle)
 			time.Sleep(retryInterval)
 			continue

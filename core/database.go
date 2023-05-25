@@ -62,38 +62,41 @@ type LogEvent struct {
 }
 
 type Bundle struct {
-	ID               int64     `gorm:"primaryKey"`
-	Uuid             string    `gorm:"index" json:"uuid"`
-	Name             string    `json:"name"`
-	Size             int64     `json:"size"`
-	DeltaContentId   int64     `json:"delta_content_id"`
-	DeltaNodeUrl     string    `json:"delta_node_url"`
-	RequestingApiKey string    `json:"requesting_api_key,omitempty"`
-	Miner            string    `json:"miner"`
-	Cid              string    `json:"cid"`
-	Status           string    `json:"status"` // open, processing, filled, uploaded-to-delta
-	LastMessage      string    `json:"last_message"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
+	ID                int64     `gorm:"primaryKey"`
+	Uuid              string    `gorm:"index" json:"uuid"`
+	Name              string    `json:"name"`
+	Size              int64     `json:"size"`
+	DeltaContentId    int64     `json:"delta_content_id"`
+	DeltaNodeUrl      string    `json:"delta_node_url"`
+	RequestingApiKey  string    `json:"requesting_api_key,omitempty"`
+	Miner             string    `json:"miner"`
+	FileCid           string    `json:"file_cid"`
+	AggregatePieceCid string    `json:"aggregate_piece_cid"`
+	InclusionProof    string    `json:"inclusion_proof"`
+	Status            string    `json:"status"` // open, processing, filled, uploaded-to-delta
+	LastMessage       string    `json:"last_message"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
 }
 type Bucket struct {
-	ID               int64     `gorm:"primaryKey"`
-	Uuid             string    `gorm:"index" json:"uuid"`
-	BundleUuid       string    `gorm:"index" json:"bundle_uuid"`
-	Name             string    `json:"name"`
-	Size             int64     `json:"size"`
-	RequestingApiKey string    `json:"requesting_api_key,omitempty"`
-	DeltaContentId   int64     `json:"delta_content_id"`
-	DeltaNodeUrl     string    `json:"delta_node_url"`
-	Miner            string    `json:"miner"`
-	PieceCid         string    `json:"piece_cid"`
-	PieceSize        int64     `json:"piece_size"`
-	InclusionProof   string    `json:"inclusion_proof"`
-	Cid              string    `json:"cid"`
-	Status           string    `json:"status"` // open, processing, filled, bundled
-	LastMessage      string    `json:"last_message"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
+	ID               int64     `gorm:"primaryKey" json:"id,omitempty"`
+	Uuid             string    `gorm:"index" json:"uuid" json:"uuid,omitempty"`
+	BundleUuid       string    `gorm:"index" json:"bundle_uuid" json:"bundle_uuid,omitempty"`
+	Name             string    `json:"name" json:"name,omitempty"`
+	Size             int64     `json:"size" json:"size,omitempty"`
+	RequestingApiKey string    `json:"requesting_api_key,omitempty" json:"requesting_api_key,omitempty"`
+	DeltaContentId   int64     `json:"delta_content_id" json:"delta_content_id,omitempty"`
+	DeltaNodeUrl     string    `json:"delta_node_url" json:"delta_node_url,omitempty"`
+	Miner            string    `json:"miner" json:"miner,omitempty"`
+	PieceCid         string    `json:"piece_cid" json:"piece_cid,omitempty"`
+	PieceSize        int64     `json:"piece_size" json:"piece_size,omitempty"`
+	CommPa           string    `json:"comm_pa,omitempty"`
+	SizePa           int64     `json:"size_pa,omitempty"`
+	Cid              string    `json:"cid" json:"cid,omitempty"`
+	Status           string    `json:"status" json:"status,omitempty"` // open, processing, filled, bundled
+	LastMessage      string    `json:"last_message" json:"last_message,omitempty"`
+	CreatedAt        time.Time `json:"created_at" json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at" json:"updated_at"`
 }
 
 //	 main content record

@@ -65,7 +65,7 @@ type UploadResponse struct {
 }
 
 func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
-	var DeltaUploadApi = node.Config.ExternalApi.ApiUrl
+	var DeltaUploadApi = node.Config.ExternalApi.DeltaNodeApiUrl
 	content := e.Group("/content")
 	content.POST("/add", handleUploadToCarBucketAndMiners(node, DeltaUploadApi))
 	content.POST("/add-ipfs", handleUploadFromCidAndMiners(node, DeltaUploadApi))
@@ -217,7 +217,7 @@ func handleUploadFromCidAndMiners(node *core.LightNode, DeltaUploadApi string) f
 
 				if makeDeal == "true" {
 					job := jobs.CreateNewDispatcher()
-					job.AddJob(jobs.NewBucketAggregator(node, newContent, addNode))
+					job.AddJob(jobs.NewBucketAggregator(node, newContent, addNode, false))
 					job.Start(1)
 				}
 
@@ -415,7 +415,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 
 				if makeDeal == "true" {
 					job := jobs.CreateNewDispatcher()
-					job.AddJob(jobs.NewBucketAggregator(node, newContent, srcR))
+					job.AddJob(jobs.NewBucketAggregator(node, newContent, srcR, false))
 					job.Start(1)
 				}
 

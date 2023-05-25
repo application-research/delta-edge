@@ -60,6 +60,7 @@ func (b BucketCarBundler) Run() error {
 		intTotalSize += bucket.PieceSize
 
 		bucket.BundleUuid = bundle.Uuid
+		err = b.LightNode.DB.Save(&bucket).Error
 		if err != nil {
 			panic(err)
 		}
@@ -72,7 +73,7 @@ func (b BucketCarBundler) Run() error {
 
 	bundle.Status = "processing"
 	b.LightNode.DB.Save(&bundle)
-	
+
 	//create the aggregate object
 	a, err := datasegment.NewAggregate(abi.PaddedPieceSize(totalSizePow2), subPieceInfos)
 	if err != nil {
@@ -118,9 +119,36 @@ func (b BucketCarBundler) Run() error {
 		panic(err)
 	}
 
-	bundle.Cid = rootBundle.Cid().String()
+	bundle.FileCid = rootBundle.Cid().String()
+	bundle.AggregatePieceCid = cidPC.String()
 	bundle.Status = "filled"
+	bundle.Size = int64(a.DealSize)
+	bundle.DeltaNodeUrl = b.LightNode.Config.ExternalApi.DeltaNodeApiUrl
+	bundle.CreatedAt = time.Now()
+	bundle.UpdatedAt = time.Now()
 	b.LightNode.DB.Save(&bundle)
+
+	// update the bucket with proof piece info
+	for _, bucketX := range buckets {
+		bucketPieceCid, err := cid.Decode(bucketX.PieceCid)
+		if err != nil {
+			panic(err)
+		}
+
+		pieceInfo := abi.PieceInfo{
+			Size:     abi.PaddedPieceSize(bucketX.PieceSize),
+			PieceCID: bucketPieceCid,
+		}
+		proofForEach, err := a.ProofForPieceInfo(pieceInfo)
+		aux, err := proofForEach.ComputeExpectedAuxData(datasegment.VerifierDataForPieceInfo(pieceInfo))
+
+		bucketX.CommPa = aux.CommPa.String()
+		bucketX.SizePa = int64(aux.SizePa)
+		if err != nil {
+			panic(err)
+		}
+
+	}
 
 	job := CreateNewDispatcher()
 	job.AddJob(NewUploadBundleToDeltaProcessor(b.LightNode, rootReader, bundle))

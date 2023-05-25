@@ -94,7 +94,7 @@ func (r *DealChecker) Info() error {
 }
 
 func NewDealChecker(ln *core.LightNode) IProcessor {
-	DELTA_UPLOAD_API = ln.Config.ExternalApi.ApiUrl
+	DELTA_UPLOAD_API = ln.Config.ExternalApi.DeltaNodeApiUrl
 	return &DealChecker{
 		Processor{
 			LightNode: ln,

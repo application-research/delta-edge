@@ -20,7 +20,7 @@ func (r *BucketChecker) Info() error {
 }
 
 func NewBucketChecker(ln *core.LightNode, bucket core.Bucket) IProcessor {
-	DELTA_UPLOAD_API = ln.Config.ExternalApi.ApiUrl
+	DELTA_UPLOAD_API = ln.Config.ExternalApi.DeltaNodeApiUrl
 	return &BucketChecker{
 		Bucket: bucket,
 		Processor: Processor{

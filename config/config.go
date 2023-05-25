@@ -33,8 +33,8 @@ type DeltaConfig struct {
 	}
 
 	ExternalApi struct {
-		ApiUrl     string `env:"DELTA_NODE_API" envDefault:"http://localhost:1414"`
-		AuthSvcUrl string `env:"AUTH_SVC_API" envDefault:"https://auth.estuary.tech"`
+		DeltaNodeApiUrl string `env:"DELTA_NODE_API" envDefault:"http://localhost:1414"`
+		AuthSvcUrl      string `env:"AUTH_SVC_API" envDefault:"https://auth.estuary.tech"`
 	}
 }
 

@@ -20,7 +20,7 @@ func (r *BundleChecker) Info() error {
 }
 
 func NewBundleChecker(ln *core.LightNode, bucket core.Bundle) IProcessor {
-	DELTA_UPLOAD_API = ln.Config.ExternalApi.ApiUrl
+	DELTA_UPLOAD_API = ln.Config.ExternalApi.DeltaNodeApiUrl
 	return &BundleChecker{
 		Bundle: bucket,
 		Processor: Processor{

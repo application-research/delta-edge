@@ -82,6 +82,7 @@ func DaemonCmd(cfg *config.DeltaConfig) []*cli.Command {
 `)
 			fmt.Println("Cleaning up and retrying...")
 			cleanUpAndRetry(ln)
+			//runProcessors(ln)
 			fmt.Println("Cleaning up and retrying... Done")
 
 			fmt.Println("Starting API server")
@@ -100,8 +101,8 @@ func DaemonCmd(cfg *config.DeltaConfig) []*cli.Command {
 }
 
 func runProcessors(ln *core.LightNode) {
-	dealCheckFreq := ln.Config.Common.DealCheck
-	dealCheckFreqTick := time.NewTicker(time.Duration(dealCheckFreq) * time.Second)
+	dealCheckFreq := 12
+	dealCheckFreqTick := time.NewTicker(time.Duration(dealCheckFreq) * time.Hour)
 
 	for {
 		select {
