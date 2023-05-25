@@ -91,9 +91,14 @@ func (b BucketCarBundler) Run() error {
 
 	// process the deal
 	fmt.Println("rootReader", rootReader)
+
+	// add this to the node
+	b.LightNode.Node.AddPinFile(context.Background(), rootReader, nil)
+
 	//job := CreateNewDispatcher()
 	//job.AddJob(NewUploadToDeltaProcessor(b.LightNode, rootReader))
 	//job.Start(1)
+	
 	return nil
 }
 

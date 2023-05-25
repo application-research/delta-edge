@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-car"
+	"io"
 	"strings"
 	"time"
 
@@ -67,9 +68,217 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 	var DeltaUploadApi = node.Config.ExternalApi.ApiUrl
 	content := e.Group("/content")
 	content.POST("/add", handleUploadToCarBucketAndMiners(node, DeltaUploadApi))
+	content.POST("/add-ipfs", handleUploadFromCidAndMiners(node, DeltaUploadApi))
 	content.POST("/add-car", handlePinAddCarToNodeToMiners(node, DeltaUploadApi))
 	content.POST("/fetch-pin", handleFetchPinToNodeToMiners(node, DeltaUploadApi))
 
+}
+
+func handleUploadFromCidAndMiners(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		authorizationString := c.Request().Header.Get("Authorization")
+		authParts := strings.Split(authorizationString, " ")
+		cidFromForm := c.FormValue("cid")           // comma-separated list of miners to pin to
+		sourceMultiAddr := c.FormValue("multiaddr") // comma-separated list of miners to pin to
+		minersString := c.FormValue("miners")       // comma-separated list of miners to pin to
+		makeDeal := c.FormValue("make_deal")        // whether to make a deal with the miners or not
+
+		if makeDeal == "" {
+			makeDeal = "true"
+		}
+
+		miners := make(map[string]bool)
+		for _, miner := range strings.Split(minersString, ",") {
+			miners[miner] = true
+		}
+
+		cidFromFormD, err := cid.Decode(cidFromForm)
+		if err != nil {
+			return c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error decoding the cid",
+			})
+		}
+
+		// will try to get it from the network
+		node.ConnectToDelegates(context.Background(), []string{sourceMultiAddr})
+		addNode, err := node.Node.GetFile(c.Request().Context(), cidFromFormD)
+		if err != nil {
+			return c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error adding the file to IPFS",
+			})
+		}
+
+		fileBytes := &bytes.Buffer{}
+		_, err = io.Copy(fileBytes, addNode)
+		if err != nil {
+			return c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error reading the file",
+			})
+		}
+
+		size := int64(fileBytes.Len())
+		fmt.Printf("Buffer size: %d\n", size)
+
+		// check open bucket
+		var contentList []core.Content
+
+		for miner := range miners {
+			if size > node.Config.Common.AggregateSize {
+				newContent := core.Content{
+					Name:             cidFromForm,
+					Size:             size,
+					Cid:              cidFromForm,
+					DeltaNodeUrl:     DeltaUploadApi,
+					RequestingApiKey: authParts[1],
+					Status:           utils.STATUS_PINNED,
+					Miner:            miner,
+					MakeDeal: func() bool {
+						if makeDeal == "true" {
+							return true
+						}
+						return false
+					}(),
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				}
+
+				node.DB.Create(&newContent)
+
+				if makeDeal == "true" {
+					job := jobs.CreateNewDispatcher()
+					job.AddJob(jobs.NewUploadToDeltaProcessor(node, newContent, addNode))
+					job.Start(1)
+				}
+
+				if err != nil {
+					c.JSON(500, UploadResponse{
+						Status:  "error",
+						Message: "Error pinning the file" + err.Error(),
+					})
+				}
+				newContent.RequestingApiKey = ""
+				contentList = append(contentList, newContent)
+			} else if size < node.Config.Common.AggregateSize {
+				var bucket core.Bucket
+
+				if node.Config.Common.AggregatePerApiKey {
+					rawQuery := "SELECT * FROM buckets WHERE status = ? and miner = ? and requesting_api_key = ?"
+					node.DB.Raw(rawQuery, "open", miner, authParts[1]).Scan(&bucket)
+				} else {
+					rawQuery := "SELECT * FROM buckets WHERE status = ? and miner = ?"
+					node.DB.Raw(rawQuery, "open", miner).Scan(&bucket)
+				}
+
+				if bucket.ID == 0 {
+					// create a new bucket
+					bucketUuid, errUuid := uuid.NewUUID()
+					if errUuid != nil {
+						return c.JSON(500, UploadResponse{
+							Status:  "error",
+							Message: "Error creating bucket",
+						})
+					}
+					bucket = core.Bucket{
+						Status:           "open",
+						Name:             bucketUuid.String(),
+						RequestingApiKey: authParts[1],
+						DeltaNodeUrl:     DeltaUploadApi,
+						Uuid:             bucketUuid.String(),
+						Miner:            miner, // blank
+						CreatedAt:        time.Now(),
+						UpdatedAt:        time.Now(),
+					}
+					node.DB.Create(&bucket)
+				}
+
+				newContent := core.Content{
+					Name:             cidFromForm,
+					Size:             size,
+					Cid:              cidFromForm,
+					DeltaNodeUrl:     DeltaUploadApi,
+					RequestingApiKey: authParts[1],
+					Status:           utils.STATUS_PINNED,
+					Miner:            miner,
+					BucketUuid:       bucket.Uuid,
+					MakeDeal: func() bool {
+						if makeDeal == "true" {
+							return true
+						}
+						return false
+					}(),
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				}
+
+				node.DB.Create(&newContent)
+
+				if makeDeal == "true" {
+					job := jobs.CreateNewDispatcher()
+					job.AddJob(jobs.NewBucketAggregator(node, newContent, addNode))
+					job.Start(1)
+				}
+
+				if err != nil {
+					c.JSON(500, UploadResponse{
+						Status:  "error",
+						Message: "Error pinning the file" + err.Error(),
+					})
+				}
+				newContent.RequestingApiKey = ""
+				contentList = append(contentList, newContent)
+			} else if size > node.Config.Common.MaxSizeToSplit {
+				newContent := core.Content{
+					Name:             cidFromForm,
+					Size:             size,
+					Cid:              cidFromForm,
+					DeltaNodeUrl:     DeltaUploadApi,
+					RequestingApiKey: authParts[1],
+					Status:           utils.STATUS_PINNED,
+					Miner:            miner,
+					MakeDeal: func() bool {
+						if makeDeal == "true" {
+							return true
+						}
+						return false
+					}(),
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				}
+
+				node.DB.Create(&newContent)
+
+				if makeDeal == "true" {
+					job := jobs.CreateNewDispatcher()
+					job.AddJob(jobs.NewSplitterProcessor(node, newContent, addNode))
+					job.Start(1)
+				}
+
+				if err != nil {
+					c.JSON(500, UploadResponse{
+						Status:  "error",
+						Message: "Error pinning the file" + err.Error(),
+					})
+				}
+				newContent.RequestingApiKey = ""
+				contentList = append(contentList, newContent)
+			}
+		}
+
+		c.JSON(200, struct {
+			Status   string         `json:"status"`
+			Message  string         `json:"message"`
+			Contents []core.Content `json:"contents"`
+		}{
+			Status:   "success",
+			Message:  "File uploaded and pinned successfully. Please take note of the ids.",
+			Contents: contentList,
+		})
+
+		return nil
+	}
 }
 
 // upload a file
