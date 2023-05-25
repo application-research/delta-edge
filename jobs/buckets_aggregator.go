@@ -3,11 +3,14 @@ package jobs
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"github.com/application-research/edge-ur/core"
 	"github.com/filecoin-project/go-data-segment/datasegment"
+	"github.com/filecoin-project/go-data-segment/util"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/ipfs/go-cid"
 	"io"
+	"os"
 )
 
 type BucketsAggregator struct {
@@ -23,38 +26,49 @@ func (b BucketsAggregator) Run() error {
 
 	// get all buckets cid
 	var buckets []core.Bucket
-	b.LightNode.DB.Model(&core.Bucket{}).Where("status = ?", "uploaded-to-delta").Find(&buckets)
+	b.LightNode.DB.Model(&core.Bucket{}).Where("status = ?", "filled").Find(&buckets)
+
+	if len(buckets) < 2 {
+		fmt.Println("Not enough buckets to aggregate")
+		return nil
+	}
+
 	var intTotalSize int64
 	// create piece info of each bucket
 	var subPieceInfos []abi.PieceInfo
 	for _, bucket := range buckets {
-		bucketPieceCid, err := cid.Decode(bucket.Cid)
+		bucketPieceCid, err := cid.Decode(bucket.PieceCid)
 
-		// subPieceInfo
-		for _, subPieceInfo := range subPieceInfos {
-			if subPieceInfo.PieceCID == bucketPieceCid {
-				continue
-			}
-
-			subPieceInfos = append(subPieceInfos, abi.PieceInfo{
-				Size:     abi.PaddedPieceSize(bucket.PieceSize),
-				PieceCID: bucketPieceCid,
-			})
-			intTotalSize += bucket.PieceSize
-		}
+		subPieceInfos = append(subPieceInfos, abi.PieceInfo{
+			Size:     abi.PaddedPieceSize(bucket.PieceSize),
+			PieceCID: bucketPieceCid,
+		})
+		intTotalSize += bucket.PieceSize
 
 		if err != nil {
 			panic(err)
 		}
 	}
 
-	//create the aggregate object
-	a, err := datasegment.NewAggregate(abi.PaddedPieceSize(intTotalSize), subPieceInfos)
+	totalSizePow2, err := util.CeilPow2(uint64(intTotalSize * 2))
 	if err != nil {
 		panic(err)
 	}
+
+	//create the aggregate object
+	fmt.Println("intTotalSize", intTotalSize)
+	a, err := datasegment.NewAggregate(abi.PaddedPieceSize(totalSizePow2), subPieceInfos)
+	if err != nil {
+		panic(err)
+	}
+
 	// create the verifiable data aggregation car
-	buff := &bytes.Buffer{}
+	indexStart, err := a.IndexStartPosition()
+	buffer := bytes.NewBuffer(nil)
+	reader := bytes.NewReader(buffer.Bytes())
+	_, err = reader.Seek(int64(indexStart), io.SeekStart)
+	_, err = io.Copy(buffer, reader)
+
 	for _, bucketV := range buckets {
 		cCid, err := cid.Decode(bucketV.Cid)
 		if err != nil {
@@ -64,18 +78,20 @@ func (b BucketsAggregator) Run() error {
 		if errCData != nil {
 			panic(errCData)
 		}
-		cData.WriteTo(buff)
+
+		reader.Seek(0, os.SEEK_SET)
+		io.Copy(buffer, cData)
+		cData.Close()
 	}
 
-	//index_start, err := a.IndexStartPosition()
-	r, err := a.IndexReader()
-	_, err = io.Copy(buff, r)
+	cidIPC, _ := a.IndexPieceCID()
+	fmt.Println("a.IndexPieceCid()", cidIPC)
 
+	cidPC, _ := a.PieceCID()
+	fmt.Println("a.PieceCID()", cidPC)
 	if err != nil {
 		panic(err)
 	}
-
-	//index_size, err := a.IndexSize()
 
 	return nil
 }

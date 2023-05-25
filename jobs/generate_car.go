@@ -117,7 +117,7 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 
 	bucket.PieceCid = pieceCid.String()
 	bucket.PieceSize = int64(unpadded.Padded())
-	bucket.Status = "aggregated"
+	bucket.Status = "filled"
 	bucket.Size = int64(unpadded)
 	r.LightNode.DB.Save(&bucket)
 
@@ -126,22 +126,12 @@ func (r *GenerateCarProcessor) GenerateCarForBucket(bucketUuid string) {
 	fmt.Println("Bucket Piece CID: ", bucket.PieceCid)
 	fmt.Println("Bucket Piece Size: ", bucket.PieceSize)
 
-	//aggregate, err := datasegment.NewAggregate(abi.PaddedPieceSize(bucket.PieceSize), subPieceInfos)
-	//if err != nil {
-	//	fmt.Println("Err", err.Error())
-	//}
-	//
-	//bufNice := &bytes.Buffer{}
-	//for _, c := range dirNd.Links() {
-	//	nd, err := c.GetNode(context.Background(), r.LightNode.Node.DAGService)
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//	buf.Write(nd.RawData())
-	//}
-
 	// process the deal
+	//job := CreateNewDispatcher()
+	//job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, bucket.Cid))
+	//job.Start(1)
+
 	job := CreateNewDispatcher()
-	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, bucket.Cid))
+	job.AddJob(NewBucketsAggregator(r.LightNode))
 	job.Start(1)
 }
