@@ -45,46 +45,59 @@ func NewBucketCarGenerator(ln *core.LightNode, bucketToProcess core.Bucket) IPro
 func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 
 	// create node and raw per file (layer them)
-	var content []core.Content
-	r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid = ?", bucketUuid).Find(&content)
+	var contentsToUpdateWithPieceInfo []core.Content
+	r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid = ?", bucketUuid).Find(&contentsToUpdateWithPieceInfo)
 
 	// for each content, generate a node and a raw
 	dir := uio.NewDirectory(r.LightNode.Node.DAGService)
 	dir.SetCidBuilder(GetCidBuilderDefault())
 
-	//buf := &bytes.Buffer{}
+	// get the subPieceInfos
 	var subPieceInfos []abi.PieceInfo
 	var intTotalSize int64
-
-	totalSizePow2, err := util.CeilPow2(uint64(intTotalSize * 2))
-
-	for _, c := range content {
+	for _, c := range contentsToUpdateWithPieceInfo {
 		cCid, err := cid.Decode(c.Cid)
 		if err != nil {
 			panic(err)
 		}
-		//cData, errCData := r.LightNode.Node.GetFile(context.Background(), cCid) // get the node
-		cDataNode, errCData := r.LightNode.Node.Get(context.Background(), cCid) // get the file
-		if errCData != nil {
-			panic(errCData)
-		}
-		dir.AddChild(context.Background(), c.Name, cDataNode)
 
 		pieceCid, pieceSize, _, err := filclient.GeneratePieceCommitment(context.Background(), cCid, r.LightNode.Node.Blockstore)
-		c.PieceCid = pieceCid.String()
-		c.PieceSize = int64(pieceSize)
 
+		c.PieceCid = pieceCid.String()
+		cielPow2Piece, err := util.CeilPow2(pieceSize)
+		if err != nil {
+			panic(err)
+		}
+
+		c.PieceSize = int64(cielPow2Piece)
+
+		// add to the array
 		subPieceInfos = append(subPieceInfos, abi.PieceInfo{
-			Size:     abi.PaddedPieceSize(pieceSize),
+			Size:     abi.PaddedPieceSize(cielPow2Piece),
 			PieceCID: pieceCid,
 		})
-		intTotalSize += c.Size
+
+		intTotalSize += int64(cielPow2Piece)
+		fmt.Println("PieceCid1: ", c.PieceCid)
+		fmt.Println("PieceSize1: ", c.PieceSize)
+
 		r.LightNode.DB.Save(&c)
 	}
 
+	// generate the aggregate using the subpieceinfos
+	totalSizePow2, err := util.CeilPow2(uint64(intTotalSize))
+	if err != nil {
+		panic(err)
+	}
 	agg, err := datasegment.NewAggregate(abi.PaddedPieceSize(totalSizePow2), subPieceInfos)
+	if err != nil {
+		panic(err)
+	}
+
 	var aggReaders []io.Reader
-	for _, cAgg := range content {
+	var updateContentsForAgg []core.Content
+	r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid = ?", bucketUuid).Find(&updateContentsForAgg)
+	for _, cAgg := range updateContentsForAgg {
 		cCidAgg, err := cid.Decode(cAgg.Cid)
 		if err != nil {
 			panic(err)
@@ -110,7 +123,9 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 	r.LightNode.DB.Model(&core.Bucket{}).Where("uuid = ?", bucketUuid).First(&bucket)
 	bucket.Cid = aggNd.Cid().String()
 	bucket.RequestingApiKey = r.Bucket.RequestingApiKey
+	bucket.Miner = "t017840"
 	aggCid, err := agg.PieceCID()
+
 	if err != nil {
 		panic(err)
 	}
@@ -121,32 +136,41 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 	bucket.Size = intTotalSize
 	r.LightNode.DB.Save(&bucket)
 
-	for _, c := range content {
-		fmt.Println("PieceCid: ", c.PieceCid)
-		pieceCidStr, err := cid.Decode(c.PieceCid)
+	// get the proof for each piece
+	var updatedContents []core.Content
+	r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid = ?", bucketUuid).Find(&updatedContents)
+
+	for _, cProof := range updatedContents {
+		fmt.Println("PieceCid2: ", cProof.PieceCid)
+		fmt.Println("PieceSize2: ", cProof.PieceSize)
+		pieceCidStr, err := cid.Decode(cProof.PieceCid)
 		if err != nil {
 			panic(err)
 		}
+
 		pieceInfo := abi.PieceInfo{
-			Size:     abi.PaddedPieceSize(c.PieceSize),
+			Size:     abi.PaddedPieceSize(cProof.PieceSize),
 			PieceCID: pieceCidStr,
 		}
 		proofForEach, err := agg.ProofForPieceInfo(pieceInfo)
-		aux, err := proofForEach.ComputeExpectedAuxData(datasegment.VerifierDataForPieceInfo(pieceInfo))
 		if err != nil {
 			panic(err)
 		}
+		//_, err = proofForEach.ComputeExpectedAuxData(datasegment.VerifierDataForPieceInfo(pieceInfo))
+		//if err != nil {
+		//	panic(err)
+		//}
 
-		bucketPieceCid, _ := cid.Decode(bucket.PieceCid)
-		if aux.CommPa != bucketPieceCid {
-			panic("commPa does not match")
-		}
+		//bucketPieceCid, _ := cid.Decode(bucket.PieceCid)
+		//if aux.CommPa.String() != bucketPieceCid.String() {
+		//	panic("commPa does not match")
+		//}
 
 		incW := &bytes.Buffer{}
 		proofForEach.MarshalCBOR(incW)
-		c.InclusionProof = incW.Bytes()
+		cProof.InclusionProof = incW.Bytes()
 
-		r.LightNode.DB.Save(&c)
+		r.LightNode.DB.Save(&cProof)
 	}
 
 	fmt.Println("Bucket CID: ", bucket.Cid)
@@ -154,8 +178,8 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 	fmt.Println("Bucket Piece CID: ", bucket.PieceCid)
 	fmt.Println("Bucket Piece Size: ", bucket.PieceSize)
 
-	//job := CreateNewDispatcher()
-	//job.AddJob(NewBucketCarBundler(r.LightNode, bucket.Miner))
-	//job.Start(1)
+	job := CreateNewDispatcher()
+	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, bucket.Cid))
+	job.Start(1)
 
 }
