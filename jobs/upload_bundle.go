@@ -118,7 +118,7 @@ func (r *UploadBundleToDeltaProcessor) Run() error {
 		}
 		res, err = client.Do(clonedReq)
 		if err != nil || res.StatusCode != http.StatusOK {
-			fmt.Println("Error uploading car to delta: ", err)
+			fmt.Println("Error uploading bundle to delta: ", err)
 			r.Bundle.Status = "error"
 			r.Bundle.LastMessage = "Error uploading car to delta"
 			r.LightNode.DB.Save(&r.Bundle)

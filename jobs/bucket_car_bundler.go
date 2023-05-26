@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/application-research/edge-ur/core"
@@ -14,6 +15,7 @@ import (
 )
 
 type BucketCarBundler struct {
+	Miner string
 	Processor
 }
 
@@ -25,9 +27,9 @@ func (b BucketCarBundler) Run() error {
 
 	// get all buckets cid
 	var buckets []core.Bucket
-	b.LightNode.DB.Model(&core.Bucket{}).Where("status = ?", "filled").Find(&buckets)
+	b.LightNode.DB.Model(&core.Bucket{}).Where("status = ? and miner = ?", "filled", b.Miner).Find(&buckets)
 
-	if len(buckets) < 3 {
+	if len(buckets) < 5 {
 		fmt.Println("Not enough buckets to aggregate")
 		return nil
 	}
@@ -98,11 +100,6 @@ func (b BucketCarBundler) Run() error {
 		panic(err)
 	}
 
-	//cidIPC, errPiece := a.IndexPieceCID()
-	//if errPiece != nil {
-	//	fmt.Printf("%+v\n", errPiece)
-	//}
-
 	cidPC, errP := a.PieceCID()
 	if errP != nil {
 		fmt.Printf("%+v\n", errP)
@@ -135,10 +132,15 @@ func (b BucketCarBundler) Run() error {
 			PieceCID: bucketPieceCid,
 		}
 		proofForEach, err := a.ProofForPieceInfo(pieceInfo)
-		aux, err := proofForEach.ComputeExpectedAuxData(datasegment.VerifierDataForPieceInfo(pieceInfo))
+		//aux, err := proofForEach.ComputeExpectedAuxData(datasegment.VerifierDataForPieceInfo(pieceInfo))
 
-		bucketX.CommPa = aux.CommPa.String()
-		bucketX.SizePa = int64(aux.SizePa)
+		//bucketX.CommPa = aux.CommPa.String()
+		//bucketX.SizePa = int64(aux.SizePa)
+
+		incPW := &bytes.Buffer{}
+		proofForEach.MarshalCBOR(incPW)
+		bucketX.InclusionProof = incPW.Bytes()
+		bucketX.BundleUuid = bundle.Uuid
 
 		if err != nil {
 			panic(err)
@@ -155,8 +157,9 @@ func (b BucketCarBundler) Run() error {
 	return nil
 }
 
-func NewBucketCarBundler(ln *core.LightNode) IProcessor {
+func NewBucketCarBundler(ln *core.LightNode, miner string) IProcessor {
 	return &BucketCarBundler{
+		miner,
 		Processor{
 			LightNode: ln,
 		},

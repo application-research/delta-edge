@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"github.com/application-research/edge-ur/core"
 	"github.com/application-research/filclient"
+	"github.com/filecoin-project/go-data-segment/datasegment"
+	"github.com/filecoin-project/go-data-segment/util"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/ipfs/go-cid"
 	uio "github.com/ipfs/go-unixfs/io"
+	"io"
 )
 
 // The BucketCarGenerator type has a Bucket field and implements the Processor interface.
@@ -49,62 +52,56 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 	dir := uio.NewDirectory(r.LightNode.Node.DAGService)
 	dir.SetCidBuilder(GetCidBuilderDefault())
 
-	buf := &bytes.Buffer{}
+	//buf := &bytes.Buffer{}
 	var subPieceInfos []abi.PieceInfo
-	for _, c := range content {
+	var intTotalSize int64
 
+	totalSizePow2, err := util.CeilPow2(uint64(intTotalSize * 2))
+
+	for _, c := range content {
 		cCid, err := cid.Decode(c.Cid)
 		if err != nil {
 			panic(err)
 		}
-		cData, errCData := r.LightNode.Node.GetFile(context.Background(), cCid) // get the node
+		//cData, errCData := r.LightNode.Node.GetFile(context.Background(), cCid) // get the node
 		cDataNode, errCData := r.LightNode.Node.Get(context.Background(), cCid) // get the file
 		if errCData != nil {
 			panic(errCData)
 		}
 		dir.AddChild(context.Background(), c.Name, cDataNode)
 
-		cData.WriteTo(buf)
-		if err != nil {
-			panic(err)
-		}
-		pieceCid, payloadSize, unpadded, err := filclient.GeneratePieceCommitment(context.Background(), cCid, r.LightNode.Node.Blockstore)
-		if err != nil {
-			panic(err)
-		}
-
-		fmt.Println("Piece cid: ", pieceCid)
-		fmt.Println("Payload size: ", payloadSize)
-		fmt.Println("Padded Piece: ", unpadded.Padded())
-
+		pieceCid, pieceSize, _, err := filclient.GeneratePieceCommitment(context.Background(), cCid, r.LightNode.Node.Blockstore)
 		c.PieceCid = pieceCid.String()
-		c.PieceSize = int64(unpadded.Padded())
+		c.PieceSize = int64(pieceSize)
+
+		subPieceInfos = append(subPieceInfos, abi.PieceInfo{
+			Size:     abi.PaddedPieceSize(pieceSize),
+			PieceCID: pieceCid,
+		})
+		intTotalSize += c.Size
 		r.LightNode.DB.Save(&c)
+	}
 
-		// subPieceInfo
-		for _, subPieceInfo := range subPieceInfos {
-			if subPieceInfo.PieceCID == pieceCid {
-				continue
-			}
-
-			subPieceInfos = append(subPieceInfos, abi.PieceInfo{
-				Size:     unpadded.Padded(),
-				PieceCID: pieceCid,
-			})
-		}
-
+	agg, err := datasegment.NewAggregate(abi.PaddedPieceSize(totalSizePow2), subPieceInfos)
+	var aggReaders []io.Reader
+	for _, cAgg := range content {
+		cCidAgg, err := cid.Decode(cAgg.Cid)
 		if err != nil {
 			panic(err)
 		}
-
+		cDataAgg, errCData := r.LightNode.Node.GetFile(context.Background(), cCidAgg) // get the node
+		if errCData != nil {
+			panic(errCData)
+		}
+		aggReaders = append(aggReaders, cDataAgg)
 	}
-	//dirNd, err := dir.GetNode()
-	//if err != nil {
-	//	panic(err)
-	//}
-	//	dirSize, err := dirNd.Size()
 
-	aggNd, err := r.LightNode.Node.AddPinFile(context.Background(), buf, nil)
+	rootReader, err := agg.AggregateObjectReader(aggReaders)
+	if err != nil {
+		panic(err)
+	}
+
+	aggNd, err := r.LightNode.Node.AddPinFile(context.Background(), rootReader, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -113,29 +110,52 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 	r.LightNode.DB.Model(&core.Bucket{}).Where("uuid = ?", bucketUuid).First(&bucket)
 	bucket.Cid = aggNd.Cid().String()
 	bucket.RequestingApiKey = r.Bucket.RequestingApiKey
-
-	pieceCid, _, unpadded, err := filclient.GeneratePieceCommitment(context.Background(), aggNd.Cid(), r.LightNode.Node.Blockstore)
+	aggCid, err := agg.PieceCID()
 	if err != nil {
 		panic(err)
 	}
 
-	bucket.PieceCid = pieceCid.String()
-	bucket.PieceSize = int64(unpadded.Padded())
+	bucket.PieceCid = aggCid.String()
+	bucket.PieceSize = int64(agg.DealSize)
 	bucket.Status = "filled"
-	bucket.Size = int64(unpadded)
+	bucket.Size = intTotalSize
 	r.LightNode.DB.Save(&bucket)
+
+	for _, c := range content {
+		fmt.Println("PieceCid: ", c.PieceCid)
+		pieceCidStr, err := cid.Decode(c.PieceCid)
+		if err != nil {
+			panic(err)
+		}
+		pieceInfo := abi.PieceInfo{
+			Size:     abi.PaddedPieceSize(c.PieceSize),
+			PieceCID: pieceCidStr,
+		}
+		proofForEach, err := agg.ProofForPieceInfo(pieceInfo)
+		aux, err := proofForEach.ComputeExpectedAuxData(datasegment.VerifierDataForPieceInfo(pieceInfo))
+		if err != nil {
+			panic(err)
+		}
+
+		bucketPieceCid, _ := cid.Decode(bucket.PieceCid)
+		if aux.CommPa != bucketPieceCid {
+			panic("commPa does not match")
+		}
+
+		incW := &bytes.Buffer{}
+		proofForEach.MarshalCBOR(incW)
+		c.InclusionProof = incW.Bytes()
+
+		r.LightNode.DB.Save(&c)
+	}
 
 	fmt.Println("Bucket CID: ", bucket.Cid)
 	fmt.Println("Bucket Size: ", bucket.Size)
 	fmt.Println("Bucket Piece CID: ", bucket.PieceCid)
 	fmt.Println("Bucket Piece Size: ", bucket.PieceSize)
 
-	// process the deal
 	//job := CreateNewDispatcher()
-	//job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, bucket.Cid))
+	//job.AddJob(NewBucketCarBundler(r.LightNode, bucket.Miner))
 	//job.Start(1)
 
-	job := CreateNewDispatcher()
-	job.AddJob(NewBucketCarBundler(r.LightNode))
-	job.Start(1)
 }

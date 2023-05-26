@@ -9,8 +9,69 @@ import (
 	"strconv"
 )
 
+type StatusCheckBySubPieceCidResponse struct {
+	ContentInfo struct {
+		Cid  string `json:"cid"`
+		Name string `json:"name"`
+		Size int64  `json:"size"`
+	} `json:"content_info,omitempty"`
+	SubPieceInfo struct {
+		PieceCid       string `json:"piece_cid"`
+		Size           int64  `json:"size"`
+		CommPa         string `json:"comm_pa"`
+		SizePa         int64  `json:"size_pa"`
+		Status         string `json:"status"`
+		InclusionProof struct {
+			Index int64  `json:"index"`
+			Path  string `json:"path"`
+		}
+	} `json:"sub_piece_info,omitempty"`
+	RootPieceInfo []struct {
+		Cid               string `json:"cid"`
+		AggregatePieceCid string `json:"aggregate_piece_cid"`
+		Status            string `json:"status"`
+	} `json:"root_piece_info,omitempty"`
+}
+
 func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 
+	e.GET("/status/content/by-sub-piece-cid/:piece_cid", func(c echo.Context) error {
+
+		var response StatusCheckBySubPieceCidResponse
+
+		var bucket core.Bucket
+		node.DB.Model(&core.Bucket{}).Where("piece_cid = ?", c.Param("piece_cid")).First(&bucket)
+		response.SubPieceInfo.PieceCid = bucket.PieceCid
+		response.SubPieceInfo.Size = bucket.Size
+		response.SubPieceInfo.CommPa = bucket.CommPa
+		response.SubPieceInfo.SizePa = bucket.SizePa
+		response.SubPieceInfo.Status = bucket.Status
+
+		var bundles []core.Bundle
+		node.DB.Model(&core.Bundle{}).Where("	uuid = ?", bucket.BundleUuid).Find(&bundles)
+
+		job := jobs.CreateNewDispatcher()
+		for _, bundle := range bundles {
+			job.AddJob(jobs.NewBundleChecker(node, bundle))
+			response.RootPieceInfo = append(response.RootPieceInfo, struct {
+				Cid               string `json:"cid"`
+				AggregatePieceCid string `json:"aggregate_piece_cid"`
+				Status            string `json:"status"`
+			}{
+				Cid:               bundle.FileCid,
+				AggregatePieceCid: bundle.AggregatePieceCid,
+				Status:            bundle.Status,
+			})
+		}
+
+		job.AddJob(jobs.NewBucketChecker(node, bucket))
+		job.Start(len(bundles) + 1)
+
+		return c.JSON(200, map[string]interface{}{
+			"message": "success",
+			"data":    response,
+		})
+	})
 	e.GET("/status/content/by-cid/:cid", func(c echo.Context) error {
 
 		var content core.Content
