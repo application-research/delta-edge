@@ -11,6 +11,10 @@ Currently, the aggregate size is 1GB per USER (API_KEY). This means that each us
 - get a API key using this guide [getting an API key](getting-api-key.md)
 
 ## Upload a file
+
+![image](https://github.com/application-research/edge-ur/assets/4479171/17d0b7ad-f0b0-48bf-bd7c-16d16231b355)
+
+
 Once you have a node and API key, you can upload a file to the node using the following command:
 ```bash
 curl --location 'http://localhost:1313/api/v1/content/add' \
@@ -45,6 +49,8 @@ is used to aggregate the files into a single file.*
 
 ## Checking the status of the uploaded content
 Once the bucket is filled the edge node will aggregate the files into a single file and make a deal with the specified miner via Delta.
+
+![image](https://github.com/application-research/edge-ur/assets/4479171/b4c3f80d-8b7b-4b16-8c76-61020923a7d2)
 
 ## Checking the status by content ID
 When the file is uploaded, edge-ur returns a propery called "ID". This is the content ID. You can use this ID to check the status of the content.
