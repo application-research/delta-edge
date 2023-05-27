@@ -11,11 +11,11 @@ Currently, the aggregate size is 1GB per USER (API_KEY). This means that each us
 - get a API key using this guide [getting an API key](getting-api-key.md)
 
 ## Upload a file
+Files that are less than the aggregate size will automatically be part of a bucket. A bucket is a system object that collects all the files, bundle them all together to create a deal.
 
 ![image](https://github.com/application-research/edge-ur/assets/4479171/17d0b7ad-f0b0-48bf-bd7c-16d16231b355)
 
-
-Once you have a node and API key, you can upload a file to the node using the following command:
+To upload a file:
 ```bash
 curl --location 'http://localhost:1313/api/v1/content/add' \
 --header 'Authorization: Bearer [API_KEY]' \
@@ -52,7 +52,7 @@ Once the bucket is filled the edge node will aggregate the files into a single f
 
 ![image](https://github.com/application-research/edge-ur/assets/4479171/b4c3f80d-8b7b-4b16-8c76-61020923a7d2)
 
-## Checking the status by content ID
+### Checking the status by content ID
 When the file is uploaded, edge-ur returns a propery called "ID". This is the content ID. You can use this ID to check the status of the content.
 
 Note: The deal_id on the `DealInfo` field will return 0 initially. This is because the deal is not yet made. Once the deal is made, the user needs to hit the status endpoint again
