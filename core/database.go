@@ -95,8 +95,11 @@ type Content struct {
 	PieceCid         string    `json:"piece_cid"`
 	PieceSize        int64     `json:"piece_size"`
 	InclusionProof   []byte    `json:"inclusion_proof" json:"inclusion_proof,omitempty"`
+	VerifierData     []byte    `json:"verifier_data" json:"verifier_data,omitempty"`
 	CommPa           string    `json:"comm_pa,omitempty"`
 	SizePa           int64     `json:"size_pa,omitempty"`
+	CommPc           string    `json:"comm_pa,omitempty"`
+	SizePc           int64     `json:"size_pa,omitempty"`
 	DealId           int64     `json:"deal_id" json:"deal_id,omitempty"`
 	LastMessage      string    `json:"last_message"`
 	Miner            string    `json:"miner"`

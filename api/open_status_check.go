@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"github.com/application-research/edge-ur/core"
 	"github.com/application-research/edge-ur/jobs"
 	"github.com/filecoin-project/go-data-segment/datasegment"
@@ -23,56 +24,57 @@ type StatusCheckBySubPieceCidResponse struct {
 		Size           int64  `json:"size"`
 		CommPa         string `json:"comm_pa"`
 		SizePa         int64  `json:"size_pa"`
+		CommPc         string `json:"comm_pc"`
+		SizePc         int64  `json:"size_pc"`
 		Status         string `json:"status"`
-		InclusionProof struct {
-			Index int64  `json:"index"`
-			Path  string `json:"path"`
-		}
+		InclusionProof []byte `json:"inclusion_proof"`
+		VerifierData   []byte `json:"verifier_data"`
 	} `json:"sub_piece_info,omitempty"`
-	RootPieceInfo []struct {
-		Cid               string `json:"cid"`
-		AggregatePieceCid string `json:"aggregate_piece_cid"`
-		Status            string `json:"status"`
-	} `json:"root_piece_info,omitempty"`
+	DealInfo DealInfo `json:"deal_info,omitempty"`
+	Message  string   `json:"message,omitempty"`
+}
+type DealInfo struct {
+	DealUuid  string `json:"deal_uuid"`
+	DealID    int64  `json:"deal_id"`
+	Status    string `json:"status"`
+	DeltaNode string `json:"delta_node"`
 }
 
 func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 	e.GET("/status/content/:id", func(c echo.Context) error {
-
-		var content core.Content
-		node.DB.Raw("select * from contents as c where id = ?", c.Param("id")).Scan(&content)
-		content.RequestingApiKey = ""
-
-		if content.ID == 0 {
-			return c.JSON(404, map[string]interface{}{
-				"message": "Content not found. Please check if you have the proper API key or if the content id is valid",
-			})
-		}
-
-		// check the bucket
-		var bucket core.Bucket
-		node.DB.Model(&core.Bucket{}).Where("uuid = ?", content.BucketUuid).First(&bucket)
-
-		// trigger status check
-		job := jobs.CreateNewDispatcher()
-		job.AddJob(jobs.NewBucketChecker(node, bucket))
-		job.Start(1)
-
-		return c.JSON(200, map[string]interface{}{
-			"content": content,
-		})
-	})
-	e.GET("/status/content/piece/:piece_cid", func(c echo.Context) error {
-
 		var response StatusCheckBySubPieceCidResponse
 
 		var content core.Content
-		node.DB.Model(&core.Content{}).Where("piece_cid = ?", c.Param("piece_cid")).First(&content)
+		node.DB.Model(&core.Content{}).Where("id = ?", c.Param("id")).First(&content)
+
+		response.ContentInfo.Cid = content.Cid
+		response.ContentInfo.Name = content.Name
+		response.ContentInfo.Size = content.Size
 
 		// get the inclusion proof to get the aggregate piece cid
 		ip := new(datasegment.InclusionProof)
-		reader := bytes.NewReader(content.InclusionProof)
-		ip.UnmarshalCBOR(reader)
+		vd := new(datasegment.InclusionVerifierData)
+
+		readerIp := bytes.NewReader(content.InclusionProof)
+		readerVd := bytes.NewReader(content.VerifierData)
+		ip.UnmarshalCBOR(readerIp)
+		vd.UnmarshalCBOR(readerVd)
+
+		response.SubPieceInfo.PieceCid = content.PieceCid
+		response.SubPieceInfo.Size = content.PieceSize
+		response.SubPieceInfo.CommPa = content.CommPa
+		response.SubPieceInfo.SizePa = content.SizePa
+		response.SubPieceInfo.CommPc = content.CommPc
+		response.SubPieceInfo.SizePc = content.SizePc
+		response.SubPieceInfo.Status = content.Status
+		response.SubPieceInfo.InclusionProof = content.InclusionProof
+		response.SubPieceInfo.VerifierData = content.VerifierData
+
+		response.DealInfo = DealInfo{
+			DealID:    content.DealId,
+			Status:    content.Status,
+			DeltaNode: content.DeltaNodeUrl,
+		}
 
 		contentPieceCid, err := cid.Decode(content.PieceCid)
 		if err != nil {
@@ -82,15 +84,159 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		}
 		_, err = ip.ComputeExpectedAuxData(datasegment.VerifierDataForPieceInfo(abi.PieceInfo{
 			PieceCID: contentPieceCid,
-			Size:     abi.PaddedPieceSize(content.Size),
+			Size:     abi.PaddedPieceSize(content.PieceSize),
 		}))
 
 		if err != nil {
+			fmt.Println("failed to compute expected aux data", err)
 			return c.JSON(500, map[string]interface{}{
 				"message": "failed to compute expected aux data",
 			})
 		}
 
+		var bucket core.Bucket
+		node.DB.Model(&core.Bucket{}).Where("uuid = ?", content.BucketUuid).Scan(&bucket)
+		job := jobs.CreateNewDispatcher()
+		job.AddJob(jobs.NewBucketChecker(node, bucket))
+		job.Start(1)
+
+		bucket.RequestingApiKey = ""
+		return c.JSON(200, map[string]interface{}{
+			"message": "success",
+			"data":    response,
+		})
+	})
+	e.GET("/status/content/cid/:cid", func(c echo.Context) error {
+
+		var responses []StatusCheckBySubPieceCidResponse
+
+		var contents []core.Content
+		node.DB.Model(&core.Content{}).Where("cid = ?", c.Param("cid")).Find(&contents)
+
+		for _, content := range contents {
+			var response StatusCheckBySubPieceCidResponse
+
+			response.ContentInfo.Cid = content.Cid
+			response.ContentInfo.Name = content.Name
+			response.ContentInfo.Size = content.Size
+
+			// get the inclusion proof to get the aggregate piece cid
+			ip := new(datasegment.InclusionProof)
+			vd := new(datasegment.InclusionVerifierData)
+
+			readerIp := bytes.NewReader(content.InclusionProof)
+			readerVd := bytes.NewReader(content.VerifierData)
+			ip.UnmarshalCBOR(readerIp)
+			vd.UnmarshalCBOR(readerVd)
+
+			response.SubPieceInfo.PieceCid = content.PieceCid
+			response.SubPieceInfo.Size = content.PieceSize
+			response.SubPieceInfo.CommPa = content.CommPa
+			response.SubPieceInfo.SizePa = content.SizePa
+			response.SubPieceInfo.CommPc = content.CommPc
+			response.SubPieceInfo.SizePc = content.SizePc
+			response.SubPieceInfo.Status = content.Status
+			response.SubPieceInfo.InclusionProof = content.InclusionProof
+			response.SubPieceInfo.VerifierData = content.VerifierData
+
+			response.DealInfo = DealInfo{
+				DealID:    content.DealId,
+				Status:    content.Status,
+				DeltaNode: content.DeltaNodeUrl,
+			}
+			contentPieceCid, err := cid.Decode(content.PieceCid)
+			if err != nil {
+				return c.JSON(500, map[string]interface{}{
+					"message": "failed to decode piece cid",
+				})
+			}
+			_, err = ip.ComputeExpectedAuxData(datasegment.VerifierDataForPieceInfo(abi.PieceInfo{
+				PieceCID: contentPieceCid,
+				Size:     abi.PaddedPieceSize(content.PieceSize),
+			}))
+
+			if err != nil {
+				fmt.Println("failed to compute expected aux data", err)
+				return c.JSON(500, map[string]interface{}{
+					"message": "failed to compute expected aux data",
+				})
+			}
+
+			var bucket core.Bucket
+			node.DB.Model(&core.Bucket{}).Where("uuid = ?", content.BucketUuid).Scan(&bucket)
+			job := jobs.CreateNewDispatcher()
+			job.AddJob(jobs.NewBucketChecker(node, bucket))
+			job.Start(1)
+			bucket.RequestingApiKey = ""
+
+			responses = append(responses, response)
+		}
+
+		return c.JSON(200, map[string]interface{}{
+			"data": responses,
+		})
+	})
+	e.GET("/status/content/piece/:piece_cid", func(c echo.Context) error {
+
+		var response StatusCheckBySubPieceCidResponse
+
+		var content core.Content
+		node.DB.Model(&core.Content{}).Where("piece_cid = ?", c.Param("piece_cid")).First(&content)
+
+		response.ContentInfo.Cid = content.Cid
+		response.ContentInfo.Name = content.Name
+		response.ContentInfo.Size = content.Size
+
+		// get the inclusion proof to get the aggregate piece cid
+		ip := new(datasegment.InclusionProof)
+		vd := new(datasegment.InclusionVerifierData)
+
+		readerIp := bytes.NewReader(content.InclusionProof)
+		readerVd := bytes.NewReader(content.VerifierData)
+		ip.UnmarshalCBOR(readerIp)
+		vd.UnmarshalCBOR(readerVd)
+
+		response.SubPieceInfo.PieceCid = content.PieceCid
+		response.SubPieceInfo.Size = content.PieceSize
+		response.SubPieceInfo.CommPa = content.CommPa
+		response.SubPieceInfo.SizePa = content.SizePa
+		response.SubPieceInfo.CommPc = content.CommPc
+		response.SubPieceInfo.SizePc = content.SizePc
+		response.SubPieceInfo.Status = content.Status
+		response.SubPieceInfo.InclusionProof = content.InclusionProof
+		response.SubPieceInfo.VerifierData = content.VerifierData
+
+		response.DealInfo = DealInfo{
+			DealID:    content.DealId,
+			Status:    content.Status,
+			DeltaNode: content.DeltaNodeUrl,
+		}
+
+		contentPieceCid, err := cid.Decode(content.PieceCid)
+		if err != nil {
+			return c.JSON(500, map[string]interface{}{
+				"message": "failed to decode piece cid",
+			})
+		}
+		_, err = ip.ComputeExpectedAuxData(datasegment.VerifierDataForPieceInfo(abi.PieceInfo{
+			PieceCID: contentPieceCid,
+			Size:     abi.PaddedPieceSize(content.PieceSize),
+		}))
+
+		if err != nil {
+			fmt.Println("failed to compute expected aux data", err)
+			return c.JSON(500, map[string]interface{}{
+				"message": "failed to compute expected aux data",
+			})
+		}
+
+		var bucket core.Bucket
+		node.DB.Model(&core.Bucket{}).Where("uuid = ?", content.BucketUuid).Scan(&bucket)
+		job := jobs.CreateNewDispatcher()
+		job.AddJob(jobs.NewBucketChecker(node, bucket))
+		job.Start(1)
+
+		bucket.RequestingApiKey = ""
 		return c.JSON(200, map[string]interface{}{
 			"message": "success",
 			"data":    response,

@@ -148,10 +148,12 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 			PieceCID: pieceCidStr,
 		}
 		proofForEach, err := agg.ProofForPieceInfo(pieceInfo)
+		verifierDataForEach := datasegment.VerifierDataForPieceInfo(pieceInfo)
 		if err != nil {
 			panic(err)
 		}
 		aux, err := proofForEach.ComputeExpectedAuxData(datasegment.VerifierDataForPieceInfo(pieceInfo))
+
 		if err != nil {
 			panic(err)
 		}
@@ -162,10 +164,17 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 		}
 
 		incW := &bytes.Buffer{}
+		verifierDataW := &bytes.Buffer{}
+
 		proofForEach.MarshalCBOR(incW)
+		verifierDataForEach.MarshalCBOR(verifierDataW)
+
 		cProof.InclusionProof = incW.Bytes()
+		cProof.VerifierData = verifierDataW.Bytes()
 		cProof.CommPa = aux.CommPa.String()
 		cProof.SizePa = int64(aux.SizePa)
+		cProof.CommPc = verifierDataForEach.CommPc.String()
+		cProof.SizePc = int64(verifierDataForEach.SizePc)
 
 		r.LightNode.DB.Save(&cProof)
 	}
