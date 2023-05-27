@@ -126,6 +126,6 @@ func runProcessors(ln *core.LightNode) {
 func cleanUpAndRetry(ln *core.LightNode) {
 	dispatcher := jobs.CreateNewDispatcher()
 	dispatcher.AddJob(jobs.NewRetryProcessor(ln))
-	dispatcher.AddJob(jobs.NewBucketCarBundler(ln, ""))
+	//dispatcher.AddJob(jobs.NewBucketCarBundler(ln, ""))
 	dispatcher.Start(2)
 }

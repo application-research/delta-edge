@@ -45,7 +45,7 @@ func OpenDatabase(cfg config.DeltaConfig) (*gorm.DB, error) {
 }
 
 func ConfigureModels(db *gorm.DB) {
-	db.AutoMigrate(&Content{}, &ContentDeal{}, &Collection{}, &CollectionRef{}, &LogEvent{}, &Bucket{}, &Bundle{})
+	db.AutoMigrate(&Content{}, &ContentDeal{}, &Collection{}, &CollectionRef{}, &LogEvent{}, &Bucket{})
 }
 
 type LogEvent struct {

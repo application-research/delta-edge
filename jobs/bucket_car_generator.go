@@ -61,23 +61,22 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 			panic(err)
 		}
 
-		pieceCid, pieceSize, _, err := filclient.GeneratePieceCommitment(context.Background(), cCid, r.LightNode.Node.Blockstore)
+		pieceCid, _, unpadded, err := filclient.GeneratePieceCommitment(context.Background(), cCid, r.LightNode.Node.Blockstore)
 
 		c.PieceCid = pieceCid.String()
-		cielPow2Piece, err := util.CeilPow2(pieceSize)
 		if err != nil {
 			panic(err)
 		}
 
-		c.PieceSize = int64(cielPow2Piece)
+		c.PieceSize = int64(unpadded.Padded())
 
 		// add to the array
 		subPieceInfos = append(subPieceInfos, abi.PieceInfo{
-			Size:     abi.PaddedPieceSize(cielPow2Piece),
+			Size:     unpadded.Padded(),
 			PieceCID: pieceCid,
 		})
 
-		intTotalSize += int64(cielPow2Piece)
+		intTotalSize += int64(unpadded.Padded())
 		fmt.Println("PieceCid1: ", c.PieceCid)
 		fmt.Println("PieceSize1: ", c.PieceSize)
 
@@ -156,15 +155,15 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 		if err != nil {
 			panic(err)
 		}
-		//_, err = proofForEach.ComputeExpectedAuxData(datasegment.VerifierDataForPieceInfo(pieceInfo))
-		//if err != nil {
-		//	panic(err)
-		//}
+		aux, err := proofForEach.ComputeExpectedAuxData(datasegment.VerifierDataForPieceInfo(pieceInfo))
+		if err != nil {
+			panic(err)
+		}
 
-		//bucketPieceCid, _ := cid.Decode(bucket.PieceCid)
-		//if aux.CommPa.String() != bucketPieceCid.String() {
-		//	panic("commPa does not match")
-		//}
+		bucketPieceCid, _ := cid.Decode(bucket.PieceCid)
+		if aux.CommPa.String() != bucketPieceCid.String() {
+			panic("commPa does not match")
+		}
 
 		incW := &bytes.Buffer{}
 		proofForEach.MarshalCBOR(incW)
