@@ -74,6 +74,7 @@ type Bucket struct {
 	PieceCid         string    `json:"piece_cid" json:"piece_cid,omitempty"`
 	PieceSize        int64     `json:"piece_size" json:"piece_size,omitempty"`
 	Cid              string    `json:"cid" json:"cid,omitempty"`
+	DealId           int64     `json:"deal_id" json:"deal_id,omitempty"`
 	Status           string    `json:"status" json:"status,omitempty"` // open, processing, filled, bundled
 	LastMessage      string    `json:"last_message" json:"last_message,omitempty"`
 	CreatedAt        time.Time `json:"created_at" json:"created_at"`
@@ -96,6 +97,7 @@ type Content struct {
 	InclusionProof   []byte    `json:"inclusion_proof" json:"inclusion_proof,omitempty"`
 	CommPa           string    `json:"comm_pa,omitempty"`
 	SizePa           int64     `json:"size_pa,omitempty"`
+	DealId           int64     `json:"deal_id" json:"deal_id,omitempty"`
 	LastMessage      string    `json:"last_message"`
 	Miner            string    `json:"miner"`
 	MakeDeal         bool      `json:"make_deal"`

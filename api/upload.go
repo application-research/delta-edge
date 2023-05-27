@@ -68,9 +68,9 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 	var DeltaUploadApi = node.Config.ExternalApi.DeltaNodeApiUrl
 	content := e.Group("/content")
 	content.POST("/add", handleUploadToCarBucketAndMiners(node, DeltaUploadApi))
-	content.POST("/add-ipfs", handleUploadFromCidAndMiners(node, DeltaUploadApi))
+	content.POST("/fetch-pin", handleUploadFromCidAndMiners(node, DeltaUploadApi))
 	content.POST("/add-car", handlePinAddCarToNodeToMiners(node, DeltaUploadApi))
-	content.POST("/fetch-pin", handleFetchPinToNodeToMiners(node, DeltaUploadApi))
+	//content.POST("/fetch-pin", handleFetchPinToNodeToMiners(node, DeltaUploadApi))
 
 }
 

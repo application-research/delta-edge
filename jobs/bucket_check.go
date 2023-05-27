@@ -60,6 +60,7 @@ func (r *BucketChecker) Run() error {
 		bucket.Miner = dealResult.Deals[len(dealResult.Deals)-1].Miner
 	}
 	bucket.Status = dealResult.Content.Status
+	bucket.DealId = int64(dealResult.Deals[0].DealID)
 	r.LightNode.DB.Save(&bucket)
 
 	// if the updated date is 1 day old, then we should just retry the request
@@ -100,6 +101,7 @@ func (r *BucketChecker) Run() error {
 	for _, c := range contents {
 		c.DeltaContentId = bucket.DeltaContentId
 		c.DeltaNodeUrl = bucket.DeltaNodeUrl
+		c.DealId = bucket.DealId
 		r.LightNode.DB.Save(&c)
 		job := CreateNewDispatcher()
 		job.AddJob(NewDealItemChecker(r.LightNode, c))
