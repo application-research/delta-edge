@@ -11,11 +11,10 @@ Currently, the aggregate size is 1GB per USER (API_KEY). This means that each us
 - get a API key using this guide [getting an API key](getting-api-key.md)
 
 ## Upload a file
+Files that are less than the aggregate size will automatically be part of a bucket. A bucket is a system object that collects all the files, bundle them all together to create a deal.
 
 ![image](https://github.com/application-research/edge-ur/assets/4479171/17d0b7ad-f0b0-48bf-bd7c-16d16231b355)
 
-
-Once you have a node and API key, you can upload a file to the node using the following command:
 ```bash
 curl --location 'http://localhost:1313/api/v1/content/add' \
 --header 'Authorization: Bearer [API_KEY]' \
