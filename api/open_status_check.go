@@ -15,9 +15,10 @@ import (
 
 type StatusCheckBySubPieceCidResponse struct {
 	ContentInfo struct {
-		Cid  string `json:"cid"`
-		Name string `json:"name"`
-		Size int64  `json:"size"`
+		Cid   string `json:"cid"`
+		Name  string `json:"name"`
+		Size  int64  `json:"size"`
+		Miner string `json:"miner"`
 	} `json:"content_info,omitempty"`
 	SubPieceInfo struct {
 		PieceCid       string `json:"piece_cid"`
@@ -50,6 +51,7 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		response.ContentInfo.Cid = content.Cid
 		response.ContentInfo.Name = content.Name
 		response.ContentInfo.Size = content.Size
+		response.ContentInfo.Miner = content.Miner
 
 		// get the inclusion proof to get the aggregate piece cid
 		ip := new(datasegment.InclusionProof)
@@ -119,6 +121,7 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 			response.ContentInfo.Cid = content.Cid
 			response.ContentInfo.Name = content.Name
 			response.ContentInfo.Size = content.Size
+			response.ContentInfo.Miner = content.Miner
 
 			// get the inclusion proof to get the aggregate piece cid
 			ip := new(datasegment.InclusionProof)
@@ -186,6 +189,7 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		response.ContentInfo.Cid = content.Cid
 		response.ContentInfo.Name = content.Name
 		response.ContentInfo.Size = content.Size
+		response.ContentInfo.Miner = content.Miner
 
 		// get the inclusion proof to get the aggregate piece cid
 		ip := new(datasegment.InclusionProof)
