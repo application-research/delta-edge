@@ -84,7 +84,7 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 	}
 
 	// generate the aggregate using the subpieceinfos
-	totalSizePow2, err := util.CeilPow2(uint64(intTotalSize))
+	totalSizePow2, err := util.CeilPow2(uint64(intTotalSize * 2))
 	if err != nil {
 		panic(err)
 	}
