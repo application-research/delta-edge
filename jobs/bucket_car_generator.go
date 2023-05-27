@@ -120,17 +120,15 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 
 	var bucket core.Bucket
 	r.LightNode.DB.Model(&core.Bucket{}).Where("uuid = ?", bucketUuid).First(&bucket)
-	bucket.Cid = aggNd.Cid().String()
 	bucket.RequestingApiKey = r.Bucket.RequestingApiKey
 	bucket.Miner = "t017840"
 	aggCid, err := agg.PieceCID()
-
 	if err != nil {
 		panic(err)
 	}
-
 	bucket.PieceCid = aggCid.String()
-	bucket.PieceSize = int64(agg.DealSize)
+	bucket.Cid = aggNd.Cid().String()
+	bucket.Size = intTotalSize
 	bucket.Status = "filled"
 	bucket.Size = intTotalSize
 	r.LightNode.DB.Save(&bucket)
@@ -140,8 +138,6 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 	r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid = ?", bucketUuid).Find(&updatedContents)
 
 	for _, cProof := range updatedContents {
-		fmt.Println("PieceCid2: ", cProof.PieceCid)
-		fmt.Println("PieceSize2: ", cProof.PieceSize)
 		pieceCidStr, err := cid.Decode(cProof.PieceCid)
 		if err != nil {
 			panic(err)
@@ -160,23 +156,19 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 			panic(err)
 		}
 
-		bucketPieceCid, _ := cid.Decode(bucket.PieceCid)
-		if aux.CommPa.String() != bucketPieceCid.String() {
+		bucketCid, _ := cid.Decode(bucket.PieceCid)
+		if aux.CommPa.String() != bucketCid.String() {
 			panic("commPa does not match")
 		}
 
 		incW := &bytes.Buffer{}
 		proofForEach.MarshalCBOR(incW)
 		cProof.InclusionProof = incW.Bytes()
+		cProof.CommPa = aux.CommPa.String()
+		cProof.SizePa = int64(aux.SizePa)
 
 		r.LightNode.DB.Save(&cProof)
 	}
-
-	fmt.Println("Bucket CID: ", bucket.Cid)
-	fmt.Println("Bucket Size: ", bucket.Size)
-	fmt.Println("Bucket Piece CID: ", bucket.PieceCid)
-	fmt.Println("Bucket Piece Size: ", bucket.PieceSize)
-
 	job := CreateNewDispatcher()
 	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, bucket.Cid))
 	job.Start(1)

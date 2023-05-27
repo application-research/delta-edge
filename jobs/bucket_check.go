@@ -35,10 +35,10 @@ func (r *BucketChecker) Run() error {
 	var bucket core.Bucket
 	r.LightNode.DB.Raw("select * from buckets where id = ?", r.Bucket.ID).Scan(&bucket)
 
-	c := bucket
+	//c := bucket
 	//for _, c := range content {
-	contentId := strconv.Itoa(int(c.DeltaContentId))
-	resp, err := http.Get(c.DeltaNodeUrl + "/open/stats/content/" + contentId)
+	contentId := strconv.Itoa(int(bucket.DeltaContentId))
+	resp, err := http.Get(bucket.DeltaNodeUrl + "/open/stats/content/" + contentId)
 	if err != nil {
 		fmt.Println("Get error: ", err)
 		return nil
@@ -55,22 +55,22 @@ func (r *BucketChecker) Run() error {
 	}
 	var dealResult DealResult
 	json.Unmarshal(body, &dealResult)
-	c.LastMessage = dealResult.Content.LastMessage
+	bucket.LastMessage = dealResult.Content.LastMessage
 	if len(dealResult.Deals) > 0 {
-		c.Miner = dealResult.Deals[len(dealResult.Deals)-1].Miner
+		bucket.Miner = dealResult.Deals[len(dealResult.Deals)-1].Miner
 	}
-	c.Status = dealResult.Content.Status
-	r.LightNode.DB.Save(&c)
+	bucket.Status = dealResult.Content.Status
+	r.LightNode.DB.Save(&bucket)
 
 	// if the updated date is 1 day old, then we should just retry the request
-	if c.Status == "transfer-started" {
-		if c.UpdatedAt.Before(time.Now().Add(-24 * time.Hour)) {
+	if bucket.Status == "transfer-started" {
+		if bucket.UpdatedAt.Before(time.Now().Add(-24 * time.Hour)) {
 			fmt.Println("Content is transfer-started, but has not been updated in 24 hours, retrying")
-			c.Status = "retry"
-			r.LightNode.DB.Save(&c)
+			bucket.Status = "retry"
+			r.LightNode.DB.Save(&bucket)
 
-			contentIdFromDelta := strconv.Itoa(int(c.DeltaContentId))
-			respRetry, err := http.Get(c.DeltaNodeUrl + "/api/v1/retry/deal/end-to-end/" + contentIdFromDelta)
+			contentIdFromDelta := strconv.Itoa(int(bucket.DeltaContentId))
+			respRetry, err := http.Get(bucket.DeltaNodeUrl + "/api/v1/retry/deal/end-to-end/" + contentIdFromDelta)
 			if err != nil {
 				fmt.Println("Get error: ", err)
 				return nil
@@ -87,14 +87,24 @@ func (r *BucketChecker) Run() error {
 
 			var dealRetry DealRetry
 			json.Unmarshal(bodyRetry, &dealRetry)
-			c.LastMessage = "Retrying"
-			c.DeltaContentId = int64(dealRetry.NewContentID)
-			r.LightNode.DB.Save(&c)
+			bucket.LastMessage = "Retrying"
+			bucket.DeltaContentId = int64(dealRetry.NewContentID)
+			r.LightNode.DB.Save(&bucket)
 
 		}
 	}
 
-	//}
+	var contents []core.Content
+	r.LightNode.DB.Raw("select * from contents where bucket_uuid = ?", bucket.Uuid).Scan(&contents)
+	// check each content
+	for _, c := range contents {
+		c.DeltaContentId = bucket.DeltaContentId
+		c.DeltaNodeUrl = bucket.DeltaNodeUrl
+		r.LightNode.DB.Save(&c)
+		job := CreateNewDispatcher()
+		job.AddJob(NewDealItemChecker(r.LightNode, c))
+		job.Start(1)
+	}
 
 	return nil
 }
