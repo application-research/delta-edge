@@ -3,10 +3,12 @@ package api
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 	"github.com/application-research/edge-ur/core"
 	"github.com/application-research/edge-ur/jobs"
 	"github.com/filecoin-project/go-data-segment/datasegment"
+	"github.com/filecoin-project/go-data-segment/merkletree"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/ipfs/go-cid"
 	"github.com/labstack/echo/v4"
@@ -21,15 +23,25 @@ type StatusCheckBySubPieceCidResponse struct {
 		Miner string `json:"miner"`
 	} `json:"content_info,omitempty"`
 	SubPieceInfo struct {
-		PieceCid       string                            `json:"piece_cid"`
-		Size           int64                             `json:"size"`
-		CommPa         string                            `json:"comm_pa"`
-		SizePa         int64                             `json:"size_pa"`
-		CommPc         string                            `json:"comm_pc"`
-		SizePc         int64                             `json:"size_pc"`
-		Status         string                            `json:"status"`
-		InclusionProof datasegment.InclusionProof        `json:"inclusion_proof"`
-		VerifierData   datasegment.InclusionVerifierData `json:"verifier_data"`
+		PieceCid string `json:"piece_cid"`
+		Size     int64  `json:"size"`
+		CommPa   string `json:"comm_pa"`
+		SizePa   int64  `json:"size_pa"`
+		CommPc   string `json:"comm_pc"`
+		SizePc   int64  `json:"size_pc"`
+		Status   string `json:"status"`
+		//InclusionProof datasegment.InclusionProof        `json:"inclusion_proof"`
+		InclusionProof struct {
+			ProofIndex struct {
+				Index string   `json:"index"`
+				Path  []string `json:"path"`
+			} `json:"proofIndex"`
+			ProofSubtree struct {
+				Index string   `json:"index"`
+				Path  []string `json:"path"`
+			} `json:"proofSubtree"`
+		} `json:"inclusion_proof"`
+		VerifierData datasegment.InclusionVerifierData `json:"verifier_data"`
 	} `json:"sub_piece_info,omitempty"`
 	DealInfo DealInfo `json:"deal_info,omitempty"`
 	Message  string   `json:"message,omitempty"`
@@ -70,8 +82,24 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 			response.SubPieceInfo.CommPc = content.CommPc
 			response.SubPieceInfo.SizePc = content.SizePc
 			response.SubPieceInfo.Status = content.Status
-			response.SubPieceInfo.InclusionProof = *ip
+			//response.SubPieceInfo.InclusionProof = *ip
 			response.SubPieceInfo.VerifierData = *vd
+			response.SubPieceInfo.InclusionProof.ProofIndex.Index = "0x" + hex.EncodeToString(uint64ToBytes(ip.ProofIndex.Index))
+
+			var proofIndexPath []string
+			for _, n := range ip.ProofIndex.Path {
+				i := [merkletree.NodeSize]byte(n)
+				proofIndexPath = append(proofIndexPath, "0x"+hex.EncodeToString(i[:]))
+			}
+			response.SubPieceInfo.InclusionProof.ProofIndex.Path = proofIndexPath
+
+			response.SubPieceInfo.InclusionProof.ProofSubtree.Index = "0x" + hex.EncodeToString(uint64ToBytes(ip.ProofSubtree.Index))
+			var proofSubtreePath []string
+			for _, n := range ip.ProofSubtree.Path {
+				i := [merkletree.NodeSize]byte(n)
+				proofSubtreePath = append(proofSubtreePath, "0x"+hex.EncodeToString(i[:]))
+			}
+			response.SubPieceInfo.InclusionProof.ProofSubtree.Path = proofSubtreePath
 
 			contentPieceCid, err := cid.Decode(content.PieceCid)
 			if err != nil {
@@ -146,8 +174,25 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 				response.SubPieceInfo.CommPc = content.CommPc
 				response.SubPieceInfo.SizePc = content.SizePc
 				response.SubPieceInfo.Status = content.Status
-				response.SubPieceInfo.InclusionProof = *ip
+				//response.SubPieceInfo.InclusionProof = *ip
 				response.SubPieceInfo.VerifierData = *vd
+
+				response.SubPieceInfo.InclusionProof.ProofIndex.Index = "0x" + hex.EncodeToString(uint64ToBytes(ip.ProofIndex.Index))
+
+				var proofIndexPath []string
+				for _, n := range ip.ProofIndex.Path {
+					i := [merkletree.NodeSize]byte(n)
+					proofIndexPath = append(proofIndexPath, "0x"+hex.EncodeToString(i[:]))
+				}
+				response.SubPieceInfo.InclusionProof.ProofIndex.Path = proofIndexPath
+
+				response.SubPieceInfo.InclusionProof.ProofSubtree.Index = "0x" + hex.EncodeToString(uint64ToBytes(ip.ProofSubtree.Index))
+				var proofSubtreePath []string
+				for _, n := range ip.ProofSubtree.Path {
+					i := [merkletree.NodeSize]byte(n)
+					proofSubtreePath = append(proofSubtreePath, "0x"+hex.EncodeToString(i[:]))
+				}
+				response.SubPieceInfo.InclusionProof.ProofSubtree.Path = proofSubtreePath
 
 				contentPieceCid, err := cid.Decode(content.PieceCid)
 				if err != nil {
@@ -228,8 +273,24 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		response.SubPieceInfo.CommPc = content.CommPc
 		response.SubPieceInfo.SizePc = content.SizePc
 		response.SubPieceInfo.Status = content.Status
-		response.SubPieceInfo.InclusionProof = *ip
+		//response.SubPieceInfo.InclusionProof = *ip
 		response.SubPieceInfo.VerifierData = *vd
+		response.SubPieceInfo.InclusionProof.ProofIndex.Index = "0x" + hex.EncodeToString(uint64ToBytes(ip.ProofIndex.Index))
+
+		var proofIndexPath []string
+		for _, n := range ip.ProofIndex.Path {
+			i := [merkletree.NodeSize]byte(n)
+			proofIndexPath = append(proofIndexPath, "0x"+hex.EncodeToString(i[:]))
+		}
+		response.SubPieceInfo.InclusionProof.ProofIndex.Path = proofIndexPath
+
+		response.SubPieceInfo.InclusionProof.ProofSubtree.Index = "0x" + hex.EncodeToString(uint64ToBytes(ip.ProofSubtree.Index))
+		var proofSubtreePath []string
+		for _, n := range ip.ProofSubtree.Path {
+			i := [merkletree.NodeSize]byte(n)
+			proofSubtreePath = append(proofSubtreePath, "0x"+hex.EncodeToString(i[:]))
+		}
+		response.SubPieceInfo.InclusionProof.ProofSubtree.Path = proofSubtreePath
 
 		response.DealInfo = DealInfo{
 			DealID:    content.DealId,
@@ -541,4 +602,12 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		})
 	})
 
+}
+
+func uint64ToBytes(number uint64) []byte {
+	byteArray := make([]byte, 8)
+	for i := 0; i < 8; i++ {
+		byteArray[i] = byte(number >> ((7 - i) * 8))
+	}
+	return byteArray
 }
