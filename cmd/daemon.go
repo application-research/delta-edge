@@ -68,7 +68,6 @@ func DaemonCmd(cfg *config.DeltaConfig) []*cli.Command {
 
 			core.ScanHostComputeResources(ln, repo)
 			//	launch the jobs
-			//go runProcessors(ln)
 
 			// launch the API node
 			fmt.Println(`
@@ -81,8 +80,8 @@ func DaemonCmd(cfg *config.DeltaConfig) []*cli.Command {
     \|_______| \|_______| \|_______| \|_______|                 \|_______| \|__|\|__|
 `)
 			fmt.Println("Cleaning up and retrying...")
-			cleanUpAndRetry(ln)
-			//runProcessors(ln)
+			go cleanUpAndRetry(ln)
+			go runProcessors(ln)
 			fmt.Println("Cleaning up and retrying... Done")
 
 			fmt.Println("Starting API server")
@@ -109,8 +108,13 @@ func runProcessors(ln *core.LightNode) {
 		case <-dealCheckFreqTick.C:
 			go func() {
 				dealCheck := jobs.NewDealChecker(ln)
+				bucketAgg := jobs.NewBucketAggregator(ln, core.Content{
+					RequestingApiKey: "",
+				}, nil,
+					true)
 				d := jobs.CreateNewDispatcher() // dispatch jobs
 				d.AddJob(dealCheck)
+				d.AddJob(bucketAgg)
 				d.Start(1)
 
 				for {
@@ -126,6 +130,5 @@ func runProcessors(ln *core.LightNode) {
 func cleanUpAndRetry(ln *core.LightNode) {
 	dispatcher := jobs.CreateNewDispatcher()
 	dispatcher.AddJob(jobs.NewRetryProcessor(ln))
-	//dispatcher.AddJob(jobs.NewBucketCarBundler(ln, ""))
 	dispatcher.Start(2)
 }

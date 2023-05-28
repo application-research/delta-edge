@@ -21,15 +21,15 @@ type StatusCheckBySubPieceCidResponse struct {
 		Miner string `json:"miner"`
 	} `json:"content_info,omitempty"`
 	SubPieceInfo struct {
-		PieceCid       string `json:"piece_cid"`
-		Size           int64  `json:"size"`
-		CommPa         string `json:"comm_pa"`
-		SizePa         int64  `json:"size_pa"`
-		CommPc         string `json:"comm_pc"`
-		SizePc         int64  `json:"size_pc"`
-		Status         string `json:"status"`
-		InclusionProof []byte `json:"inclusion_proof"`
-		VerifierData   []byte `json:"verifier_data"`
+		PieceCid       string                            `json:"piece_cid"`
+		Size           int64                             `json:"size"`
+		CommPa         string                            `json:"comm_pa"`
+		SizePa         int64                             `json:"size_pa"`
+		CommPc         string                            `json:"comm_pc"`
+		SizePc         int64                             `json:"size_pc"`
+		Status         string                            `json:"status"`
+		InclusionProof datasegment.InclusionProof        `json:"inclusion_proof"`
+		VerifierData   datasegment.InclusionVerifierData `json:"verifier_data"`
 	} `json:"sub_piece_info,omitempty"`
 	DealInfo DealInfo `json:"deal_info,omitempty"`
 	Message  string   `json:"message,omitempty"`
@@ -70,8 +70,8 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 			response.SubPieceInfo.CommPc = content.CommPc
 			response.SubPieceInfo.SizePc = content.SizePc
 			response.SubPieceInfo.Status = content.Status
-			response.SubPieceInfo.InclusionProof = content.InclusionProof
-			response.SubPieceInfo.VerifierData = content.VerifierData
+			response.SubPieceInfo.InclusionProof = *ip
+			response.SubPieceInfo.VerifierData = *vd
 
 			contentPieceCid, err := cid.Decode(content.PieceCid)
 			if err != nil {
@@ -85,7 +85,6 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 			}))
 
 			if err != nil {
-				fmt.Println("failed to compute expected aux data", err)
 				return c.JSON(500, map[string]interface{}{
 					"message": "failed to compute expected aux data",
 				})
@@ -147,8 +146,8 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 				response.SubPieceInfo.CommPc = content.CommPc
 				response.SubPieceInfo.SizePc = content.SizePc
 				response.SubPieceInfo.Status = content.Status
-				response.SubPieceInfo.InclusionProof = content.InclusionProof
-				response.SubPieceInfo.VerifierData = content.VerifierData
+				response.SubPieceInfo.InclusionProof = *ip
+				response.SubPieceInfo.VerifierData = *vd
 
 				contentPieceCid, err := cid.Decode(content.PieceCid)
 				if err != nil {
@@ -229,8 +228,8 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		response.SubPieceInfo.CommPc = content.CommPc
 		response.SubPieceInfo.SizePc = content.SizePc
 		response.SubPieceInfo.Status = content.Status
-		response.SubPieceInfo.InclusionProof = content.InclusionProof
-		response.SubPieceInfo.VerifierData = content.VerifierData
+		response.SubPieceInfo.InclusionProof = *ip
+		response.SubPieceInfo.VerifierData = *vd
 
 		response.DealInfo = DealInfo{
 			DealID:    content.DealId,
@@ -248,7 +247,6 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 			PieceCID: contentPieceCid,
 			Size:     abi.PaddedPieceSize(content.PieceSize),
 		}))
-
 		if err != nil {
 			fmt.Println("failed to compute expected aux data", err)
 			return c.JSON(500, map[string]interface{}{
