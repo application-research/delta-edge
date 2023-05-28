@@ -27,7 +27,7 @@ RUN echo "Building docker image for edge"
 
 RUN apt-get update && \
     apt-get install -y hwloc libhwloc-dev ocl-icd-opencl-dev
-WORKDIR /root/
+WORKDIR /app/
 
 COPY --from=builder /app/edge ./
 CMD ./edge daemon --repo=${REPO}
