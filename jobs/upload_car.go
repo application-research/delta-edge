@@ -119,7 +119,6 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 		if err != nil || res.StatusCode != http.StatusOK {
 			fmt.Println("Error uploading car to delta: ", err)
 			r.CarBucket.Status = "error"
-			r.CarBucket.LastMessage = err.Error()
 			r.LightNode.DB.Save(&r.CarBucket)
 			time.Sleep(retryInterval)
 			continue
