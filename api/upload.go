@@ -126,7 +126,7 @@ func handleUploadFromCidAndMiners(node *core.LightNode, DeltaUploadApi string) f
 		var contentList []core.Content
 
 		for miner := range miners {
-			if size > node.Config.Common.AggregateSize {
+			if size > node.Config.Common.MaxSizeToSplit {
 				newContent := core.Content{
 					Name:             cidFromForm,
 					Size:             size,
@@ -149,7 +149,7 @@ func handleUploadFromCidAndMiners(node *core.LightNode, DeltaUploadApi string) f
 
 				if makeDeal == "true" {
 					job := jobs.CreateNewDispatcher()
-					job.AddJob(jobs.NewUploadToDeltaProcessor(node, newContent, addNode))
+					job.AddJob(jobs.NewSplitterProcessor(node, newContent, addNode))
 					job.Start(1)
 				}
 
@@ -161,7 +161,7 @@ func handleUploadFromCidAndMiners(node *core.LightNode, DeltaUploadApi string) f
 				}
 				newContent.RequestingApiKey = ""
 				contentList = append(contentList, newContent)
-			} else if size < node.Config.Common.AggregateSize {
+			} else {
 				var bucket core.Bucket
 
 				if node.Config.Common.AggregatePerApiKey {
@@ -218,41 +218,6 @@ func handleUploadFromCidAndMiners(node *core.LightNode, DeltaUploadApi string) f
 				if makeDeal == "true" {
 					job := jobs.CreateNewDispatcher()
 					job.AddJob(jobs.NewBucketAggregator(node, newContent, addNode, false))
-					job.Start(1)
-				}
-
-				if err != nil {
-					c.JSON(500, UploadResponse{
-						Status:  "error",
-						Message: "Error pinning the file" + err.Error(),
-					})
-				}
-				newContent.RequestingApiKey = ""
-				contentList = append(contentList, newContent)
-			} else if size > node.Config.Common.MaxSizeToSplit {
-				newContent := core.Content{
-					Name:             cidFromForm,
-					Size:             size,
-					Cid:              cidFromForm,
-					DeltaNodeUrl:     DeltaUploadApi,
-					RequestingApiKey: authParts[1],
-					Status:           utils.STATUS_PINNED,
-					Miner:            miner,
-					MakeDeal: func() bool {
-						if makeDeal == "true" {
-							return true
-						}
-						return false
-					}(),
-					CreatedAt: time.Now(),
-					UpdatedAt: time.Now(),
-				}
-
-				node.DB.Create(&newContent)
-
-				if makeDeal == "true" {
-					job := jobs.CreateNewDispatcher()
-					job.AddJob(jobs.NewSplitterProcessor(node, newContent, addNode))
 					job.Start(1)
 				}
 
