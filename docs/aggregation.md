@@ -54,11 +54,39 @@ Once the bucket is filled the edge node will aggregate the files into a single f
 ### How it works
 ![image](https://github.com/application-research/edge-ur/assets/4479171/b4c3f80d-8b7b-4b16-8c76-61020923a7d2)
 
+### Response 
+
+- ContentInfo
+  - `cid` - this is the exact cid of the file.
+  - `selective_car_cid` - this is the cid of the CAR file that this file is wrapped with.
+  - `name` - file name
+  - `size` - size of the file
+  - `miner` - the miner assigned to make a deal with.
+
+- Sub Piece Information
+  - `piece_cid` - this is the piece_cid of the file
+  - `size` - this is the padded piece size of the file
+  - `comm_pa` - this is the piece_cid of the aggregate that this file belongs to
+  - `size_pa`- this is the size of the aggregate the this file belongs to
+  - `comm_pc` - same as the piece_cid, but this is computed from the aux. (Same `piece_cid` and `comm_pc` means the file and sub piece info are computationally equal in commp)
+  - `size_pc` - this is the padded piece size of the file
+  - `status` - this is the deal status (it's also available on the DealInfo)
+  - `inclusion_proof` - the inclusion proof generated for this file
+  - `verifier_data` - the verifier data generated for this file
+
+- DealInfo
+  - `deal_id` - the deal id from chain. This will initially be `0` but will be updated when the deal has made it on chain.
+  - `status` - this is the deal status from delta and storage market actor
+  - `delta_node` - the delta node used to make a deal with.
+
+
+
 ### Checking the status by content ID
 When the file is uploaded, edge-ur returns a propery called "ID". This is the content ID. You can use this ID to check the status of the content.
 
 Note: The deal_id on the `DealInfo` field will return 0 initially. This is because the deal is not yet made. Once the deal is made, the user needs to hit the status endpoint again
 to get the deal_id.
+
 
 ```bash
 curl --location 'http://localhost:1313/open/status/content/1500'
@@ -128,6 +156,10 @@ curl --location 'http://localhost:1313/open/status/content/1500'
    "message":"success"
 }
 ```
+
+- deal_id - this will initially be set to 0 until a deal transaction is made.
+- status - this will indicate the status of the deal from delta and storage market actor.
+- delta_node - this is the delta node that this file was used to deal 
 
 ### Checking the status of the content by CID
 You can check the status of the file using the following command:
