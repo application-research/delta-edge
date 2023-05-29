@@ -48,7 +48,6 @@ type StatusCheckBySubPieceCidResponse struct {
 	Message  string   `json:"message,omitempty"`
 }
 type DealInfo struct {
-	DealUuid  string `json:"deal_uuid"`
 	DealID    int64  `json:"deal_id"`
 	Status    string `json:"status"`
 	DeltaNode string `json:"delta_node"`
@@ -157,6 +156,7 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 			response.ContentInfo.Name = content.Name
 			response.ContentInfo.Size = content.Size
 			response.ContentInfo.Miner = content.Miner
+			response.ContentInfo.SelectiveCarCid = content.SelectiveCarCid
 
 			if content.PieceCid != "" {
 
@@ -227,7 +227,9 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 				job.AddJob(jobs.NewDealItemChecker(node, content))
 				job.Start(1)
 			}
-
+			if content.Status == "" {
+				content.Status = "pending"
+			}
 			response.DealInfo = DealInfo{
 				DealID:    content.DealId,
 				Status:    content.Status,
@@ -258,6 +260,7 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		response.ContentInfo.Name = content.Name
 		response.ContentInfo.Size = content.Size
 		response.ContentInfo.Miner = content.Miner
+		response.ContentInfo.SelectiveCarCid = content.SelectiveCarCid
 
 		// get the inclusion proof to get the aggregate piece cid
 		ip := new(datasegment.InclusionProof)
@@ -294,6 +297,9 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		}
 		response.SubPieceInfo.InclusionProof.ProofSubtree.Path = proofSubtreePath
 
+		if content.Status == "" {
+			content.Status = "pending"
+		}
 		response.DealInfo = DealInfo{
 			DealID:    content.DealId,
 			Status:    content.Status,

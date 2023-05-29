@@ -83,12 +83,14 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 
 		// write to blockstore
 		ch, err := car.LoadCar(context.Background(), r.LightNode.Node.Blockstore, &buf)
+		selectiveCarNode, err := r.LightNode.Node.AddPinFile(context.Background(), &buf, nil)
 		if err != nil {
 			panic(err)
 		}
 
 		if len(ch.Roots) > 0 {
-			c.SelectiveCarCid = ch.Roots[0].String()
+			selectiveCarNodeCid := selectiveCarNode.Cid()
+			c.SelectiveCarCid = selectiveCarNodeCid.String()
 		}
 		r.LightNode.DB.Save(&c)
 	}
