@@ -13,9 +13,10 @@ Currently, the aggregate size is 1GB per USER (API_KEY). This means that each us
 ## Upload a file
 Files that are less than the aggregate size will automatically be part of a bucket. A bucket is a system object that collects all the files, bundle them all together to create a deal.
 
+### How it works
 ![image](https://github.com/application-research/edge-ur/assets/4479171/17d0b7ad-f0b0-48bf-bd7c-16d16231b355)
 
-To upload a file:
+### To upload a file:
 ```bash
 curl --location 'http://localhost:1313/api/v1/content/add' \
 --header 'Authorization: Bearer [API_KEY]' \
@@ -48,8 +49,9 @@ curl --location 'http://localhost:1313/api/v1/content/add' \
 is used to aggregate the files into a single file.*
 
 ## Checking the status of the uploaded content
-Once the bucket is filled the edge node will aggregate the files into a single file and make a deal with the specified miner via Delta.
+Once the bucket is filled the edge node will aggregate the files into a single file and make a deal with the specified miner via Delta. Anyone can access the status of the CID using the status endpoint.
 
+### How it works
 ![image](https://github.com/application-research/edge-ur/assets/4479171/b4c3f80d-8b7b-4b16-8c76-61020923a7d2)
 
 ### Checking the status by content ID
@@ -132,8 +134,7 @@ You can check the status of the file using the following command:
 
 Note that a CID can be dealt to different deals so this endpoint will return an array of results.
 ```bash
-curl --location --request GET 'http://localhost:1313/open/status/content/cid/bafybeihl2yxou73d7mro4k3g25xnspjkp3afe7ffydvysypiq2yv5zh6y4' \
---header 'Authorization: Bearer [API_KEY]'
+curl --location --request GET 'http://localhost:1313/open/status/content/cid/bafybeihl2yxou73d7mro4k3g25xnspjkp3afe7ffydvysypiq2yv5zh6y4' 
 {
    "data":[
       {
