@@ -59,34 +59,71 @@ Note: The deal_id on the `DealInfo` field will return 0 initially. This is becau
 to get the deal_id.
 
 ```bash
-curl --location 'http://localhost:1313/open/status/content/140'
+curl --location 'http://localhost:1313/open/status/content/1500'
 {
-    "data": {
-        "content_info": {
-            "cid": "bafybeifixryrosiyqtsjl3bnrnvkmfku2eqoumj5lay5jejf3ixvedmwju",
-            "name": "random_1685214395N.dat",
-            "size": 500000,
-            "miner": "t017840"
-        },
-        "sub_piece_info": {
-            "piece_cid": "baga6ea4seaqdgoccoy2x2tqgly4rhhbnewt554xje5jcokdtqhvarpvb5afsehi",
-            "size": 524288,
-            "comm_pa": "baga6ea4seaqlqz2o7vakjlioebzplj5hzwaukvwtsc6gzso4ifijlmdndvp72lq",
-            "size_pa": 8388608,
-            "comm_pc": "baga6ea4seaqdgoccoy2x2tqgly4rhhbnewt554xje5jcokdtqhvarpvb5afsehi",
-            "size_pc": 524288,
-            "status": "StorageDealVerifyData",
-            "inclusion_proof": "goIEhFggcCL2D372rfoXEXpSYZ4wzqgsaAda3xxmd4bsUG7vLRlYINmYh7lzVzqW4ROTZFI2wXsfTHA01yPHqZ9wm7TaYRYrWCDJTuaLtV+MWLaXHItK/Fug8VPxpMWoX+F4PvMvZ8TrMlgg8sEir+Lzmg9NOgb2LvHdbvOolhyA6T9GCicmWXlp3QSCGgAB/8SRWCD1pf1C0WogMCeY727TCZebQwA9IyDZ8OjqmDGpJ1n7C1ggNzG7maxon2bu9Zc+SpTaGI9N3K5YByT8bz/WDf1IgzNYIFE1nSxP0H7VLSnzTOZPh3RlvdsJYXJbU38xhJcppQQ1WCBXojgaKGUr9H9r73rKZ5vkrt5Ycatc8+ssCBFEiMuFJlggH3rJWVUQ4J6kHEYLF2QwuzIs1vtBLsV8sX2YmkMQNy9YIPx+koKW5Rb6remGso+S1EpPJLk1SFIjN2p5kCe8GPgzWCAIxHs47hO8Q/QbkVwO7ZkRomCGs+1iQBv51YuNGd/2JFggsuR7+xH6zZQfYq9cdQ8+pcxN9RfVxPFtsrTXe67Boy9YIPkiYWDI+Se/3MQYzfIDSTFGAI6u+30CGU1eVIGJAFEIWCAsGpZLuQtZ6/4PbaKa1lrj5BdySo98EXRaQMrB5edAEVgg/uN4zvFkBLGZ7eCxPhG2JP+deE+77YeNgyl+eV4CTwJYII6eJAP6iEz2I39g3yX4PuQNyp7YeetvY1LRUIT1rQ0/WCB1LZaT+hZ1JDlUduMXqYWA8AlHr7ejBUDWJakpHMEqB1ggcCL2D372rfoXEXpSYZ4wzqgsaAda3xxmd4bsUG7vLRlYINmYh7lzVzqW4ROTZFI2wXsfTHA01yPHqZ9wm7TaYRYrWCDQtTDbsLTyXF0vKijf7oCLU0EqApMfGMSZ9aJUCGsTJlggC9byZKQHRfNraPkZqWRdUxZ4w2wnvw3iD8oXWPJIdgE=",
-            "verifier_data": "gtgqWCgAAYHiA5IgIDM4QnY1fU4GXjkTnC0lp97y6SdSJyhzgeoIvqHoCyIdGgAIAAA="
-        },
-        "deal_info": {
-            "deal_uuid": "",
-            "deal_id": 0,
-            "status": "StorageDealVerifyData",
-            "delta_node": "http://localhost:1414"
-        }
-    },
-    "message": "success"
+   "data":{
+      "content_info":{
+         "cid":"bafybeib4druxhywgq6pw3o4yyfdf4xlcqtyuzzpjqkjztonlz2ui5p5yyq",
+         "selective_car_cid":"",
+         "name":"random_1685323144198576133.dat",
+         "size":500000,
+         "miner":"t017840"
+      },
+      "sub_piece_info":{
+         "piece_cid":"baga6ea4seaqpqiuaevlybzqw32oey227npulipxeyz6xecm4owwqkfo2lx5fapy",
+         "size":524288,
+         "comm_pa":"baga6ea4seaqprqf7z6eb3syawm4nd22xiltiaoupsn3sse5ympva42kwiojd2ea",
+         "size_pa":8388608,
+         "comm_pc":"baga6ea4seaqpqiuaevlybzqw32oey227npulipxeyz6xecm4owwqkfo2lx5fapy",
+         "size_pc":524288,
+         "status":"StorageDealAwaitingPreCommit",
+         "inclusion_proof":{
+            "proofIndex":{
+               "index":"0x000000000001ffc3",
+               "path":[
+                  "0x5f51015a6c5a60cb34ca2e67fdd19c3de1a3d234dc532de0e6e5e74642266027",
+                  "0xe7f44f3b94879cf48d0ca14664c21b0a30e568f65f8059937d1643cd30184a28",
+                  "0xdaf9ca3c2b71c078c0aca6d3268743c9f0895579243dc738c394a68013c9602d",
+                  "0x57a2381a28652bf47f6bef7aca679be4aede5871ab5cf3eb2c08114488cb8526",
+                  "0x1f7ac9595510e09ea41c460b176430bb322cd6fb412ec57cb17d989a4310372f",
+                  "0xfc7e928296e516faade986b28f92d44a4f24b935485223376a799027bc18f833",
+                  "0x08c47b38ee13bc43f41b915c0eed9911a26086b3ed62401bf9d58b8d19dff624",
+                  "0xb2e47bfb11facd941f62af5c750f3ea5cc4df517d5c4f16db2b4d77baec1a32f",
+                  "0xf9226160c8f927bfdcc418cdf203493146008eaefb7d02194d5e548189005108",
+                  "0x2c1a964bb90b59ebfe0f6da29ad65ae3e417724a8f7c11745a40cac1e5e74011",
+                  "0xfee378cef16404b199ede0b13e11b624ff9d784fbbed878d83297e795e024f02",
+                  "0x8e9e2403fa884cf6237f60df25f83ee40dca9ed879eb6f6352d15084f5ad0d3f",
+                  "0x752d9693fa167524395476e317a98580f00947afb7a30540d625a9291cc12a07",
+                  "0x7022f60f7ef6adfa17117a52619e30cea82c68075adf1c667786ec506eef2d19",
+                  "0xd99887b973573a96e11393645236c17b1f4c7034d723c7a99f709bb4da61162b",
+                  "0xd0b530dbb0b4f25c5d2f2a28dfee808b53412a02931f18c499f5a254086b1326",
+                  "0xc61a433ad9181ecd0494d8a3ad68342e65cfd91195bb4a35f52498872d58ad17"
+               ]
+            },
+            "proofSubtree":{
+               "index":"0x0000000000000003",
+               "path":[
+                  "0x055bda1951ac6a8dbb39528d4af0af42d95adcdb679e77af39b96d64dde52f1f",
+                  "0xf9b01b48888fa61f24df8a954626ae680283f23d4cd8016dd8088a8cc6dab51e",
+                  "0xa490ccea6aee523cb1d7bb5f9d2a944ca228cbd46c065e1cad2aacb5fc54c92f",
+                  "0xda2369882f204474ac2d7fefc31406706f125bced0907210f270855d3d311216"
+               ]
+            }
+         },
+         "verifier_data":{
+            "CommPc":{
+               "/":"baga6ea4seaqpqiuaevlybzqw32oey227npulipxeyz6xecm4owwqkfo2lx5fapy"
+            },
+            "SizePc":524288
+         }
+      },
+      "deal_info":{
+         "deal_id":79457,
+         "status":"StorageDealAwaitingPreCommit",
+         "delta_node":"https://hackfs.delta.estuary.tech"
+      }
+   },
+   "message":"success"
 }
 ```
 
@@ -98,67 +135,70 @@ Note that a CID can be dealt to different deals so this endpoint will return an 
 curl --location --request GET 'http://localhost:1313/open/status/content/cid/bafybeihl2yxou73d7mro4k3g25xnspjkp3afe7ffydvysypiq2yv5zh6y4' \
 --header 'Authorization: Bearer [API_KEY]'
 {
-    "data": [
-        {
-            "content_info": {
-                "cid": "bafybeihl2yxou73d7mro4k3g25xnspjkp3afe7ffydvysypiq2yv5zh6y4",
-                "name": "random_1685214394N.dat",
-                "size": 500000
+   "data":[
+      {
+         "content_info":{
+            "cid":"bafybeihwrdaysfhiutv62gifebmx3hzghqqi7riljgz7vfuvlwabrokhui",
+            "selective_car_cid":"",
+            "name":"random_1685323335525204940.dat",
+            "size":500000,
+            "miner":"t017840"
+         },
+         "sub_piece_info":{
+            "piece_cid":"baga6ea4seaqi2mhuqczxjj4j5db6udry5sc752offux7lp6pjnc2ocljesz6kiq",
+            "size":524288,
+            "comm_pa":"baga6ea4seaqdkiyu664i6pjn76wrc4yfit2jm4lyai377tixd4krcvtenswdekq",
+            "size_pa":8388608,
+            "comm_pc":"baga6ea4seaqi2mhuqczxjj4j5db6udry5sc752offux7lp6pjnc2ocljesz6kiq",
+            "size_pc":524288,
+            "status":"StorageDealAwaitingPreCommit",
+            "inclusion_proof":{
+               "proofIndex":{
+                  "index":"0x000000000001ffc1",
+                  "path":[
+                     "0xbee18debaad248941d4f50e3ac1f17a73fa425c2d7d9948c7609b1ef473c253f",
+                     "0x7ccef61c7c7f2f379ea99354ba667e63529890d5a74114477450d8b8d9238132",
+                     "0x693b4e3429c834452a0e5bc7255255bd0b57ac5033fc6abb6c25b773e669251e",
+                     "0x57a2381a28652bf47f6bef7aca679be4aede5871ab5cf3eb2c08114488cb8526",
+                     "0x1f7ac9595510e09ea41c460b176430bb322cd6fb412ec57cb17d989a4310372f",
+                     "0xfc7e928296e516faade986b28f92d44a4f24b935485223376a799027bc18f833",
+                     "0x08c47b38ee13bc43f41b915c0eed9911a26086b3ed62401bf9d58b8d19dff624",
+                     "0xb2e47bfb11facd941f62af5c750f3ea5cc4df517d5c4f16db2b4d77baec1a32f",
+                     "0xf9226160c8f927bfdcc418cdf203493146008eaefb7d02194d5e548189005108",
+                     "0x2c1a964bb90b59ebfe0f6da29ad65ae3e417724a8f7c11745a40cac1e5e74011",
+                     "0xfee378cef16404b199ede0b13e11b624ff9d784fbbed878d83297e795e024f02",
+                     "0x8e9e2403fa884cf6237f60df25f83ee40dca9ed879eb6f6352d15084f5ad0d3f",
+                     "0x752d9693fa167524395476e317a98580f00947afb7a30540d625a9291cc12a07",
+                     "0x7022f60f7ef6adfa17117a52619e30cea82c68075adf1c667786ec506eef2d19",
+                     "0xd99887b973573a96e11393645236c17b1f4c7034d723c7a99f709bb4da61162b",
+                     "0xd0b530dbb0b4f25c5d2f2a28dfee808b53412a02931f18c499f5a254086b1326",
+                     "0x7eacee2ef23658551f68d1d577413a7cbaa85a5af436a4501914392c4d941e23"
+                  ]
+               },
+               "proofSubtree":{
+                  "index":"0x0000000000000001",
+                  "path":[
+                     "0x6f4d1b33f5949c03e0101448312da702124842a0ecd9c9a7430d6d64c5fe6810",
+                     "0x33d1bf66e6612eb4c6c5f1adce4fd57d639b5447fa982841d3f9180333357c16",
+                     "0xfc61255147302c4f89137e7ca69018ec08852218b49e797dd689088cdb793a00",
+                     "0x41d687c129527729e1b27f27824284495f802dc3ed74fdac6d94690d9f05f70a"
+                  ]
+               }
             },
-            "sub_piece_info": {
-                "piece_cid": "baga6ea4seaqk2rif6gz4mqj4q6pke2bunhi7qh7uwmekn27lhbvhcsbq7wr3aji",
-                "size": 524288,
-                "comm_pa": "baga6ea4seaqdjgko77z2jmiykg44bzlsyvpsv53b36apt6wwgmdqm4rvw3v6mlq",
-                "size_pa": 8388608,
-                "comm_pc": "baga6ea4seaqk2rif6gz4mqj4q6pke2bunhi7qh7uwmekn27lhbvhcsbq7wr3aji",
-                "size_pc": 524288,
-                "status": "StorageDealVerifyData",
-                "inclusion_proof": "goIEhFggcCL2D372rfoXEXpSYZ4wzqgsaAda3xxmd4bsUG7vLRlYINmYh7lzVzqW4ROTZFI2wXsfTHA01yPHqZ9wm7TaYRYrWCB2qV1fAFCCA+/Zf68f13lBn9mCicwEumC+YrG/Kqx6GlggNUKAEyN5sdKwSVeygJKA3MpZHf+y87iCkETV7s1pLBeCGgAB/8SRWCD1pf1C0WogMCeY727TCZebQwA9IyDZ8OjqmDGpJ1n7C1ggNzG7maxon2bu9Zc+SpTaGI9N3K5YByT8bz/WDf1IgzNYICM1HodgKdT6HNEKwtoNyq4BQ8IeOSJjY4tJC/1eTokLWCBXojgaKGUr9H9r73rKZ5vkrt5Ycatc8+ssCBFEiMuFJlggH3rJWVUQ4J6kHEYLF2QwuzIs1vtBLsV8sX2YmkMQNy9YIPx+koKW5Rb6remGso+S1EpPJLk1SFIjN2p5kCe8GPgzWCAIxHs47hO8Q/QbkVwO7ZkRomCGs+1iQBv51YuNGd/2JFggsuR7+xH6zZQfYq9cdQ8+pcxN9RfVxPFtsrTXe67Boy9YIPkiYWDI+Se/3MQYzfIDSTFGAI6u+30CGU1eVIGJAFEIWCAsGpZLuQtZ6/4PbaKa1lrj5BdySo98EXRaQMrB5edAEVgg/uN4zvFkBLGZ7eCxPhG2JP+deE+77YeNgyl+eV4CTwJYII6eJAP6iEz2I39g3yX4PuQNyp7YeetvY1LRUIT1rQ0/WCB1LZaT+hZ1JDlUduMXqYWA8AlHr7ejBUDWJakpHMEqB1ggcCL2D372rfoXEXpSYZ4wzqgsaAda3xxmd4bsUG7vLRlYINmYh7lzVzqW4ROTZFI2wXsfTHA01yPHqZ9wm7TaYRYrWCDQtTDbsLTyXF0vKijf7oCLU0EqApMfGMSZ9aJUCGsTJlggFHI0eeMxGZvmcTnvAh/4L/BYOohDGLYIv9y7O6wfzRE=",
-                "verifier_data": "gtgqWCgAAYHiA5IgIK1FBfGzxkE8h56iaDRp0fgf9LMIpuvrOGpxSDD9o7AlGgAIAAA="
-            },
-            "deal_info": {
-                "deal_id": 0,
-                "status": "StorageDealVerifyData",
-                "delta_node": "http://localhost:1414"
+            "verifier_data":{
+               "CommPc":{
+                  "/":"baga6ea4seaqi2mhuqczxjj4j5db6udry5sc752offux7lp6pjnc2ocljesz6kiq"
+               },
+               "SizePc":524288
             }
-        }
-    ]
-}
-```
-
-### Checking the status of the content by PieceCID
-You can check the status of the file using the following command:
-
-```bash
-curl --location --request GET 'http://localhost:1313/open/status/content/piece/baga6ea4seaqk2rif6gz4mqj4q6pke2bunhi7qh7uwmekn27lhbvhcsbq7wr3aji' \
---header 'Authorization: Bearer [API_KEY]'
-{
-    "data": {
-        "content_info": {
-            "cid": "bafybeihl2yxou73d7mro4k3g25xnspjkp3afe7ffydvysypiq2yv5zh6y4",
-            "name": "random_1685214394N.dat",
-            "size": 500000,
-            "miner": "t017840"
-        },
-        "sub_piece_info": {
-            "piece_cid": "baga6ea4seaqk2rif6gz4mqj4q6pke2bunhi7qh7uwmekn27lhbvhcsbq7wr3aji",
-            "size": 524288,
-            "comm_pa": "baga6ea4seaqdjgko77z2jmiykg44bzlsyvpsv53b36apt6wwgmdqm4rvw3v6mlq",
-            "size_pa": 8388608,
-            "comm_pc": "baga6ea4seaqk2rif6gz4mqj4q6pke2bunhi7qh7uwmekn27lhbvhcsbq7wr3aji",
-            "size_pc": 524288,
-            "status": "StorageDealVerifyData",
-            "inclusion_proof": "goIEhFggcCL2D372rfoXEXpSYZ4wzqgsaAda3xxmd4bsUG7vLRlYINmYh7lzVzqW4ROTZFI2wXsfTHA01yPHqZ9wm7TaYRYrWCB2qV1fAFCCA+/Zf68f13lBn9mCicwEumC+YrG/Kqx6GlggNUKAEyN5sdKwSVeygJKA3MpZHf+y87iCkETV7s1pLBeCGgAB/8SRWCD1pf1C0WogMCeY727TCZebQwA9IyDZ8OjqmDGpJ1n7C1ggNzG7maxon2bu9Zc+SpTaGI9N3K5YByT8bz/WDf1IgzNYICM1HodgKdT6HNEKwtoNyq4BQ8IeOSJjY4tJC/1eTokLWCBXojgaKGUr9H9r73rKZ5vkrt5Ycatc8+ssCBFEiMuFJlggH3rJWVUQ4J6kHEYLF2QwuzIs1vtBLsV8sX2YmkMQNy9YIPx+koKW5Rb6remGso+S1EpPJLk1SFIjN2p5kCe8GPgzWCAIxHs47hO8Q/QbkVwO7ZkRomCGs+1iQBv51YuNGd/2JFggsuR7+xH6zZQfYq9cdQ8+pcxN9RfVxPFtsrTXe67Boy9YIPkiYWDI+Se/3MQYzfIDSTFGAI6u+30CGU1eVIGJAFEIWCAsGpZLuQtZ6/4PbaKa1lrj5BdySo98EXRaQMrB5edAEVgg/uN4zvFkBLGZ7eCxPhG2JP+deE+77YeNgyl+eV4CTwJYII6eJAP6iEz2I39g3yX4PuQNyp7YeetvY1LRUIT1rQ0/WCB1LZaT+hZ1JDlUduMXqYWA8AlHr7ejBUDWJakpHMEqB1ggcCL2D372rfoXEXpSYZ4wzqgsaAda3xxmd4bsUG7vLRlYINmYh7lzVzqW4ROTZFI2wXsfTHA01yPHqZ9wm7TaYRYrWCDQtTDbsLTyXF0vKijf7oCLU0EqApMfGMSZ9aJUCGsTJlggFHI0eeMxGZvmcTnvAh/4L/BYOohDGLYIv9y7O6wfzRE=",
-            "verifier_data": "gtgqWCgAAYHiA5IgIK1FBfGzxkE8h56iaDRp0fgf9LMIpuvrOGpxSDD9o7AlGgAIAAA="
-        },
-        "deal_info": {
-            "deal_uuid": "",
-            "deal_id": 0,
-            "status": "StorageDealVerifyData",
-            "delta_node": "http://localhost:1414"
-        }
-    },
-    "message": "success"
+         },
+         "deal_info":{
+            "deal_id":79483,
+            "status":"StorageDealAwaitingPreCommit",
+            "delta_node":"https://hackfs.delta.estuary.tech"
+         }
+      }
+   ]
 }
 ```
 
