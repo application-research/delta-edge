@@ -136,15 +136,15 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 	bucket.RequestingApiKey = r.Bucket.RequestingApiKey
 	bucket.Miner = "t017840"
 	aggCid, err := agg.PieceCID()
+
 	if err != nil {
 		panic(err)
 	}
 	bucket.PieceCid = aggCid.String()
 	bucket.Cid = aggNd.Cid().String()
-	bucket.Size = intTotalSize
+	bucket.PieceSize = int64(agg.DealSize)
 	bucket.Status = "filled"
 	bucket.Size = intTotalSize
-	r.LightNode.DB.Save(&bucket)
 
 	// get the proof for each piece
 	var updatedContents []core.Content
@@ -192,9 +192,10 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 
 		r.LightNode.DB.Save(&cProof)
 	}
+	r.LightNode.DB.Save(&bucket)
 
 	job := CreateNewDispatcher()
-	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, bucket.Cid))
+	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket.Uuid))
 	job.Start(1)
 
 }

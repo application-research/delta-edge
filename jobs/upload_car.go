@@ -17,17 +17,15 @@ import (
 )
 
 type UploadCarToDeltaProcessor struct {
-	CarBucket core.Bucket `json:"car_bucket"`
-	RootCid   string      `json:"root_cid"`
+	BucketUuid string `json:"bucket_uuid"`
 	Processor
 }
 
-func NewUploadCarToDeltaProcessor(ln *core.LightNode, bucket core.Bucket, rootCid string) IProcessor {
+func NewUploadCarToDeltaProcessor(ln *core.LightNode, bucketUuid string) IProcessor {
 	DELTA_UPLOAD_API = ln.Config.ExternalApi.DeltaNodeApiUrl
 	REPLICATION_FACTOR = string(ln.Config.Common.ReplicationFactor)
 	return &UploadCarToDeltaProcessor{
-		bucket,
-		rootCid,
+		bucketUuid,
 		Processor{
 			LightNode: ln,
 		},
@@ -42,6 +40,8 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 
 	// if network connection is not available or delta node is not available, then we need to skip and
 	// let the upload retry consolidate the content until it is available
+	var bucket core.Bucket
+	r.LightNode.DB.Model(&core.Bucket{}).Where("uuid = ?", r.BucketUuid).First(&bucket)
 
 	maxRetries := 5
 	retryInterval := 5 * time.Second
@@ -49,12 +49,12 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
 
-	partFile, err := writer.CreateFormFile("data", r.CarBucket.Cid)
+	partFile, err := writer.CreateFormFile("data", bucket.Cid)
 	if err != nil {
 		fmt.Println("CreateFormFile error: ", err)
 		return nil
 	}
-	cidToGet, err := cid.Decode(r.CarBucket.Cid)
+	cidToGet, err := cid.Decode(bucket.Cid)
 	if err != nil {
 		fmt.Println("Error decoding cid: ", err)
 		return nil
@@ -66,8 +66,8 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 		return nil
 	}
 
-	r.CarBucket.Status = "uploading"
-	r.LightNode.DB.Save(&r.CarBucket)
+	bucket.Status = "uploading"
+	r.LightNode.DB.Save(&bucket)
 
 	//rootNd.WriteTo(partFile)
 	_, err = io.Copy(partFile, rootNd)
@@ -77,7 +77,13 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 	}
 
 	repFactor := r.LightNode.Config.Common.ReplicationFactor
-	partMetadata := fmt.Sprintf(`{"auto_retry":true,"miner":"%s","replication":%d}`, r.CarBucket.Miner, repFactor)
+	fmt.Println("Replication factor: ", repFactor)
+	fmt.Println("Piece cid: ", bucket.PieceCid)
+	fmt.Println("Piece size: ", bucket.PieceSize)
+	fmt.Println("Miner: ", bucket.Miner)
+
+	partMetadata := fmt.Sprintf(`{"auto_retry":true,"size":%d,"miner":"%s","replication":%d,"piece_commitment":{"piece_cid":"%s","padded_piece_size":%d}}`, bucket.Size, bucket.Miner, repFactor, bucket.PieceCid, bucket.PieceSize)
+
 	if partFile, err = writer.CreateFormField("metadata"); err != nil {
 		fmt.Println("CreateFormField error: ", err)
 		return nil
@@ -100,7 +106,7 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.Header.Set("Authorization", "Bearer "+r.CarBucket.RequestingApiKey)
+	req.Header.Set("Authorization", "Bearer "+bucket.RequestingApiKey)
 	client := &http.Client{}
 	var res *http.Response
 	for j := 0; j < maxRetries; j++ {
@@ -118,8 +124,21 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 		res, err = client.Do(clonedReq)
 		if err != nil || res.StatusCode != http.StatusOK {
 			fmt.Println("Error uploading car to delta: ", err)
-			r.CarBucket.Status = "error"
-			r.LightNode.DB.Save(&r.CarBucket)
+			bucket.Status = "error"
+			if err != nil {
+				bucket.LastMessage = err.Error()
+			}
+			body, error := ioutil.ReadAll(res.Body)
+			if error != nil {
+				fmt.Println(error)
+			}
+			// close response body
+			res.Body.Close()
+
+			// print response body
+			fmt.Println(string(body))
+			bucket.LastMessage = string(body)
+			r.LightNode.DB.Save(&bucket)
 			time.Sleep(retryInterval)
 			continue
 		} else {
@@ -127,27 +146,27 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 				var dealE2EUploadResponse DealE2EUploadResponse
 				body, err := ioutil.ReadAll(res.Body)
 				if err != nil {
-					r.CarBucket.Status = "error"
-					r.CarBucket.LastMessage = err.Error()
-					r.LightNode.DB.Save(&r.CarBucket)
+					bucket.Status = "error"
+					bucket.LastMessage = err.Error()
+					r.LightNode.DB.Save(&bucket)
 					fmt.Println(err)
 					continue
 				}
 				err = json.Unmarshal(body, &dealE2EUploadResponse)
 				if err != nil {
-					r.CarBucket.Status = "error"
-					r.CarBucket.LastMessage = err.Error()
-					r.LightNode.DB.Save(&r.CarBucket)
+					bucket.Status = "error"
+					bucket.LastMessage = err.Error()
+					r.LightNode.DB.Save(&bucket)
 					continue
 				} else {
 					if dealE2EUploadResponse.ContentID == 0 {
 						continue
 					} else {
-						r.CarBucket.UpdatedAt = time.Now()
-						r.CarBucket.LastMessage = utils.STATUS_UPLOADED_TO_DELTA
-						r.CarBucket.Status = utils.STATUS_UPLOADED_TO_DELTA
-						r.CarBucket.DeltaContentId = int64(dealE2EUploadResponse.ContentID)
-						r.LightNode.DB.Save(&r.CarBucket)
+						bucket.UpdatedAt = time.Now()
+						bucket.LastMessage = utils.STATUS_UPLOADED_TO_DELTA
+						bucket.Status = utils.STATUS_UPLOADED_TO_DELTA
+						bucket.DeltaContentId = int64(dealE2EUploadResponse.ContentID)
+						r.LightNode.DB.Save(&bucket)
 						break
 					}
 				}

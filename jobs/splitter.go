@@ -197,6 +197,6 @@ func (r *SplitterProcessor) GenerateCarForBucket(bucketUuid string) {
 
 	// process the deal
 	job := CreateNewDispatcher()
-	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, bucket.Cid))
+	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket.Uuid))
 	job.Start(1)
 }
