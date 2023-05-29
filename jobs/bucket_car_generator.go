@@ -3,14 +3,17 @@ package jobs
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"github.com/application-research/edge-ur/core"
-	"github.com/application-research/filclient"
 	"github.com/filecoin-project/go-data-segment/datasegment"
 	"github.com/filecoin-project/go-data-segment/util"
+	commcid "github.com/filecoin-project/go-fil-commcid"
+	commp "github.com/filecoin-project/go-fil-commp-hashhash"
+	"github.com/filecoin-project/go-fil-markets/shared"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/ipfs/go-cid"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	uio "github.com/ipfs/go-unixfs/io"
+	"github.com/ipld/go-car"
 	"io"
 )
 
@@ -61,7 +64,7 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 			panic(err)
 		}
 
-		pieceCid, _, unpadded, err := filclient.GeneratePieceCommitment(context.Background(), cCid, r.LightNode.Node.Blockstore)
+		pieceCid, _, unpadded, buf, err := GeneratePieceCommitment(context.Background(), cCid, r.LightNode.Node.Blockstore)
 
 		c.PieceCid = pieceCid.String()
 		if err != nil {
@@ -77,9 +80,16 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 		})
 
 		intTotalSize += int64(unpadded.Padded())
-		fmt.Println("PieceCid1: ", c.PieceCid)
-		fmt.Println("PieceSize1: ", c.PieceSize)
 
+		// write to blockstore
+		ch, err := car.LoadCar(context.Background(), r.LightNode.Node.Blockstore, &buf)
+		if err != nil {
+			panic(err)
+		}
+
+		if len(ch.Roots) > 0 {
+			c.SelectiveCarCid = ch.Roots[0].String()
+		}
 		r.LightNode.DB.Save(&c)
 	}
 
@@ -96,8 +106,9 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 	var aggReaders []io.Reader
 	var updateContentsForAgg []core.Content
 	r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid = ?", bucketUuid).Find(&updateContentsForAgg)
+
 	for _, cAgg := range updateContentsForAgg {
-		cCidAgg, err := cid.Decode(cAgg.Cid)
+		cCidAgg, err := cid.Decode(cAgg.SelectiveCarCid)
 		if err != nil {
 			panic(err)
 		}
@@ -172,14 +183,64 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 		cProof.InclusionProof = incW.Bytes()
 		cProof.VerifierData = verifierDataW.Bytes()
 		cProof.CommPa = aux.CommPa.String()
+
 		cProof.SizePa = int64(aux.SizePa)
 		cProof.CommPc = verifierDataForEach.CommPc.String()
 		cProof.SizePc = int64(verifierDataForEach.SizePc)
 
 		r.LightNode.DB.Save(&cProof)
 	}
+
 	job := CreateNewDispatcher()
 	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, bucket.Cid))
 	job.Start(1)
 
+}
+
+const maxTraversalLinks = 32 * (1 << 20)
+
+func GeneratePieceCommitment(ctx context.Context, payloadCid cid.Cid, bstore blockstore.Blockstore) (cid.Cid, uint64, abi.UnpaddedPieceSize, bytes.Buffer, error) {
+	selectiveCar := car.NewSelectiveCar(
+		context.Background(),
+		bstore,
+		[]car.Dag{{Root: payloadCid, Selector: shared.AllSelector()}},
+		car.MaxTraversalLinks(maxTraversalLinks),
+		car.TraverseLinksOnlyOnce(),
+	)
+
+	buf := new(bytes.Buffer)
+	blockCount := 0
+	var oneStepBlocks []car.Block
+	err := selectiveCar.Write(buf, func(block car.Block) error {
+		oneStepBlocks = append(oneStepBlocks, block)
+		blockCount++
+		return nil
+	})
+
+	preparedCar, err := selectiveCar.Prepare()
+	if err != nil {
+		return cid.Undef, 0, 0, *buf, err
+	}
+
+	writer := new(commp.Calc)
+	carWriter := &bytes.Buffer{}
+	err = preparedCar.Dump(ctx, writer)
+	if err != nil {
+		return cid.Undef, 0, 0, *buf, err
+	}
+	commpc, size, err := writer.Digest()
+	if err != nil {
+		return cid.Undef, 0, 0, *buf, err
+	}
+	err = preparedCar.Dump(ctx, carWriter)
+	if err != nil {
+		return cid.Undef, 0, 0, *buf, err
+	}
+
+	commCid, err := commcid.DataCommitmentV1ToCID(commpc)
+	if err != nil {
+		return cid.Undef, 0, 0, *buf, err
+	}
+
+	return commCid, preparedCar.Size(), abi.PaddedPieceSize(size).Unpadded(), *buf, nil
 }

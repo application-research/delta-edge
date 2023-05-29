@@ -87,6 +87,7 @@ type Content struct {
 	Name             string    `json:"name"`
 	Size             int64     `json:"size"`
 	Cid              string    `json:"cid"`
+	SelectiveCarCid  string    `json:"selective_car_cid"`
 	RequestingApiKey string    `json:"requesting_api_key,omitempty"`
 	DeltaContentId   int64     `json:"delta_content_id"`
 	DeltaNodeUrl     string    `json:"delta_node_url"`
