@@ -22,6 +22,7 @@ type StatusCheckBySubPieceCidResponse struct {
 		Name            string `json:"name"`
 		Size            int64  `json:"size"`
 		Miner           string `json:"miner"`
+		DeltaContentId  int64  `json:"delta_content_id"`
 	} `json:"content_info,omitempty"`
 	SubPieceInfo struct {
 		PieceCid string `json:"piece_cid"`
@@ -61,10 +62,11 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		node.DB.Model(&core.Content{}).Where("id = ?", c.Param("id")).First(&content)
 
 		response.ContentInfo.Cid = content.Cid
-		response.ContentInfo.SelectiveCarCid = content.SelectiveCarCid
 		response.ContentInfo.Name = content.Name
 		response.ContentInfo.Size = content.Size
 		response.ContentInfo.Miner = content.Miner
+		response.ContentInfo.SelectiveCarCid = content.SelectiveCarCid
+		response.ContentInfo.DeltaContentId = content.DeltaContentId
 
 		// get the inclusion proof to get the aggregate piece cid
 		if content.PieceCid != "" {
@@ -156,6 +158,7 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 			response.ContentInfo.Name = content.Name
 			response.ContentInfo.Size = content.Size
 			response.ContentInfo.Miner = content.Miner
+			response.ContentInfo.DeltaContentId = content.DeltaContentId
 			response.ContentInfo.SelectiveCarCid = content.SelectiveCarCid
 
 			if content.PieceCid != "" {
@@ -260,6 +263,7 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		response.ContentInfo.Name = content.Name
 		response.ContentInfo.Size = content.Size
 		response.ContentInfo.Miner = content.Miner
+		response.ContentInfo.DeltaContentId = content.DeltaContentId
 		response.ContentInfo.SelectiveCarCid = content.SelectiveCarCid
 
 		// get the inclusion proof to get the aggregate piece cid
