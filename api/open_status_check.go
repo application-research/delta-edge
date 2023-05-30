@@ -43,7 +43,11 @@ type StatusCheckBySubPieceCidResponse struct {
 				Path  []string `json:"path"`
 			} `json:"proofSubtree"`
 		} `json:"inclusion_proof"`
-		VerifierData datasegment.InclusionVerifierData `json:"verifier_data"`
+		//VerifierData datasegment.InclusionVerifierData `json:"verifier_data"`
+		VerifierData struct {
+			CommPc string `json:"commPc"`
+			SizePc int64  `json:"sizePc"`
+		}
 	} `json:"sub_piece_info,omitempty"`
 	DealInfo DealInfo `json:"deal_info,omitempty"`
 	Message  string   `json:"message,omitempty"`
@@ -86,7 +90,15 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 			response.SubPieceInfo.SizePc = content.SizePc
 			response.SubPieceInfo.Status = content.Status
 			//response.SubPieceInfo.InclusionProof = *ip
-			response.SubPieceInfo.VerifierData = *vd
+			commPCid, err := cid.Decode(content.CommPc)
+			if err != nil {
+				return c.JSON(500, map[string]interface{}{
+					"message": "failed to decode CommPc",
+				})
+			}
+
+			response.SubPieceInfo.VerifierData.CommPc = "0x" + hex.EncodeToString(commPCid.Bytes()[:])
+			response.SubPieceInfo.VerifierData.SizePc = content.SizePc
 			response.SubPieceInfo.InclusionProof.ProofIndex.Index = "0x" + hex.EncodeToString(uint64ToBytes(ip.ProofIndex.Index))
 
 			var proofIndexPath []string
@@ -180,7 +192,15 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 				response.SubPieceInfo.SizePc = content.SizePc
 				response.SubPieceInfo.Status = content.Status
 				//response.SubPieceInfo.InclusionProof = *ip
-				response.SubPieceInfo.VerifierData = *vd
+				commPCid, err := cid.Decode(content.CommPc)
+				if err != nil {
+					return c.JSON(500, map[string]interface{}{
+						"message": "failed to decode CommPc",
+					})
+				}
+
+				response.SubPieceInfo.VerifierData.CommPc = "0x" + hex.EncodeToString(commPCid.Bytes()[:])
+				response.SubPieceInfo.VerifierData.SizePc = content.SizePc
 
 				response.SubPieceInfo.InclusionProof.ProofIndex.Index = "0x" + hex.EncodeToString(uint64ToBytes(ip.ProofIndex.Index))
 
@@ -283,7 +303,15 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		response.SubPieceInfo.SizePc = content.SizePc
 		response.SubPieceInfo.Status = content.Status
 		//response.SubPieceInfo.InclusionProof = *ip
-		response.SubPieceInfo.VerifierData = *vd
+		commPCid, err := cid.Decode(content.CommPc)
+		if err != nil {
+			return c.JSON(500, map[string]interface{}{
+				"message": "failed to decode CommPc",
+			})
+		}
+
+		response.SubPieceInfo.VerifierData.CommPc = "0x" + hex.EncodeToString(commPCid.Bytes()[:])
+		response.SubPieceInfo.VerifierData.SizePc = content.SizePc
 		response.SubPieceInfo.InclusionProof.ProofIndex.Index = "0x" + hex.EncodeToString(uint64ToBytes(ip.ProofIndex.Index))
 
 		var proofIndexPath []string
