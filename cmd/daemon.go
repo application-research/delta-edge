@@ -80,7 +80,7 @@ func DaemonCmd(cfg *config.DeltaConfig) []*cli.Command {
     \|_______| \|_______| \|_______| \|_______|                 \|_______| \|__|\|__|
 `)
 			fmt.Println("Cleaning up and retrying...")
-			go cleanUpAndRetry(ln)
+			//go cleanUpAndRetry(ln)
 			go runProcessors(ln)
 			fmt.Println("Cleaning up and retrying... Done")
 
