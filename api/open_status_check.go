@@ -47,7 +47,7 @@ type StatusCheckBySubPieceCidResponse struct {
 		VerifierData struct {
 			CommPc string `json:"commPc"`
 			SizePc int64  `json:"sizePc"`
-		}
+		} `json:"verifier_data"`
 	} `json:"sub_piece_info,omitempty"`
 	DealInfo DealInfo `json:"deal_info,omitempty"`
 	Message  string   `json:"message,omitempty"`
