@@ -3,6 +3,7 @@ package jobs
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"github.com/application-research/edge-ur/core"
 	"github.com/filecoin-project/go-data-segment/datasegment"
 	"github.com/filecoin-project/go-data-segment/util"
@@ -61,14 +62,18 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 	for _, c := range contentsToUpdateWithPieceInfo {
 		cCid, err := cid.Decode(c.Cid)
 		if err != nil {
-			panic(err)
+			fmt.Println("error generating piece commitment")
+			c.Status = "error"
+			c.LastMessage = err.Error()
 		}
 
 		pieceCid, _, unpadded, buf, err := GeneratePieceCommitment(context.Background(), cCid, r.LightNode.Node.Blockstore)
-
 		c.PieceCid = pieceCid.String()
 		if err != nil {
-			panic(err)
+			fmt.Println("error generating piece commitment")
+			c.Status = "error"
+			c.LastMessage = err.Error()
+			continue
 		}
 
 		c.PieceSize = int64(unpadded.Padded())
@@ -85,7 +90,10 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 		ch, err := car.LoadCar(context.Background(), r.LightNode.Node.Blockstore, &buf)
 		selectiveCarNode, err := r.LightNode.Node.AddPinFile(context.Background(), &buf, nil)
 		if err != nil {
-			panic(err)
+			fmt.Println("error generating piece commitment")
+			c.Status = "error"
+			c.LastMessage = err.Error()
+			continue
 		}
 
 		if len(ch.Roots) > 0 {
