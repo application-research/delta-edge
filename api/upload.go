@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/application-research/edge-ur/jobs"
 	"github.com/application-research/edge-ur/utils"
@@ -82,6 +83,16 @@ func handleUploadFromCidAndMiners(node *core.LightNode, DeltaUploadApi string) f
 		sourceMultiAddr := c.FormValue("multiaddr") // comma-separated list of miners to pin to
 		minersString := c.FormValue("miners")       // comma-separated list of miners to pin to
 		makeDeal := c.FormValue("make_deal")        // whether to make a deal with the miners or not
+
+		// Check capacity if needed
+		if node.Config.Common.CapacityLimitPerKeyInBytes > 0 {
+			if err := validateCapacityLimit(node, authParts[1]); err != nil {
+				return c.JSON(500, UploadResponse{
+					Status:  "error",
+					Message: err.Error(),
+				})
+			}
+		}
 
 		if makeDeal == "" {
 			makeDeal = "true"
@@ -257,6 +268,16 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 		minersString := c.FormValue("miners") // comma-separated list of miners to pin to
 		makeDeal := c.FormValue("make_deal")  // whether to make a deal with the miners or not
 
+		// Check capacity if needed
+		if node.Config.Common.CapacityLimitPerKeyInBytes > 0 {
+			if err := validateCapacityLimit(node, authParts[1]); err != nil {
+				return c.JSON(500, UploadResponse{
+					Status:  "error",
+					Message: err.Error(),
+				})
+			}
+		}
+
 		if makeDeal == "" {
 			makeDeal = "true"
 		}
@@ -415,6 +436,16 @@ func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) fun
 		minersString := c.FormValue("miners") // comma-separated list of miners to pin to
 		makeDeal := c.FormValue("make_deal")  // whether to make a deal with the miners or not
 
+		// Check capacity if needed
+		if node.Config.Common.CapacityLimitPerKeyInBytes > 0 {
+			if err := validateCapacityLimit(node, authParts[1]); err != nil {
+				return c.JSON(500, UploadResponse{
+					Status:  "error",
+					Message: err.Error(),
+				})
+			}
+		}
+
 		if makeDeal == "" {
 			makeDeal = "true"
 		}
@@ -501,6 +532,16 @@ func handleFetchPinToNodeToMiners(node *core.LightNode, DeltaUploadApi string) f
 		cidToFetch := c.FormValue("cid")
 		minersString := c.FormValue("miners")
 		makeDeal := c.FormValue("make_deal")
+
+		// Check capacity if needed
+		if node.Config.Common.CapacityLimitPerKeyInBytes > 0 {
+			if err := validateCapacityLimit(node, authParts[1]); err != nil {
+				return c.JSON(500, UploadResponse{
+					Status:  "error",
+					Message: err.Error(),
+				})
+			}
+		}
 
 		if makeDeal == "" {
 			makeDeal = "true"
@@ -603,6 +644,16 @@ func handlePinAddCarToNodeToMiners(node *core.LightNode, DeltaUploadApi string) 
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
 
+		// Check capacity if needed
+		if node.Config.Common.CapacityLimitPerKeyInBytes > 0 {
+			if err := validateCapacityLimit(node, authParts[1]); err != nil {
+				return c.JSON(500, UploadResponse{
+					Status:  "error",
+					Message: err.Error(),
+				})
+			}
+		}
+
 		file, err := c.FormFile("data")
 		minersString := c.FormValue("miners") // comma-separated list of miners to pin to
 		makeDeal := c.FormValue("make_deal")  // whether to make a deal with the miners or not
@@ -689,4 +740,18 @@ func handlePinAddCarToNodeToMiners(node *core.LightNode, DeltaUploadApi string) 
 
 		return nil
 	}
+}
+
+func validateCapacityLimit(node *core.LightNode, authKey string) error {
+	var totalSize int64
+	err := node.DB.Raw(`SELECT COALESCE(SUM(size), 0) FROM contents where requesting_api_key = ?`, authKey).Scan(&totalSize).Error
+	if err != nil {
+		return err
+	}
+
+	if totalSize >= node.Config.Common.CapacityLimitPerKeyInBytes {
+		return errors.New(fmt.Sprintf("You have reached your capacity limit of %d bytes", node.Config.Common.CapacityLimitPerKeyInBytes))
+	}
+
+	return nil
 }
