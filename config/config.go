@@ -31,7 +31,7 @@ type DeltaConfig struct {
 		DealCheck          int   `env:"DEAL_CHECK" envDefault:"600"`
 		ReplicationFactor  int   `env:"REPLICATION_FACTOR" envDefault:"0"`
 		// Capacity Limit per Key: default 0 - unlimited
-		CapacityLimitPerKeyInBytes int64 `env:"CAPACITY_LIMIT_PER_KEY_IN_BYTES" evnDefault:"0"`
+		CapacityLimitPerKeyInBytes int64 `env:"CAPACITY_LIMIT_PER_KEY_IN_BYTES" envDefault:"0"`
 	}
 
 	ExternalApi struct {
