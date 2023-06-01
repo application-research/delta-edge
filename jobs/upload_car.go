@@ -82,7 +82,8 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 	fmt.Println("Piece size: ", bucket.PieceSize)
 	fmt.Println("Miner: ", bucket.Miner)
 
-	partMetadata := fmt.Sprintf(`{"auto_retry":true,"size":%d,"miner":"%s","replication":%d,"piece_commitment":{"piece_cid":"%s","padded_piece_size":%d}}`, bucket.Size, bucket.Miner, repFactor, bucket.PieceCid, bucket.PieceSize)
+	//partMetadata := fmt.Sprintf(`{"auto_retry":true,"size":%d,"miner":"%s","replication":%d,"piece_commitment":{"piece_cid":"%s","padded_piece_size":%d}}`, bucket.Size, bucket.Miner, repFactor, bucket.FilCPieceCid, bucket.FilCPieceSize)
+	partMetadata := fmt.Sprintf(`{"auto_retry":true,"size":%d,"miner":"%s","replication":%d}`, bucket.Size, bucket.Miner, repFactor)
 
 	if partFile, err = writer.CreateFormField("metadata"); err != nil {
 		fmt.Println("CreateFormField error: ", err)

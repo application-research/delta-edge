@@ -59,6 +59,9 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 	// get the subPieceInfos
 	var subPieceInfos []abi.PieceInfo
 	var intTotalSize int64
+	var totalUnpaddedSize int64
+	var bucketCommpPa string
+	var bucketSizePa int64
 	for _, c := range contentsToUpdateWithPieceInfo {
 		cCid, err := cid.Decode(c.Cid)
 		if err != nil {
@@ -85,7 +88,7 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 		})
 
 		intTotalSize += int64(unpadded.Padded())
-
+		totalUnpaddedSize += int64(unpadded)
 		// write to blockstore
 		ch, err := car.LoadCar(context.Background(), r.LightNode.Node.Blockstore, &buf)
 		selectiveCarNode, err := r.LightNode.Node.AddPinFile(context.Background(), &buf, nil)
@@ -104,7 +107,7 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 	}
 
 	// generate the aggregate using the subpieceinfos
-	totalSizePow2, err := util.CeilPow2(uint64(intTotalSize * 2))
+	totalSizePow2, err := util.CeilPow2(uint64(intTotalSize))
 	if err != nil {
 		panic(err)
 	}
@@ -118,7 +121,8 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 	r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid = ?", bucketUuid).Find(&updateContentsForAgg)
 
 	for _, cAgg := range updateContentsForAgg {
-		cCidAgg, err := cid.Decode(cAgg.SelectiveCarCid)
+		fmt.Println("cAgg", cAgg.Cid, bucketUuid)
+		cCidAgg, err := cid.Decode(cAgg.Cid)
 		if err != nil {
 			panic(err)
 		}
@@ -135,12 +139,17 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 	}
 
 	aggNd, err := r.LightNode.Node.AddPinFile(context.Background(), rootReader, nil)
+
+	filcPiece, _, unpaddedAgg, _, err := GeneratePieceCommitment(context.Background(), aggNd.Cid(), r.LightNode.Node.Blockstore)
+	//aggBufNode, err := r.LightNode.Node.AddPinFile(context.Background(), &aggBufR, nil)
 	if err != nil {
 		panic(err)
 	}
 
 	var bucket core.Bucket
 	r.LightNode.DB.Model(&core.Bucket{}).Where("uuid = ?", bucketUuid).First(&bucket)
+	bucket.FilCPieceCid = filcPiece.String()
+	bucket.FilCPieceSize = int64(unpaddedAgg.Padded())
 	bucket.RequestingApiKey = r.Bucket.RequestingApiKey
 	bucket.Miner = "t017840"
 	aggCid, err := agg.PieceCID()
@@ -150,9 +159,9 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 	}
 	bucket.PieceCid = aggCid.String()
 	bucket.Cid = aggNd.Cid().String()
-	bucket.PieceSize = int64(agg.DealSize)
+	//bucket.PieceSize = int64(unpaddedAgg.Padded())
 	bucket.Status = "filled"
-	bucket.Size = intTotalSize
+	bucket.Size = totalUnpaddedSize
 
 	// get the proof for each piece
 	var updatedContents []core.Content
@@ -199,7 +208,12 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 		cProof.SizePc = int64(verifierDataForEach.SizePc)
 
 		r.LightNode.DB.Save(&cProof)
+
+		bucketCommpPa = aux.CommPa.String()
+		bucketSizePa = int64(aux.SizePa)
 	}
+	bucket.PieceCid = bucketCommpPa
+	bucket.PieceSize = bucketSizePa
 	r.LightNode.DB.Save(&bucket)
 
 	job := CreateNewDispatcher()
