@@ -1,11 +1,12 @@
 package jobs
 
 import (
+	"io"
+
 	"github.com/application-research/edge-ur/core"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-merkledag"
 	"github.com/multiformats/go-multihash"
-	"io"
 )
 
 type BucketAggregator struct {
@@ -30,6 +31,7 @@ func (r *BucketAggregator) Info() error {
 	panic("implement me")
 }
 
+// Run is the main function of the BucketAggregator struct. It is responsible for aggregating the contents of a bucket
 func (r *BucketAggregator) Run() error {
 	// check if there are open bucket. if there are, generate the car file for the bucket.
 
@@ -42,6 +44,8 @@ func (r *BucketAggregator) Run() error {
 		query += " AND requesting_api_key = ?"
 	}
 
+	// for each bucket, get all the contents and check if the total size is greater than the aggregate size limit (default 1GB)
+	// if it is, generate a car file for the bucket and update the bucket status to processing
 	for _, bucket := range buckets {
 		var content []core.Content
 		r.LightNode.DB.Model(&core.Content{}).Where(query, bucket.Uuid, r.Content.RequestingApiKey).Find(&content)
@@ -79,6 +83,7 @@ func (r *BucketAggregator) Run() error {
 	//	panic("implement me")
 }
 
+// GetCidBuilderDefault is a helper function that returns a default cid builder
 func GetCidBuilderDefault() cid.Builder {
 	cidBuilder, err := merkledag.PrefixForCidVersion(1)
 	if err != nil {
