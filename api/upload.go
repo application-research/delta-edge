@@ -350,10 +350,10 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 
 				if node.Config.Common.AggregatePerApiKey {
 					rawQuery := "SELECT * FROM buckets WHERE status = ? and miner = ? and requesting_api_key = ?"
-					node.DB.Raw(rawQuery, "open", miner, authParts[1]).Scan(&bucket)
+					node.DB.Raw(rawQuery, "open", miner, authParts[1]).First(&bucket)
 				} else {
 					rawQuery := "SELECT * FROM buckets WHERE status = ? and miner = ?"
-					node.DB.Raw(rawQuery, "open", miner).Scan(&bucket)
+					node.DB.Raw(rawQuery, "open", miner).First(&bucket)
 				}
 
 				if bucket.ID == 0 {
