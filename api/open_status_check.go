@@ -53,6 +53,7 @@ type StatusCheckBySubPieceCidResponse struct {
 	Message  string   `json:"message,omitempty"`
 }
 type DealInfo struct {
+	DealUuid  string `json:"deal_uuid"`
 	DealID    int64  `json:"deal_id"`
 	Status    string `json:"status"`
 	DeltaNode string `json:"delta_node"`
@@ -147,6 +148,7 @@ func ConfigureOpenStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 		}
 
 		response.DealInfo = DealInfo{
+			DealUuid:  content.DealUuid,
 			DealID:    content.DealId,
 			Status:    content.Status,
 			DeltaNode: content.DeltaNodeUrl,

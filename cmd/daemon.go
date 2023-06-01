@@ -100,7 +100,7 @@ func DaemonCmd(cfg *config.DeltaConfig) []*cli.Command {
 }
 
 func runProcessors(ln *core.LightNode) {
-	dealCheckFreq := 12
+	dealCheckFreq := 1
 	dealCheckFreqTick := time.NewTicker(time.Duration(dealCheckFreq) * time.Hour)
 
 	for {
@@ -115,7 +115,7 @@ func runProcessors(ln *core.LightNode) {
 				d := jobs.CreateNewDispatcher() // dispatch jobs
 				d.AddJob(dealCheck)
 				d.AddJob(bucketAgg)
-				d.Start(1)
+				d.Start(2)
 
 				for {
 					if d.Finished() {

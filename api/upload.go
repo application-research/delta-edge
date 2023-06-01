@@ -741,7 +741,6 @@ func handlePinAddCarToNodeToMiners(node *core.LightNode, DeltaUploadApi string) 
 		return nil
 	}
 }
-
 func validateCapacityLimit(node *core.LightNode, authKey string) error {
 	var totalSize int64
 	err := node.DB.Raw(`SELECT COALESCE(SUM(size), 0) FROM contents where requesting_api_key = ?`, authKey).Scan(&totalSize).Error

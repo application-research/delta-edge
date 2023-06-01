@@ -62,6 +62,7 @@ func (r *BucketChecker) Run() error {
 	bucket.Status = dealResult.Content.Status
 	if dealResult.Deals != nil && len(dealResult.Deals) > 0 {
 		bucket.DealId = int64(dealResult.Deals[0].DealID)
+		bucket.DealUuid = dealResult.Deals[0].DealUUID
 	}
 	r.LightNode.DB.Save(&bucket)
 

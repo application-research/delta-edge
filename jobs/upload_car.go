@@ -130,9 +130,10 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 				bucket.LastMessage = err.Error()
 				continue
 			}
-			body, error := ioutil.ReadAll(res.Body)
-			if error != nil {
-				fmt.Println(error)
+			body, errorRead := ioutil.ReadAll(res.Body)
+			if errorRead != nil {
+				bucket.LastMessage = errorRead.Error()
+				continue
 			}
 			// close response body
 			res.Body.Close()

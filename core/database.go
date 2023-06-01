@@ -77,6 +77,7 @@ type Bucket struct {
 	FilCPieceSize    int64     `json:"file_c_piece_size"`
 	Cid              string    `json:"cid" json:"cid,omitempty"`
 	DealId           int64     `json:"deal_id" json:"deal_id,omitempty"`
+	DealUuid         string    `json:"deal_uuid" json:"deal_uuid,omitempty"`
 	Status           string    `json:"status" json:"status,omitempty"` // open, processing, filled, bundled
 	LastMessage      string    `json:"last_message" json:"last_message,omitempty"`
 	CreatedAt        time.Time `json:"created_at" json:"created_at"`
@@ -104,6 +105,7 @@ type Content struct {
 	CommPc           string    `json:"comm_pa,omitempty"`
 	SizePc           int64     `json:"size_pa,omitempty"`
 	DealId           int64     `json:"deal_id" json:"deal_id,omitempty"`
+	DealUuid         string    `json:"deal_uuid" json:"deal_uuid,omitempty"`
 	LastMessage      string    `json:"last_message"`
 	Miner            string    `json:"miner"`
 	MakeDeal         bool      `json:"make_deal"`
