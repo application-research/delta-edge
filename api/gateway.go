@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"html/template"
 	"io"
 	"net/http"
@@ -14,6 +13,8 @@ import (
 	gopath "path"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 
 	"github.com/application-research/edge-ur/core"
 	"github.com/application-research/whypfs-core"
@@ -35,6 +36,12 @@ var (
 	gatewayHandler = &GatewayHandler{}
 )
 
+// GatewayHandler is a struct that implements the http.Handler interface
+// @property bs - The `bs` property is a field of type `blockstore.Blockstore`.
+// @property dserv - The `dserv` property is a field of type `mdagipld.DAGService`.
+// @property resolver - The `resolver` property is a field of type `resolver.Resolver`.
+// @property node - The `node` property is a field of type `whypfs.Node`.
+// @property db - The `db` property is a field of type `gorm.DB`.
 type GatewayHandler struct {
 	bs       blockstore.Blockstore
 	dserv    mdagipld.DAGService
@@ -43,6 +50,7 @@ type GatewayHandler struct {
 	db       *gorm.DB
 }
 
+// ConfigureGatewayRouter is a function that takes an `echo.Group` and a `core.LightNode` and returns nothing
 func ConfigureGatewayRouter(e *echo.Group, node *core.LightNode) {
 
 	//	api
@@ -63,6 +71,8 @@ func (gw *GatewayHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// handleRequest is a function that takes a `context.Context`, an `http.ResponseWriter`, and an `http.Request` and returns an `error`
+// It is responsible for handling the request and writing the response
 func (gw *GatewayHandler) handleRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	cc, err := gw.resolvePath(ctx, r.URL.Path)
 	if err != nil {
@@ -78,6 +88,8 @@ func (gw *GatewayHandler) handleRequest(ctx context.Context, w http.ResponseWrit
 	}
 }
 
+// serveUnixfs is a function that takes a `context.Context`, a `cid.Cid`, an `http.ResponseWriter`, and an `http.Request` and returns an `error`
+// It is responsible for serving the unixfs file system from the given CID and writing the response to the writer
 func (gw *GatewayHandler) serveUnixfs(ctx context.Context, cc cid.Cid, w http.ResponseWriter, req *http.Request) error {
 	nd, err := gw.dserv.Get(ctx, cc)
 	fmt.Println("nd", nd)
@@ -116,6 +128,9 @@ func (gw *GatewayHandler) serveUnixfs(ctx context.Context, cc cid.Cid, w http.Re
 	return nil
 }
 
+// sniffMimeType is a function that takes an `http.ResponseWriter` and a `uio.DagReader` and returns an `error`
+// It is responsible for setting the content type of the response based on the mime type of the dag reader
+// and used to avoid mime-type sniffing on the client (unifies behavior across gateways and web browsers)
 func (gw *GatewayHandler) sniffMimeType(w http.ResponseWriter, dr uio.DagReader) error {
 	// see kubo https://github.com/ipfs/kubo/blob/df222053856d3967ff0b4d6bc513bdb66ceedd6f/core/corehttp/gateway_handler_unixfs_file.go
 	// see http ServeContent https://cs.opensource.google/go/go/+/refs/tags/go1.19.2:src/net/http/fs.go;l=221;drc=1f068f0dc7bc997446a7aac44cfc70746ad918e0
@@ -150,6 +165,8 @@ func (gw *GatewayHandler) sniffMimeType(w http.ResponseWriter, dr uio.DagReader)
 	return nil
 }
 
+// serveUnixfsDir is a function that takes a `context.Context`, a `mdagipld.Node`, an `http.ResponseWriter`, and an `http.Request` and returns an `error`
+// It is responsible for serving the unixfs file system directory from the given node and writing the response to the writer
 func (gw *GatewayHandler) serveUnixfsDir(ctx context.Context, n mdagipld.Node, w http.ResponseWriter, req *http.Request) error {
 	dir, err := uio.NewDirectoryFromNode(gw.dserv, n)
 	if err != nil {
@@ -186,6 +203,8 @@ func (gw *GatewayHandler) serveUnixfsDir(ctx context.Context, n mdagipld.Node, w
 	return nil
 }
 
+// resolvePath is a function that takes a `context.Context` and a `string` and returns a `cid.Cid` and an `error`
+// It is responsible for parsing the path and resolving it to a CID
 func (gw *GatewayHandler) resolvePath(ctx context.Context, p string) (cid.Cid, error) {
 	proto, _, _, err := gw.parsePath(p) // a sanity check
 	if err != nil {
@@ -214,6 +233,8 @@ func (gw *GatewayHandler) resolvePath(ctx context.Context, p string) (cid.Cid, e
 	}
 }
 
+// parsePath is a function that takes a `string` and returns a `string`, a `cid.Cid`, a `[]string`, and an `error`
+// It is responsible for parsing the path and returning the protocol, the CID, and the path segments
 func (gw *GatewayHandler) parsePath(p string) (string, cid.Cid, []string, error) {
 	parts := strings.Split(strings.Trim(p, "/"), "/")
 	if len(parts) < 2 {
@@ -232,6 +253,8 @@ func (gw *GatewayHandler) parsePath(p string) (string, cid.Cid, []string, error)
 
 }
 
+// GetCidBuilderDefault is a function that takes no arguments and returns a `cid.Builder`
+// It is responsible for returning a default CID builder
 func (gw *GatewayHandler) GatewayDirResolverCheckHandler(c echo.Context) error {
 	p := c.Param("path")
 	req := c.Request().Clone(c.Request().Context())
@@ -255,6 +278,8 @@ func (gw *GatewayHandler) GatewayDirResolverCheckHandler(c echo.Context) error {
 	return nil
 }
 
+// `GatewayContentResolverCheckHandler` is a function that takes a `echo.Context` and returns an `error`
+// It is responsible for checking if the content exists in the database and returning the CID
 func GatewayContentResolverCheckHandler(c echo.Context) error {
 	authorizationString := c.Request().Header.Get("Authorization")
 	authParts := strings.Split(authorizationString, " ")
@@ -329,10 +354,12 @@ func GatewayResolverCheckHandlerDirectPath(c echo.Context) error {
 	return nil
 }
 
+// Context is a struct that represents the context of a request
 type Context struct {
 	CustomLinks []CustomLinks
 }
 
+// CustomLinks is a struct that represents a custom link
 type CustomLinks struct {
 	Href     string
 	HrefCid  string
@@ -340,6 +367,8 @@ type CustomLinks struct {
 	Size     string
 }
 
+// ServeDir is a function that takes a `context.Context`, a `mdagipld.Node`, an `http.ResponseWriter`, and an `http.Request` and returns an `error`
+// It is responsible for serving the directory from the given node and writing the response to the writer
 func ServeDir(ctx context.Context, n mdagipld.Node, w http.ResponseWriter, req *http.Request) error {
 
 	dir, err := uio.NewDirectoryFromNode(gatewayHandler.node.DAGService, n)
@@ -389,6 +418,9 @@ func ServeDir(ctx context.Context, n mdagipld.Node, w http.ResponseWriter, req *
 	return nil
 }
 
+// SniffMimeType is a function that takes an `http.ResponseWriter` and a `uio.DagReader` and returns an `error`
+// It is responsible for setting the content type of the response based on the mime type of the dag reader
+// and used to avoid mime-type sniffing on the client (unifies behavior across gateways and web browsers)
 func SniffMimeType(w http.ResponseWriter, dr uio.DagReader) error {
 	// see kubo https://github.com/ipfs/kubo/blob/df222053856d3967ff0b4d6bc513bdb66ceedd6f/core/corehttp/gateway_handler_unixfs_file.go
 	// see http ServeContent https://cs.opensource.google/go/go/+/refs/tags/go1.19.2:src/net/http/fs.go;l=221;drc=1f068f0dc7bc997446a7aac44cfc70746ad918e0
