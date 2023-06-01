@@ -62,8 +62,9 @@ func (r *BucketChecker) Run() error {
 	bucket.Status = dealResult.Content.Status
 	if dealResult.Deals != nil && len(dealResult.Deals) > 0 {
 		bucket.DealId = int64(dealResult.Deals[0].DealID)
+		bucket.DealUuid = dealResult.Deals[0].DealUUID
 	}
-	bucket.DealUuid = dealResult.Deals[0].DealUUID
+
 	r.LightNode.DB.Save(&bucket)
 
 	// if the updated date is 1 day old, then we should just retry the request
