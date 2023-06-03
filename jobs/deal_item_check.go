@@ -113,7 +113,7 @@ func (r *DealItemChecker) Run() error {
 	c := content
 	//for _, c := range content {
 	contentId := strconv.Itoa(int(c.DeltaContentId))
-	resp, err := http.Get(c.DeltaNodeUrl + "/open/stats/content/" + contentId)
+	resp, err := http.Get(c.DeltaNodeUrl + "/open/status/content/" + contentId)
 	if err != nil {
 		fmt.Println("Get error: ", err)
 		return nil
@@ -133,6 +133,8 @@ func (r *DealItemChecker) Run() error {
 	c.LastMessage = dealResult.Content.LastMessage
 	if len(dealResult.Deals) > 0 {
 		c.Miner = dealResult.Deals[len(dealResult.Deals)-1].Miner
+		c.DealId = int64(dealResult.Deals[len(dealResult.Deals)-1].DealID)
+		c.DealUuid = dealResult.Deals[len(dealResult.Deals)-1].DealUUID
 	}
 	c.Status = dealResult.Content.Status
 	r.LightNode.DB.Save(&c)
