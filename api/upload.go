@@ -11,6 +11,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-car"
 	"io"
+	"net/http"
 	"strings"
 	"time"
 
@@ -70,6 +71,7 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 	content := e.Group("/content")
 	content.POST("/add", handleUploadToCarBucketAndMiners(node, DeltaUploadApi))
 	content.POST("/fetch-pin", handleUploadFromCidAndMiners(node, DeltaUploadApi))
+	content.POST("/fetch-url", handleUploadFromUrlToCarBucketAndMiners(node, DeltaUploadApi))
 	content.POST("/add-car", handlePinAddCarToNodeToMiners(node, DeltaUploadApi))
 	//content.POST("/fetch-pin", handleFetchPinToNodeToMiners(node, DeltaUploadApi))
 
@@ -402,6 +404,189 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 				if makeDeal == "true" {
 					job := jobs.CreateNewDispatcher()
 					job.AddJob(jobs.NewBucketAggregator(node, newContent, srcR, false))
+					job.Start(1)
+				}
+
+				if err != nil {
+					c.JSON(500, UploadResponse{
+						Status:  "error",
+						Message: "Error pinning the file" + err.Error(),
+					})
+				}
+				newContent.RequestingApiKey = ""
+				contentList = append(contentList, newContent)
+			}
+		}
+
+		c.JSON(200, struct {
+			Status   string         `json:"status"`
+			Message  string         `json:"message"`
+			Contents []core.Content `json:"contents"`
+		}{
+			Status:   "success",
+			Message:  "File uploaded and pinned successfully. Please take note of the ids.",
+			Contents: contentList,
+		})
+
+		return nil
+	}
+}
+
+func handleUploadFromUrlToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		authorizationString := c.Request().Header.Get("Authorization")
+		authParts := strings.Split(authorizationString, " ")
+		minersString := c.FormValue("miners")   // comma-separated list of miners to pin to
+		urlDataToGet := c.FormValue("data_url") // comma-separated list of miners to pin to
+		makeDeal := c.FormValue("make_deal")    // whether to make a deal with the miners or not
+
+		// Check capacity if needed
+		if node.Config.Common.CapacityLimitPerKeyInBytes > 0 {
+			if err := validateCapacityLimit(node, authParts[1]); err != nil {
+				return c.JSON(500, UploadResponse{
+					Status:  "error",
+					Message: err.Error(),
+				})
+			}
+		}
+
+		if makeDeal == "" {
+			makeDeal = "true"
+		}
+
+		miners := make(map[string]bool)
+		for _, miner := range strings.Split(minersString, ",") {
+			miners[miner] = true
+		}
+
+		// download the file from the url
+		resp, err := http.Get(urlDataToGet)
+		if err != nil {
+			return c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error downloading the file from the url",
+			})
+		}
+		defer resp.Body.Close()
+
+		fileBytes := &bytes.Buffer{}
+		fileBytesR := &bytes.Buffer{}
+		lenOfW, errCopy := io.Copy(fileBytes, resp.Body)
+		fileBytesR = fileBytes
+		if errCopy != nil {
+			return c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error copying the file from the url",
+			})
+		}
+
+		fmt.Println("file.Size", lenOfW)
+		addNode, err := node.Node.AddPinFile(c.Request().Context(), fileBytes, nil)
+		fileName := addNode.Cid().String()
+		if err != nil {
+			return c.JSON(500, UploadResponse{
+				Status:  "error",
+				Message: "Error adding the file to IPFS",
+			})
+		}
+
+		// check open bucket
+		var contentList []core.Content
+
+		for miner := range miners {
+			if lenOfW > node.Config.Common.MaxSizeToSplit {
+
+				newContent := core.Content{
+					Name:             fileName,
+					Size:             lenOfW,
+					Cid:              addNode.Cid().String(),
+					DeltaNodeUrl:     DeltaUploadApi,
+					RequestingApiKey: authParts[1],
+					Status:           utils.STATUS_PINNED,
+					Miner:            miner,
+					MakeDeal: func() bool {
+						if makeDeal == "true" {
+							return true
+						}
+						return false
+					}(),
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				}
+
+				node.DB.Create(&newContent)
+
+				if makeDeal == "true" {
+					job := jobs.CreateNewDispatcher()
+					job.AddJob(jobs.NewSplitterProcessor(node, newContent, fileBytesR))
+					job.Start(1)
+				}
+
+				if err != nil {
+					c.JSON(500, UploadResponse{
+						Status:  "error",
+						Message: "Error pinning the file" + err.Error(),
+					})
+				}
+				newContent.RequestingApiKey = ""
+				contentList = append(contentList, newContent)
+			} else {
+				var bucket core.Bucket
+
+				if node.Config.Common.AggregatePerApiKey {
+					rawQuery := "SELECT * FROM buckets WHERE status = ? and miner = ? and requesting_api_key = ?"
+					node.DB.Raw(rawQuery, "open", miner, authParts[1]).First(&bucket)
+				} else {
+					rawQuery := "SELECT * FROM buckets WHERE status = ? and miner = ?"
+					node.DB.Raw(rawQuery, "open", miner).First(&bucket)
+				}
+
+				if bucket.ID == 0 {
+					// create a new bucket
+					bucketUuid, errUuid := uuid.NewUUID()
+					if errUuid != nil {
+						return c.JSON(500, UploadResponse{
+							Status:  "error",
+							Message: "Error creating bucket",
+						})
+					}
+					bucket = core.Bucket{
+						Status:           "open",
+						Name:             bucketUuid.String(),
+						RequestingApiKey: authParts[1],
+						DeltaNodeUrl:     DeltaUploadApi,
+						Uuid:             bucketUuid.String(),
+						Miner:            miner, // blank
+						CreatedAt:        time.Now(),
+						UpdatedAt:        time.Now(),
+					}
+					node.DB.Create(&bucket)
+				}
+
+				newContent := core.Content{
+					Name:             fileName,
+					Size:             lenOfW,
+					Cid:              addNode.Cid().String(),
+					DeltaNodeUrl:     DeltaUploadApi,
+					RequestingApiKey: authParts[1],
+					Status:           utils.STATUS_PINNED,
+					Miner:            miner,
+					BucketUuid:       bucket.Uuid,
+					MakeDeal: func() bool {
+						if makeDeal == "true" {
+							return true
+						}
+						return false
+					}(),
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				}
+
+				node.DB.Create(&newContent)
+
+				if makeDeal == "true" {
+					job := jobs.CreateNewDispatcher()
+					job.AddJob(jobs.NewBucketAggregator(node, newContent, fileBytesR, false))
 					job.Start(1)
 				}
 

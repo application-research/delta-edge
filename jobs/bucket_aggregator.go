@@ -52,18 +52,8 @@ func (r *BucketAggregator) Run() error {
 		var totalSize int64
 		var aggContent []core.Content
 		for _, c := range content {
-
-			var isContentExists bool
-			for _, existingContent := range aggContent {
-				if existingContent.Cid == c.Cid {
-					isContentExists = true
-					break
-				}
-			}
-			if !isContentExists {
-				totalSize += c.Size
-				aggContent = append(aggContent, c)
-			}
+			totalSize += c.Size
+			aggContent = append(aggContent, c)
 		}
 
 		if r.Force || totalSize > r.LightNode.Config.Common.AggregateSize && len(content) > 1 {
