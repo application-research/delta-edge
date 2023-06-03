@@ -81,7 +81,7 @@ func DaemonCmd(cfg *config.DeltaConfig) []*cli.Command {
 `)
 			fmt.Println("Cleaning up and retrying...")
 			//go cleanUpAndRetry(ln)
-			go runProcessors(ln)
+			//go runProcessors(ln)
 			fmt.Println("Cleaning up and retrying... Done")
 
 			fmt.Println("Starting API server")
