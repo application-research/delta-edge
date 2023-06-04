@@ -2,8 +2,6 @@
 
 Edge nodes accepts different sizes of files but it doesn't make deals for every files, what it does is it aggregates the files into a bigger file and make a deal for the aggregated file.
 
-Currently, the aggregate size is 1GB per USER (API_KEY). This means that each user can upload files up to 1GB and the edge node will aggregate the files into a single file and make a deal.
-
 ## Pre-requisites
 - make sure you have a edge node running either locally or remote. Use this guide [running a node](running_node.md) to run a node.
 - identify the edge node host.
