@@ -2,8 +2,6 @@
 
 Edge nodes accepts different sizes of files but it doesn't make deals for every files, what it does is it aggregates the files into a bigger file and make a deal for the aggregated file.
 
-Currently, the aggregate size is 1GB per USER (API_KEY). This means that each user can upload files up to 1GB and the edge node will aggregate the files into a single file and make a deal.
-
 ## Pre-requisites
 - make sure you have a edge node running either locally or remote. Use this guide [running a node](running_node.md) to run a node.
 - identify the edge node host.
@@ -47,6 +45,43 @@ curl --location 'http://localhost:1313/api/v1/content/add' \
 ```
 *Note that the content has been assigned to a bucket (using bucket_uuid). The bucket is a system object that collects the files which in turn
 is used to aggregate the files into a single file.*
+
+### To upload a file from a url:
+
+```
+curl --location 'https://hackfs-coeus.estuary.tech/edge/api/v1/content/fetch-url' \
+--header 'Authorization: Bearer [API_KEY]' \
+--form 'data_url="https://sample-videos.com/img/Sample-jpg-image-1mb.jpg"' \
+--form 'miners="t017840"'
+{
+    "status": "success",
+    "message": "File uploaded and pinned successfully. Please take note of the ids.",
+    "contents": [
+        {
+            "ID": 11533,
+            "name": "bafybeicrn76wdl5j4pxervimrz3jzg2mrt66avchhr3sgys4keshoitfxq",
+            "size": 1033414,
+            "cid": "bafybeicrn76wdl5j4pxervimrz3jzg2mrt66avchhr3sgys4keshoitfxq",
+            "selective_car_cid": "",
+            "delta_content_id": 0,
+            "delta_node_url": "http://localhost:1414",
+            "bucket_uuid": "436e9e4f-0264-11ee-937e-40a6b7203650",
+            "status": "pinned",
+            "piece_cid": "",
+            "piece_size": 0,
+            "inclusion_proof": null,
+            "verifier_data": null,
+            "deal_id": 0,
+            "deal_uuid": "",
+            "last_message": "",
+            "miner": "t017840",
+            "make_deal": true,
+            "created_at": "2023-06-03T23:13:35.863271079Z",
+            "updated_at": "2023-06-03T23:13:35.863271129Z"
+        }
+    ]
+}
+```
 
 ## Checking the status of the uploaded content
 Once the bucket is filled the edge node will aggregate the files into a single file and make a deal with the specified miner via Delta. Anyone can access the status of the CID using the status endpoint.
