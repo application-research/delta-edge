@@ -1,0 +1,71 @@
+{
+   "data": {
+     "content_info": {
+       "cid": "bafybeigwb3cbn4xm2i3pcfwt3hgv5q5rqmdta47mqjc6vhxs4ncw5jbgxu",
+       "selective_car_cid": "bafybeif7ztnhq65lumvvtr4ekcwd2ifwgm3awq4zfr3srh462rwyinlb4y",
+       "name": "plant-img.jpeg",
+       "size": 89098695,
+       "miner": "",
+       "delta_content_id": 0
+     },
+     "sub_piece_info": {
+       "piece_cid": "baga6ea4seaqgo47rjuwksf6esqdwjfdv3t2zhvrdxzrkcid5m4baoo375kfwyay",
+       "size": 134217728,
+       "comm_pa": "baga6ea4seaqnww2fkzj7vwolkhllqfoybta3scqkrcyv4ql5n2l3khd3pbagofi",
+       "size_pa": 536870912,
+       "comm_pc": "baga6ea4seaqgo47rjuwksf6esqdwjfdv3t2zhvrdxzrkcid5m4baoo375kfwyay",
+       "size_pc": 134217728,
+       "status": "pinned",
+       "inclusion_proof": {
+         "proofIndex": {
+           "index": "0x00000000007ff000",
+           "path": [
+             "0x948303a82c5cac199ef2b66114cdea9fa2d0c49c8bb9affffcb36a918302723a",
+             "0x3731bb99ac689f66eef5973e4a94da188f4ddcae580724fc6f3fd60dfd488333",
+             "0x642a607ef886b004bf2c1978463ae1d4693ac0f410eb2d1b7a47fe205e5e750f",
+             "0x57a2381a28652bf47f6bef7aca679be4aede5871ab5cf3eb2c08114488cb8526",
+             "0x1f7ac9595510e09ea41c460b176430bb322cd6fb412ec57cb17d989a4310372f",
+             "0xfc7e928296e516faade986b28f92d44a4f24b935485223376a799027bc18f833",
+             "0x08c47b38ee13bc43f41b915c0eed9911a26086b3ed62401bf9d58b8d19dff624",
+             "0xb2e47bfb11facd941f62af5c750f3ea5cc4df517d5c4f16db2b4d77baec1a32f",
+             "0xf9226160c8f927bfdcc418cdf203493146008eaefb7d02194d5e548189005108",
+             "0x2c1a964bb90b59ebfe0f6da29ad65ae3e417724a8f7c11745a40cac1e5e74011",
+             "0xfee378cef16404b199ede0b13e11b624ff9d784fbbed878d83297e795e024f02",
+             "0x8e9e2403fa884cf6237f60df25f83ee40dca9ed879eb6f6352d15084f5ad0d3f",
+             "0x752d9693fa167524395476e317a98580f00947afb7a30540d625a9291cc12a07",
+             "0x7022f60f7ef6adfa17117a52619e30cea82c68075adf1c667786ec506eef2d19",
+             "0xd99887b973573a96e11393645236c17b1f4c7034d723c7a99f709bb4da61162b",
+             "0xd0b530dbb0b4f25c5d2f2a28dfee808b53412a02931f18c499f5a254086b1326",
+             "0x84c0421ba0685a01bf795a2344064fe424bd52a9d24377b394ff4c4b4568e811",
+             "0x65f29e5d98d246c38b388cfc06db1f6b021303c5a289000bdce832a9c3ec421c",
+             "0xa2247508285850965b7e334b3127b0c042b1d046dc54402137627cd8799ce13a",
+             "0xdafdab6da9364453c26d33726b9fefe343be8f81649ec009aad3faff50617508",
+             "0xd941d5e0d6314a995c33ffbd4fbe69118d73d4e5fd2cd31f0f7c86ebdd14e706",
+             "0x514c435c3d04d349a5365fbd59ffc713629111785991c1a3c53af22079741a2f",
+             "0x6db8042c35e107e3498b7230a9cee4ab7a1253858eea5766efd5538544da4b08"
+           ]
+         },
+         "proofSubtree": {
+           "index": "0x0000000000000000",
+           "path": [
+             "0x6773f14d2ca917c49407649475dcf593d623be62a1207d6702073b7fea8b6c03",
+             "0x1c24bd4d3c8e50e4bc52a7888155cb9d01e609908a2aecbd8d5dc7e2098cdf19"
+           ]
+         }
+       },
+       "verifier_data": {
+         "CommPc": {
+           "/": "baga6ea4seaqgo47rjuwksf6esqdwjfdv3t2zhvrdxzrkcid5m4baoo375kfwyay"
+         },
+         "SizePc": 134217728
+       }
+     },
+     "deal_info": {
+       "deal_id": 0,
+       "status": "pinned",
+       "delta_node": "https://hackfs.delta.estuary.tech"
+     }
+   },
+   "message": "success"
+ }
+ 

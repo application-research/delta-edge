@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestConfigureOpenStatusCheckRouter(t *testing.T) {
+func TestInclustionProofResponses(t *testing.T) {
 	type args struct {
 		filePath string
 	}
@@ -91,6 +91,8 @@ func TestConfigureOpenStatusCheckRouter(t *testing.T) {
 			},
 		},
 	}
+
+	// Execute the test for each test case
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
@@ -107,10 +109,6 @@ func TestConfigureOpenStatusCheckRouter(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to unmarshal JSON: %v", err)
 			}
-
-			// response.SubPieceInfo.InclusionProof
-
-			//verifData, incProof, expectedAux := InclusionGolden1()
 
 			var proofIndexPath []merkletree.Node
 			for _, n := range response.SubPieceInfo.InclusionProof.ProofIndex.Path {
