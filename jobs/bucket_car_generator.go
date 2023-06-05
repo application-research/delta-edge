@@ -20,7 +20,11 @@ import (
 	"github.com/ipld/go-car"
 )
 
+// The log constant is a logging.Logger that is used to log messages for the jobs package.
 var log = logging.Logger("jobs")
+
+// The maxTraversalLinks constant is an int that represents the maximum number of traversal links.
+const maxTraversalLinks = 32 * (1 << 20)
 
 // The BucketCarGenerator type has a Bucket field and implements the Processor interface.
 // @property Bucket - The `Bucket` property is a field of type `core.Bucket`. It is likely used to store or retrieve data
@@ -36,6 +40,8 @@ func (g BucketCarGenerator) Info() error {
 	panic("implement me")
 }
 
+// The Run method of the BucketCarGenerator struct takes no parameters and returns an error. It is used to run the
+// BucketCarGenerator struct.
 func (g BucketCarGenerator) Run() error {
 	if err := g.GenerateCarForBucket(g.Bucket.Uuid); err != nil {
 		log.Errorf("error generating car for bucket: %s", err)
@@ -44,6 +50,8 @@ func (g BucketCarGenerator) Run() error {
 	return nil
 }
 
+// NewBucketCarGenerator is a function that takes a LightNode and a bucketToProcess as parameters and returns a
+// BucketCarGenerator struct. It is used to create a new BucketCarGenerator struct.
 func NewBucketCarGenerator(ln *core.LightNode, bucketToProcess core.Bucket) IProcessor {
 	return &BucketCarGenerator{
 		bucketToProcess,
@@ -253,8 +261,6 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) error {
 	return nil
 }
 
-const maxTraversalLinks = 32 * (1 << 20)
-
 func GeneratePieceCommitment(ctx context.Context, payloadCid cid.Cid, bstore blockstore.Blockstore) (cid.Cid, uint64, abi.UnpaddedPieceSize, bytes.Buffer, error) {
 	selectiveCar := car.NewSelectiveCar(
 		context.Background(),
@@ -272,6 +278,9 @@ func GeneratePieceCommitment(ctx context.Context, payloadCid cid.Cid, bstore blo
 		blockCount++
 		return nil
 	})
+	if err != nil {
+		return cid.Undef, 0, 0, *buf, err
+	}
 
 	preparedCar, err := selectiveCar.Prepare()
 	if err != nil {
