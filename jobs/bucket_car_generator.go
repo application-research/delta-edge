@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
+
 	"github.com/application-research/edge-ur/core"
 	"github.com/filecoin-project/go-data-segment/datasegment"
 	"github.com/filecoin-project/go-data-segment/util"
@@ -15,7 +17,6 @@ import (
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	uio "github.com/ipfs/go-unixfs/io"
 	"github.com/ipld/go-car"
-	"io"
 )
 
 // The BucketCarGenerator type has a Bucket field and implements the Processor interface.
@@ -46,6 +47,8 @@ func NewBucketCarGenerator(ln *core.LightNode, bucketToProcess core.Bucket) IPro
 	}
 }
 
+// GenerateCarForBucket is a method of the BucketCarGenerator struct. It takes a bucketUuid string as a parameter and
+// returns nothing. It is used to generate a car with aggregated contents for a bucket
 func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 
 	// create node and raw per file (layer them)
@@ -91,6 +94,12 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) {
 		totalUnpaddedSize += int64(unpadded)
 		// write to blockstore
 		ch, err := car.LoadCar(context.Background(), r.LightNode.Node.Blockstore, &buf)
+		if err != nil {
+			fmt.Println("error loading car")
+			c.Status = "error"
+			c.LastMessage = err.Error()
+			continue
+		}
 		selectiveCarNode, err := r.LightNode.Node.AddPinFile(context.Background(), &buf, nil)
 		if err != nil {
 			fmt.Println("error generating piece commitment")
