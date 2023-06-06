@@ -4,7 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/application-research/edge-ur/config"
+	"github.com/filecoin-project/lotus/chain/types"
+	"github.com/ipfs/boxo/blockstore"
 	"github.com/ipfs/go-datastore"
+	"github.com/ipfs/go-unixfsnode"
+	"github.com/ipld/go-ipld-prime/node/basicnode"
+
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -16,18 +21,15 @@ import (
 
 	"github.com/application-research/whypfs-core"
 	"github.com/filecoin-project/go-address"
-	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/wallet/key"
-	"github.com/ipfs/go-blockservice"
-	bsfetcher "github.com/ipfs/go-fetcher/impl/blockservice"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	"github.com/ipfs/boxo/blockservice"
+	bsfetcher "github.com/ipfs/boxo/fetcher/impl/blockservice"
+	"github.com/ipfs/boxo/ipld/merkledag"
+	"github.com/ipfs/boxo/path/resolver"
 	mdagipld "github.com/ipfs/go-ipld-format"
-	"github.com/ipfs/go-merkledag"
-	"github.com/ipfs/go-path/resolver"
-	"github.com/ipfs/go-unixfsnode"
+
 	dagpb "github.com/ipld/go-codec-dagpb"
 	"github.com/ipld/go-ipld-prime"
-	ipldbasicnode "github.com/ipld/go-ipld-prime/node/basic"
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -104,16 +106,15 @@ func NewEdgeNode(ctx context.Context, cfg config.DeltaConfig) (*LightNode, error
 func NewGatewayHandler(node *whypfs.Node) (*GatewayHandler, error) {
 
 	bsvc := blockservice.New(node.Blockstore, nil)
-	ipldFetcher := bsfetcher.NewFetcherConfig(bsvc)
-
-	ipldFetcher.PrototypeChooser = dagpb.AddSupportToChooser(func(lnk ipld.Link, lnkCtx ipld.LinkContext) (ipld.NodePrototype, error) {
+	fetcherFactory := bsfetcher.NewFetcherConfig(bsvc)
+	fetcherFactory.NodeReifier = unixfsnode.Reify
+	fetcherFactory.PrototypeChooser = dagpb.AddSupportToChooser(func(lnk ipld.Link, lnkCtx ipld.LinkContext) (ipld.NodePrototype, error) {
 		if tlnkNd, ok := lnkCtx.LinkNode.(schema.TypedLinkNode); ok {
 			return tlnkNd.LinkTargetNodePrototype(), nil
 		}
-		return ipldbasicnode.Prototype.Any, nil
+		return basicnode.Prototype.Any, nil
 	})
-
-	resolver := resolver.NewBasicResolver(ipldFetcher.WithReifier(unixfsnode.Reify))
+	resolver := resolver.NewBasicResolver(fetcherFactory)
 	return &GatewayHandler{
 		bs:       node.Blockstore,
 		dserv:    merkledag.NewDAGService(bsvc),

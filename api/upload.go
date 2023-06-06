@@ -7,13 +7,13 @@ import (
 	"github.com/application-research/edge-ur/jobs"
 	"github.com/application-research/edge-ur/utils"
 	"github.com/google/uuid"
+	"github.com/ipfs/boxo/ipld/car"
 	"github.com/ipfs/go-cid"
-	"github.com/ipld/go-car"
+	"github.com/labstack/echo/v4"
 	"strings"
 	"time"
 
 	"github.com/application-research/edge-ur/core"
-	"github.com/labstack/echo/v4"
 )
 
 type CidRequest struct {
