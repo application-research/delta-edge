@@ -5,9 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ipfs/boxo/blockstore"
-	"github.com/ipfs/boxo/ipld/unixfs"
-	"gorm.io/gorm"
 	"html/template"
 	"io"
 	"net/http"
@@ -17,18 +14,21 @@ import (
 	"strings"
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/application-research/edge-ur/core"
 	"github.com/application-research/whypfs-core"
-	"github.com/ipfs/boxo/ipld/merkledag"
-	"github.com/ipfs/boxo/path"
 	"github.com/ipfs/go-cid"
+	"github.com/ipfs/go-merkledag"
+	"github.com/ipfs/go-path"
+	"github.com/ipfs/go-unixfs"
 	"github.com/labstack/echo/v4"
 
 	"github.com/gabriel-vasile/mimetype"
-
-	uio "github.com/ipfs/boxo/ipld/unixfs/io"
-	"github.com/ipfs/boxo/path/resolver"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	mdagipld "github.com/ipfs/go-ipld-format"
+	"github.com/ipfs/go-path/resolver"
+	uio "github.com/ipfs/go-unixfs/io"
 	"golang.org/x/xerrors"
 )
 
