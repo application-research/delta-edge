@@ -67,6 +67,9 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 	ConfigureHealthCheckRouter(defaultOpenRoute, ln)
 	ConfigureNodeInfoRouter(defaultOpenRoute, ln)
 
+	debugGroup := e.Group("/debug")
+	ConfigureDebugProfileRouter(debugGroup, ln)
+
 	apiGroup := e.Group("/api/v1")
 	apiGroup.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
