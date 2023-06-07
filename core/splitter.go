@@ -4,9 +4,10 @@ package core
 import (
 	"context"
 	"fmt"
-	"github.com/ipfs/boxo/ipld/merkledag"
 	"io"
 	"os"
+
+	"github.com/ipfs/go-merkledag"
 )
 
 var defaultChuckSize int64 = 1024 * 1024
