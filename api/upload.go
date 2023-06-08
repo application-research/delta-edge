@@ -99,6 +99,9 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 			return err
 		}
 		src, err := file.Open()
+		if err != nil {
+			return err
+		}
 		srcR, err := file.Open()
 		if err != nil {
 			return err
