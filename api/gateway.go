@@ -29,7 +29,6 @@ import (
 	mdagipld "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-path/resolver"
 	uio "github.com/ipfs/go-unixfs/io"
-	"golang.org/x/xerrors"
 )
 
 var (
@@ -360,10 +359,10 @@ func ServeDir(ctx context.Context, n mdagipld.Node, w http.ResponseWriter, req *
 
 		http.ServeContent(w, req, "index.html", time.Time{}, dr)
 		return nil
+
+	case errors.Is(err, os.ErrNotExist):
 	default:
 		return err
-	case xerrors.Is(err, os.ErrNotExist):
-
 	}
 
 	templates, err := template.ParseFiles("templates/dir.html")
@@ -375,6 +374,9 @@ func ServeDir(ctx context.Context, n mdagipld.Node, w http.ResponseWriter, req *
 	templates.Lookup("dir.html")
 
 	requestURI, err := url.ParseRequestURI(req.RequestURI)
+	if err != nil {
+		return err
+	}
 
 	if err := dir.ForEachLink(ctx, func(lnk *mdagipld.Link) error {
 		href := gopath.Join(requestURI.Path, lnk.Name)
