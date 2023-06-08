@@ -210,6 +210,9 @@ func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) fun
 			return err
 		}
 		src, err := file.Open()
+		if err != nil {
+			return err
+		}
 		srcR, err := file.Open()
 		if err != nil {
 			return err
