@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,7 +14,6 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"golang.org/x/xerrors"
 )
 
 var (
@@ -162,7 +162,7 @@ func GetAuthResponse(resp *http.Response) (AuthResponse, error) {
 
 func ErrorHandler(err error, c echo.Context) {
 	var httpRespErr *HttpError
-	if xerrors.As(err, &httpRespErr) {
+	if errors.As(err, &httpRespErr) {
 		log.Errorf("handler error: %s", err)
 		if err := c.JSON(httpRespErr.Code, HttpErrorResponse{Error: *httpRespErr}); err != nil {
 			log.Errorf("handler error: %s", err)
@@ -172,7 +172,7 @@ func ErrorHandler(err error, c echo.Context) {
 	}
 
 	var echoErr *echo.HTTPError
-	if xerrors.As(err, &echoErr) {
+	if errors.As(err, &echoErr) {
 		if err := c.JSON(echoErr.Code, HttpErrorResponse{
 			Error: HttpError{
 				Code:    echoErr.Code,
