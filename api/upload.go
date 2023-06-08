@@ -238,10 +238,7 @@ func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) fun
 				Status:           utils.STATUS_PINNED,
 				Miner:            miner,
 				MakeDeal: func() bool {
-					if makeDeal == "true" {
-						return true
-					}
-					return false
+					return makeDeal == "true"
 				}(),
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
