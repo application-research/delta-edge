@@ -165,10 +165,9 @@ func (gw *GatewayHandler) serveUnixfsDir(ctx context.Context, n mdagipld.Node, w
 		}
 		http.ServeContent(w, req, "index.html", time.Time{}, dr)
 		return nil
+	case errors.Is(err, os.ErrNotExist):
 	default:
 		return err
-	case xerrors.Is(err, os.ErrNotExist):
-
 	}
 
 	fmt.Fprintf(w, "<html><body><ul>")
