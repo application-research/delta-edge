@@ -189,6 +189,8 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 		return nil
 	}
 }
+
+// TODO: remove this if not used
 func handlePinAddToNodeToMiners(node *core.LightNode, DeltaUploadApi string) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
@@ -339,10 +341,7 @@ func handleFetchPinToNodeToMiners(node *core.LightNode, DeltaUploadApi string) f
 				Status:           "fetching",
 				Miner:            miner,
 				MakeDeal: func() bool {
-					if makeDeal == "true" {
-						return true
-					}
-					return false
+					return makeDeal == "true"
 				}(),
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
@@ -430,10 +429,7 @@ func handlePinAddCarToNodeToMiners(node *core.LightNode, DeltaUploadApi string) 
 				RequestingApiKey: authParts[1],
 				Status:           utils.STATUS_PINNED,
 				MakeDeal: func() bool {
-					if makeDeal == "true" {
-						return true
-					}
-					return false
+					return makeDeal == "true"
 				}(),
 				Miner:     miner,
 				CreatedAt: time.Now(),
