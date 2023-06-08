@@ -114,7 +114,7 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 				})
 			}
 
-			if authResp.Result.Validated == false {
+			if !authResp.Result.Validated {
 				return c.JSON(http.StatusUnauthorized, HttpErrorResponse{
 					Error: HttpError{
 						Code:    http.StatusUnauthorized,
@@ -123,7 +123,7 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 					},
 				})
 			}
-			if authResp.Result.Validated == true {
+			if !authResp.Result.Validated {
 				return next(c)
 			}
 			return next(c)
