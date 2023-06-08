@@ -152,10 +152,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 				Miner:            miner,
 				CarBucket:        bucket.ID,
 				MakeDeal: func() bool {
-					if makeDeal == "true" {
-						return true
-					}
-					return false
+					return makeDeal == "true"
 				}(),
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
