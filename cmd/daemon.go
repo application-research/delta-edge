@@ -3,15 +3,16 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"runtime"
+	"strconv"
+	"time"
+
 	"github.com/application-research/edge-ur/api"
 	"github.com/application-research/edge-ur/config"
 	"github.com/application-research/edge-ur/core"
 	"github.com/application-research/edge-ur/jobs"
 	"github.com/application-research/edge-ur/utils"
 	"github.com/urfave/cli/v2"
-	"runtime"
-	"strconv"
-	"time"
 )
 
 func DaemonCmd(cfg *config.DeltaConfig) []*cli.Command {

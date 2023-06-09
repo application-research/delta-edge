@@ -3,16 +3,16 @@ module github.com/application-research/edge-ur
 go 1.18
 
 require (
-	github.com/application-research/whypfs-core v0.1.2-0.20230606004457-21a9e1bdd3d2
+	github.com/application-research/whypfs-core v0.1.2-0.20230609011535-a5159f8294c5
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/lotus v1.23.1-rc4
 	github.com/gabriel-vasile/mimetype v1.4.1
 	github.com/google/uuid v1.3.0
-	github.com/ipfs/boxo v0.8.1
+	github.com/ipfs/boxo v0.9.0
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipfs/go-datastore v0.6.0
-	github.com/ipfs/go-ipld-format v0.4.0
+	github.com/ipfs/go-ipld-format v0.5.0
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/ipfs/go-unixfsnode v1.7.1
 	github.com/ipld/go-codec-dagpb v1.6.0
@@ -38,7 +38,6 @@ require (
 	github.com/alexbrainman/goissue34681 v0.0.0-20191006012335-3fc7a47baff5 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
@@ -115,7 +114,7 @@ require (
 	github.com/ipfs/go-ipfs-pq v0.0.3 // indirect
 	github.com/ipfs/go-ipfs-util v0.0.2 // indirect
 	github.com/ipfs/go-ipld-cbor v0.0.6 // indirect
-	github.com/ipfs/go-ipld-legacy v0.1.1 // indirect
+	github.com/ipfs/go-ipld-legacy v0.2.1 // indirect
 	github.com/ipfs/go-libipfs v0.7.0 // indirect
 	github.com/ipfs/go-log v1.0.5 // indirect
 	github.com/ipfs/go-merkledag v0.10.0 // indirect
