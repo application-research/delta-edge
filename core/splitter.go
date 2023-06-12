@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/ipfs/go-merkledag"
+	"github.com/ipfs/boxo/ipld/merkledag"
 )
 
 var defaultChuckSize int64 = 1024 * 1024
