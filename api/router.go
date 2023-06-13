@@ -83,7 +83,7 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 				})
 			}
 			response, err := http.Post(
-				ln.Config.ExternalApi.AuthSvcUrl+"/check-api-key",
+				ln.Config.Delta.AuthSvcUrl+"/check-api-key",
 				"application/json",
 				strings.NewReader(fmt.Sprintf(`{"token": "%s"}`, authParts[1])),
 			)

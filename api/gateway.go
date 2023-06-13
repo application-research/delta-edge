@@ -213,7 +213,49 @@ func (gw *GatewayHandler) resolvePath(ctx context.Context, p string) (cid.Cid, e
 		return cid.Undef, fmt.Errorf("unsupported protocol: %s", proto)
 	}
 }
+func validate(c echo.Context, node *core.LightNode) error {
+	authorizationString := c.Request().Header.Get("Authorization")
+	authParts := strings.Split(authorizationString, " ")
 
+	response, err := http.Post(
+		node.Config.Delta.AuthSvcUrl+"/check-api-key",
+		"application/json",
+		strings.NewReader(fmt.Sprintf(`{"token": "%s"}`, authParts[1])),
+	)
+
+	if err != nil {
+		log.Errorf("handler error: %s", err)
+		return c.JSON(http.StatusInternalServerError, HttpErrorResponse{
+			Error: HttpError{
+				Code:    http.StatusInternalServerError,
+				Reason:  http.StatusText(http.StatusInternalServerError),
+				Details: err.Error(),
+			},
+		})
+	}
+
+	authResp, err := GetAuthResponse(response)
+	if err != nil {
+		log.Errorf("handler error: %s", err)
+		return c.JSON(http.StatusInternalServerError, HttpErrorResponse{
+			Error: HttpError{
+				Code:    http.StatusInternalServerError,
+				Reason:  http.StatusText(http.StatusInternalServerError),
+				Details: err.Error(),
+			},
+		})
+	}
+	if authResp.Result.Validated == false {
+		return c.JSON(http.StatusUnauthorized, HttpErrorResponse{
+			Error: HttpError{
+				Code:    http.StatusUnauthorized,
+				Reason:  http.StatusText(http.StatusUnauthorized),
+				Details: authResp.Result.Details,
+			},
+		})
+	}
+	return nil
+}
 func (gw *GatewayHandler) parsePath(p string) (string, cid.Cid, []string, error) {
 	parts := strings.Split(strings.Trim(p, "/"), "/")
 	if len(parts) < 2 {

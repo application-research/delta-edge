@@ -79,8 +79,19 @@ type Bucket struct {
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
 }
+type ContentSignatureMeta struct {
+	ID                  int64     `gorm:"primaryKey"`
+	ContentId           int64     `json:"content_id"`
+	Signature           string    `json:"signature"`
+	CurrentTimestamp    time.Time `json:"current_timestamp"`
+	ExpirationTimestamp time.Time `json:"expiration_timestamp"`
+	SignedUrl           string    `json:"signed_url"`
+	Message             string    `json:"message"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
+}
 
-//	 main content record
+// main content record
 type Content struct {
 	ID               int64     `gorm:"primaryKey"`
 	Name             string    `json:"name"`

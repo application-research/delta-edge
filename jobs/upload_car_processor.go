@@ -24,7 +24,7 @@ type UploadCarToDeltaProcessor struct {
 }
 
 func NewUploadCarToDeltaProcessor(ln *core.LightNode, bucket core.Bucket, fileNode io.Reader, rootCid string) IProcessor {
-	DELTA_UPLOAD_API = ln.Config.ExternalApi.ApiUrl
+	DELTA_UPLOAD_API = ln.Config.Delta.ApiUrl
 	REPLICATION_FACTOR = string(ln.Config.Common.ReplicationFactor)
 	return &UploadCarToDeltaProcessor{
 		bucket,

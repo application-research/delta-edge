@@ -21,7 +21,7 @@ func (r *CarDealItemChecker) Info() error {
 }
 
 func NewCarDealItemChecker(ln *core.LightNode, bucket core.Bucket) IProcessor {
-	DELTA_UPLOAD_API = ln.Config.ExternalApi.ApiUrl
+	DELTA_UPLOAD_API = ln.Config.Delta.ApiUrl
 	return &CarDealItemChecker{
 		Bucket: bucket,
 		Processor: Processor{
