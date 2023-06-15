@@ -1,25 +1,24 @@
 package jobs
 
 import (
-	"bytes"
-	"context"
-	"fmt"
+	"io"
+
 	"github.com/application-research/edge-ur/core"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-merkledag"
-	uio "github.com/ipfs/go-unixfs/io"
 	"github.com/multiformats/go-multihash"
-	"io"
 )
 
-type AggregateProcessor struct {
+type BucketAggregator struct {
+	Force   bool         `json:"force"`
 	Content core.Content `json:"content"`
 	File    io.Reader    `json:"file"`
 	Processor
 }
 
-func NewAggregateProcessor(ln *core.LightNode, contentToProcess core.Content, fileNode io.Reader) IProcessor {
-	return &AggregateProcessor{
+func NewBucketAggregator(ln *core.LightNode, contentToProcess core.Content, fileNode io.Reader, force bool) IProcessor {
+	return &BucketAggregator{
+		force,
 		contentToProcess,
 		fileNode,
 		Processor{
@@ -28,11 +27,12 @@ func NewAggregateProcessor(ln *core.LightNode, contentToProcess core.Content, fi
 	}
 }
 
-func (r *AggregateProcessor) Info() error {
+func (r *BucketAggregator) Info() error {
 	panic("implement me")
 }
 
-func (r *AggregateProcessor) Run() error {
+// Run is the main function of the BucketAggregator struct. It is responsible for aggregating the contents of a bucket
+func (r *BucketAggregator) Run() error {
 	// check if there are open bucket. if there are, generate the car file for the bucket.
 
 	var buckets []core.Bucket
@@ -44,22 +44,27 @@ func (r *AggregateProcessor) Run() error {
 		query += " AND requesting_api_key = ?"
 	}
 
+	// for each bucket, get all the contents and check if the total size is greater than the aggregate size limit (default 1GB)
+	// if it is, generate a car file for the bucket and update the bucket status to processing
 	for _, bucket := range buckets {
 		var content []core.Content
-		r.LightNode.DB.Model(&core.Content{}).Where(query, bucket.Uuid, bucket.RequestingApiKey).Find(&content)
+		r.LightNode.DB.Model(&core.Content{}).Where(query, bucket.Uuid, r.Content.RequestingApiKey).Find(&content)
 		var totalSize int64
 		var aggContent []core.Content
 		for _, c := range content {
-			fmt.Println(c.Cid, c.Size)
 			totalSize += c.Size
 			aggContent = append(aggContent, c)
 		}
-		fmt.Println("Total size: ", totalSize)
-		fmt.Println("Total hit size: ", r.LightNode.Config.Common.AggregateSize)
-		if totalSize > r.LightNode.Config.Common.AggregateSize && len(content) > 1 {
+
+		if r.Force || totalSize > r.LightNode.Config.Common.AggregateSize && len(content) > 1 {
 			bucket.Status = "processing"
 			r.LightNode.DB.Save(&bucket)
-			r.GenerateCarForBucket(bucket.Uuid)
+
+			// process the car generator
+			job := CreateNewDispatcher()
+			genCar := NewBucketCarGenerator(r.LightNode, bucket)
+			job.AddJob(genCar)
+			job.Start(1)
 			continue
 		}
 	}
@@ -68,68 +73,7 @@ func (r *AggregateProcessor) Run() error {
 	//	panic("implement me")
 }
 
-func (r *AggregateProcessor) GenerateCarForBucket(bucketUuid string) {
-	// [node4 > raw4, node3 > [raw3, node2 > [raw2, node1 > raw1]]]
-
-	// create node and raw per file (layer them)
-	var content []core.Content
-	r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid = ?", bucketUuid).Find(&content)
-
-	// for each content, generate a node and a raw
-	dir := uio.NewDirectory(r.LightNode.Node.DAGService)
-	dir.SetCidBuilder(GetCidBuilderDefault())
-	buf := new(bytes.Buffer)
-
-	for _, c := range content {
-
-		cCid, err := cid.Decode(c.Cid)
-		if err != nil {
-			panic(err)
-		}
-		cData, errCData := r.LightNode.Node.Get(context.Background(), cCid)
-		if errCData != nil {
-			panic(errCData)
-		}
-		dir.AddChild(context.Background(), c.Name, cData)
-		_, err = io.Copy(buf, bytes.NewReader(cData.RawData()))
-		if err != nil {
-			panic(err)
-		}
-
-		r.LightNode.DB.Save(&c)
-
-	}
-	dirNd, err := dir.GetNode()
-	if err != nil {
-		panic(err)
-	}
-	dirSize, err := dirNd.Size()
-	// add to the dag service
-	aggNd, err := r.LightNode.Node.AddPinFile(context.Background(), buf, nil)
-	if err != nil {
-		panic(err)
-	}
-	r.LightNode.Node.DAGService.Add(context.Background(), dirNd)
-	r.LightNode.Node.DAGService.Add(context.Background(), aggNd)
-
-	var bucket core.Bucket
-	r.LightNode.DB.Model(&core.Bucket{}).Where("uuid = ?", bucketUuid).First(&bucket)
-	bucket.Cid = dirNd.Cid().String()
-	bucket.RequestingApiKey = r.Content.RequestingApiKey
-	bucket.Name = dirNd.Cid().String()
-
-	bucket.Size = int64(dirSize)
-	r.LightNode.DB.Save(&bucket)
-
-	fmt.Println("Bucket CID: ", bucket.Cid)
-	fmt.Println("Bucket Size: ", bucket.Size)
-
-	// process the deal
-	job := CreateNewDispatcher()
-	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, buf, bucket.Cid))
-	job.Start(1)
-}
-
+// GetCidBuilderDefault is a helper function that returns a default cid builder
 func GetCidBuilderDefault() cid.Builder {
 	cidBuilder, err := merkledag.PrefixForCidVersion(1)
 	if err != nil {
