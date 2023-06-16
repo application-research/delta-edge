@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-var cacheStats = cache.New(5*time.Minute, 10*time.Minute)
+var cacheStats = cache.New(48*time.Hour, 24*time.Hour)
 
 type Stats struct {
 	TotalContentCount int `json:"total_content_count"`
@@ -35,7 +35,7 @@ func ConfigureStatsRouter(e *echo.Group, node *core.LightNode) {
 			return c.JSON(500, err)
 		}
 
-		err = node.DB.Raw("select count(*) as content_signature_meta").Scan(&s.TotalSignedUrls).Error
+		err = node.DB.Raw("select count(*) from content_signature_meta").Scan(&s.TotalSignedUrls).Error
 		if err != nil {
 			return c.JSON(500, err)
 		}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/application-research/edge-ur/config"
 	"github.com/ipfs/go-datastore"
+	explru "github.com/paskal/golang-lru/simplelru"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -41,6 +42,7 @@ type LightNode struct {
 	DB     *gorm.DB
 	Gw     *GatewayHandler
 	Config *config.DeltaConfig
+	Cacher *explru.ExpirableLRU
 }
 
 type LocalWallet struct {
