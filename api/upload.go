@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/application-research/edge-ur/jobs"
 	"github.com/application-research/edge-ur/utils"
@@ -71,7 +72,6 @@ func ConfigurePinningRouter(e *echo.Group, node *core.LightNode) {
 	content := e.Group("/content")
 	content.POST("/add", handleUploadToCarBucketAndMiners(node, DeltaUploadApi))
 	content.POST("/delete/:contentId", handlePinDeleteToNodeToMiners(node, DeltaUploadApi))
-
 	content.POST("/request-signed-url", handleRequestSignedUrl(node, DeltaUploadApi))
 
 }
@@ -201,6 +201,16 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 		minersString := c.FormValue("miners") // comma-separated list of miners to pin to
 		makeDeal := c.FormValue("make_deal")  // whether to make a deal with the miners or not
 
+		// Check capacity if needed
+		if node.Config.Common.CapacityLimitPerKeyInBytes > 0 {
+			if err := validateCapacityLimit(node, authParts[1]); err != nil {
+				return c.JSON(500, UploadResponse{
+					Status:  "error",
+					Message: err.Error(),
+				})
+			}
+		}
+
 		if makeDeal == "" {
 			makeDeal = "true"
 		}
@@ -220,6 +230,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 			return err
 		}
 
+		fmt.Println("file.Size", file.Size)
 		addNode, err := node.Node.AddPinFile(c.Request().Context(), src, nil)
 		if err != nil {
 			return c.JSON(500, UploadResponse{
@@ -232,101 +243,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 		var contentList []core.Content
 
 		for miner := range miners {
-			if file.Size > node.Config.Common.AggregateSize {
-				newContent := core.Content{
-					Name:             file.Filename,
-					Size:             file.Size,
-					Cid:              addNode.Cid().String(),
-					DeltaNodeUrl:     DeltaUploadApi,
-					RequestingApiKey: authParts[1],
-					Status:           utils.STATUS_PINNED,
-					Miner:            miner,
-					MakeDeal: func() bool {
-						if makeDeal == "true" {
-							return true
-						}
-						return false
-					}(),
-					CreatedAt: time.Now(),
-					UpdatedAt: time.Now(),
-				}
-
-				node.DB.Create(&newContent)
-
-				if makeDeal == "true" {
-					job := jobs.CreateNewDispatcher()
-					job.AddJob(jobs.NewUploadToDeltaProcessor(node, newContent, srcR))
-					job.Start(1)
-				}
-
-				if err != nil {
-					c.JSON(500, UploadResponse{
-						Status:  "error",
-						Message: "Error pinning the file" + err.Error(),
-					})
-				}
-				newContent.RequestingApiKey = ""
-				contentList = append(contentList, newContent)
-			} else if file.Size < node.Config.Common.AggregateSize {
-				var bucket core.Bucket
-				node.DB.Where("status = ? and miner = ?", "open", miner).First(&bucket)
-				if bucket.ID == 0 {
-					// create a new bucket
-					bucketUuid, err := uuid.NewUUID()
-					if err != nil {
-						return c.JSON(500, UploadResponse{
-							Status:  "error",
-							Message: "Error creating bucket",
-						})
-					}
-					bucket = core.Bucket{
-						Status:           "open",
-						Name:             bucketUuid.String(),
-						RequestingApiKey: authParts[1],
-						Uuid:             bucketUuid.String(),
-						Miner:            miner, // blank
-						CreatedAt:        time.Now(),
-						UpdatedAt:        time.Now(),
-					}
-					node.DB.Create(&bucket)
-				}
-
-				newContent := core.Content{
-					Name:             file.Filename,
-					Size:             file.Size,
-					Cid:              addNode.Cid().String(),
-					DeltaNodeUrl:     DeltaUploadApi,
-					RequestingApiKey: authParts[1],
-					Status:           utils.STATUS_PINNED,
-					Miner:            miner,
-					BucketUuid:       bucket.Uuid,
-					MakeDeal: func() bool {
-						if makeDeal == "true" {
-							return true
-						}
-						return false
-					}(),
-					CreatedAt: time.Now(),
-					UpdatedAt: time.Now(),
-				}
-
-				node.DB.Create(&newContent)
-
-				if makeDeal == "true" {
-					job := jobs.CreateNewDispatcher()
-					job.AddJob(jobs.NewAggregateProcessor(node, newContent, srcR))
-					job.Start(1)
-				}
-
-				if err != nil {
-					c.JSON(500, UploadResponse{
-						Status:  "error",
-						Message: "Error pinning the file" + err.Error(),
-					})
-				}
-				newContent.RequestingApiKey = ""
-				contentList = append(contentList, newContent)
-			} else if file.Size > node.Config.Common.MaxSizeToSplit {
+			if file.Size > node.Config.Common.MaxSizeToSplit {
 				newContent := core.Content{
 					Name:             file.Filename,
 					Size:             file.Size,
@@ -361,6 +278,74 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 				}
 				newContent.RequestingApiKey = ""
 				contentList = append(contentList, newContent)
+			} else {
+				var bucket core.Bucket
+
+				if node.Config.Common.AggregatePerApiKey {
+					rawQuery := "SELECT * FROM buckets WHERE status = ? and miner = ? and requesting_api_key = ?"
+					node.DB.Raw(rawQuery, "open", miner, authParts[1]).First(&bucket)
+				} else {
+					rawQuery := "SELECT * FROM buckets WHERE status = ? and miner = ?"
+					node.DB.Raw(rawQuery, "open", miner).First(&bucket)
+				}
+
+				if bucket.ID == 0 {
+					// create a new bucket
+					bucketUuid, errUuid := uuid.NewUUID()
+					if errUuid != nil {
+						return c.JSON(500, UploadResponse{
+							Status:  "error",
+							Message: "Error creating bucket",
+						})
+					}
+					bucket = core.Bucket{
+						Status:           "open",
+						Name:             bucketUuid.String(),
+						RequestingApiKey: authParts[1],
+						DeltaNodeUrl:     DeltaUploadApi,
+						Uuid:             bucketUuid.String(),
+						Miner:            miner, // blank
+						CreatedAt:        time.Now(),
+						UpdatedAt:        time.Now(),
+					}
+					node.DB.Create(&bucket)
+				}
+
+				newContent := core.Content{
+					Name:             file.Filename,
+					Size:             file.Size,
+					Cid:              addNode.Cid().String(),
+					DeltaNodeUrl:     DeltaUploadApi,
+					RequestingApiKey: authParts[1],
+					Status:           utils.STATUS_PINNED,
+					Miner:            miner,
+					BucketUuid:       bucket.Uuid,
+					MakeDeal: func() bool {
+						if makeDeal == "true" {
+							return true
+						}
+						return false
+					}(),
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				}
+
+				node.DB.Create(&newContent)
+
+				if makeDeal == "true" {
+					job := jobs.CreateNewDispatcher()
+					job.AddJob(jobs.NewBucketAggregator(node, newContent, srcR, false))
+					job.Start(1)
+				}
+
+				if err != nil {
+					c.JSON(500, UploadResponse{
+						Status:  "error",
+						Message: "Error pinning the file" + err.Error(),
+					})
+				}
+				newContent.RequestingApiKey = ""
+				contentList = append(contentList, newContent)
 			}
 		}
 
@@ -370,7 +355,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 			Contents []core.Content `json:"contents"`
 		}{
 			Status:   "success",
-			Message:  "File uploaded and pinned successfully to miners. Please take note of the ids.",
+			Message:  "File uploaded and pinned successfully. Please take note of the ids.",
 			Contents: contentList,
 		})
 
@@ -658,4 +643,18 @@ func handlePinAddCarToNodeToMiners(node *core.LightNode, DeltaUploadApi string) 
 
 		return nil
 	}
+}
+
+func validateCapacityLimit(node *core.LightNode, authKey string) error {
+	var totalSize int64
+	err := node.DB.Raw(`SELECT COALESCE(SUM(size), 0) FROM contents where requesting_api_key = ?`, authKey).Scan(&totalSize).Error
+	if err != nil {
+		return err
+	}
+
+	if totalSize >= node.Config.Common.CapacityLimitPerKeyInBytes {
+		return errors.New(fmt.Sprintf("You have reached your capacity limit of %d bytes", node.Config.Common.CapacityLimitPerKeyInBytes))
+	}
+
+	return nil
 }

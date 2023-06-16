@@ -17,7 +17,6 @@ func ConfigureStatsRouter(e *echo.Group, node *core.LightNode) {
 		node.DB.Raw("select count(*) as total_content_count, sum(size) as total_size from contents").Scan(&stats)
 
 		return c.JSON(200, stats)
-		return nil
 	})
 
 }
