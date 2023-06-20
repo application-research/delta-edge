@@ -196,7 +196,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 	return func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
-		bucketUuidParam := c.Param("bucket_uuid")
+		tagName := c.Param("tag_name")
 		//minersString := c.FormValue("miners") // comma-separated list of miners to pin to
 		//makeDeal := c.FormValue("make_deal")  // whether to make a deal with the miners or not
 
@@ -209,6 +209,9 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 				})
 			}
 		}
+
+		// check if tag exists, if it does, get the ID
+		fmt.Println(tagName)
 
 		file, err := c.FormFile("data")
 		if err != nil {
@@ -241,7 +244,6 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 				//DeltaNodeUrl:     DeltaUploadApi,
 				RequestingApiKey: authParts[1],
 				Status:           utils.STATUS_PINNED,
-				BucketUuid:       bucketUuidParam,
 				MakeDeal:         true,
 				CreatedAt:        time.Now(),
 				UpdatedAt:        time.Now(),
