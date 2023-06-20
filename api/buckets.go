@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/application-research/edge-ur/core"
 	"github.com/labstack/echo/v4"
+	"strings"
 	"time"
 )
 
@@ -21,10 +22,29 @@ type BucketsResponse struct {
 func ConfigureBucketsRouter(e *echo.Group, node *core.LightNode) {
 	//var DeltaUploadApi = node.Config.Delta.ApiUrl
 	buckets := e.Group("/buckets")
-	buckets.GET("/get-open-buckets", handleGetOpenBuckets(node))
+	buckets.GET("/get-open", handleGetOpenBuckets(node))
+	buckets.DELETE("/:uuid", handleDeleteBucket(node))
 
 }
+func handleDeleteBucket(node *core.LightNode) func(c echo.Context) error {
+	return func(c echo.Context) error {
 
+		// check if its being called by the admin api key
+		authorizationString := c.Request().Header.Get("Authorization")
+		authParts := strings.Split(authorizationString, " ")
+		if authParts[1] != node.Config.Node.AdminApiKey {
+			return c.JSON(401, map[string]interface{}{
+				"message": "Unauthorized",
+			})
+		}
+
+		node.DB.Model(&core.Bucket{}).Where("uuid = ?", c.Param("uuid")).Update("status", "deleted")
+		return c.JSON(200, map[string]interface{}{
+			"message": "Bucket deleted",
+			"bucket":  c.Param("uuid"),
+		})
+	}
+}
 func handleGetOpenBuckets(node *core.LightNode) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		var buckets []core.Bucket
@@ -34,7 +54,6 @@ func handleGetOpenBuckets(node *core.LightNode) func(c echo.Context) error {
 		for _, bucket := range buckets {
 			bucketsResponse = append(bucketsResponse, BucketsResponse{
 				BucketUUID:  bucket.Uuid,
-				BucketID:    bucket.ID,
 				PieceCid:    bucket.PieceCid,
 				PieceSize:   bucket.PieceSize,
 				DownloadUrl: "/gw/" + bucket.Cid,

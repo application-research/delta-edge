@@ -22,15 +22,15 @@ type DeltaConfig struct {
 		Repo        string `env:"REPO" envDefault:"./whypfs"`
 		DsRepo      string `env:"DS_REPO" envDefault:"./whypfs"`
 		Port        int    `env:"PORT" envDefault:"1414"`
+		AdminApiKey string `env:"ADMIN_API_KEY" envDefault:"admin"`
 	}
 
 	Common struct {
-		AggregateSize      int64 `env:"AGGREGATE_SIZE" envDefault:"1048576000"`
-		AggregatePerApiKey bool  `env:"AGGREGATE_PER_API_KEY" envDefault:"false"`
-		MaxSizeToSplit     int64 `env:"MAX_SIZE_TO_SPLIT" envDefault:"32000000000"`
-		DealCheck          int   `env:"DEAL_CHECK" envDefault:"600"`
-		ReplicationFactor  int   `env:"REPLICATION_FACTOR" envDefault:"0"`
-		// Capacity Limit per Key: default 0 - unlimited
+		AggregateSize              int64 `env:"AGGREGATE_SIZE" envDefault:"1048576000"`
+		AggregatePerApiKey         bool  `env:"AGGREGATE_PER_API_KEY" envDefault:"false"`
+		MaxSizeToSplit             int64 `env:"MAX_SIZE_TO_SPLIT" envDefault:"32000000000"`
+		DealCheck                  int   `env:"DEAL_CHECK" envDefault:"600"`
+		ReplicationFactor          int   `env:"REPLICATION_FACTOR" envDefault:"0"`
 		CapacityLimitPerKeyInBytes int64 `env:"CAPACITY_LIMIT_PER_KEY_IN_BYTES" envDefault:"0"`
 	}
 

@@ -196,6 +196,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 	return func(c echo.Context) error {
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
+		bucketUuidParam := c.Param("bucket_uuid")
 		//minersString := c.FormValue("miners") // comma-separated list of miners to pin to
 		//makeDeal := c.FormValue("make_deal")  // whether to make a deal with the miners or not
 
@@ -240,10 +241,10 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 				DeltaNodeUrl:     DeltaUploadApi,
 				RequestingApiKey: authParts[1],
 				Status:           utils.STATUS_PINNED,
-				//Miner:            miner,
-				MakeDeal:  true,
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
+				BucketUuid:       bucketUuidParam,
+				MakeDeal:         true,
+				CreatedAt:        time.Now(),
+				UpdatedAt:        time.Now(),
 			}
 
 			node.DB.Create(&newContent)
