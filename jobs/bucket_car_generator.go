@@ -1,12 +1,20 @@
 package jobs
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/application-research/edge-ur/core"
+	commcid "github.com/filecoin-project/go-fil-commcid"
+	commp "github.com/filecoin-project/go-fil-commp-hashhash"
+	"github.com/filecoin-project/go-fil-markets/shared"
+	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/ipfs/go-cid"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
 	uio "github.com/ipfs/go-unixfs/io"
+	"github.com/ipld/go-car"
+	"io"
 )
 
 // The log constant is a logging.Logger that is used to log messages for the jobs package.
@@ -64,7 +72,7 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) error {
 	// for each content, generate a node and a raw
 	dir := uio.NewDirectory(r.LightNode.Node.DAGService)
 	dir.SetCidBuilder(GetCidBuilderDefault())
-
+	buf := new(bytes.Buffer)
 	for _, cAgg := range updateContentsForAgg {
 		fmt.Println("cAgg", cAgg.Cid, bucketUuid)
 		cCidAgg, err := cid.Decode(cAgg.Cid)
@@ -78,6 +86,11 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) error {
 			return errCData
 		}
 
+		_, err = io.Copy(buf, bytes.NewReader(cDataAgg.RawData()))
+		if err != nil {
+			panic(err)
+		}
+
 		//aggReaders = append(aggReaders, cDataAgg)
 		dir.AddChild(context.Background(), cAgg.Name, cDataAgg)
 	}
@@ -86,12 +99,51 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) error {
 		log.Errorf("error getting directory node: %s", err)
 		return err
 	}
-	bucket.Cid = dirNode.Cid().String()
+	r.LightNode.Node.Add(context.Background(), dirNode)
+	aggNd, err := r.LightNode.Node.AddPinFile(context.Background(), buf, nil)
+
+	commpPayloadCid, carSize, unpaddedPieceSize, err := GeneratePieceCommitment(context.Background(), aggNd.Cid(), r.LightNode.Node.Blockstore)
+	if err != nil {
+		log.Errorf("error generating piece commitment: %s", err)
+	}
+	bucket.PieceCid = commpPayloadCid.String()
+	bucket.PieceSize = int64(unpaddedPieceSize.Padded())
+	bucket.Size = int64(carSize)
+	bucket.Cid = aggNd.Cid().String()
+	bucket.Status = "ready-for-deal-making"
 	r.LightNode.DB.Save(&bucket)
 
-	job := CreateNewDispatcher()
-	job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket.Uuid))
-	job.Start(1)
-
 	return nil
+}
+
+func GeneratePieceCommitment(ctx context.Context, payloadCid cid.Cid, bstore blockstore.Blockstore) (cid.Cid, uint64, abi.UnpaddedPieceSize, error) {
+	selectiveCar := car.NewSelectiveCar(
+		context.Background(),
+		bstore,
+		[]car.Dag{{Root: payloadCid, Selector: shared.AllSelector()}},
+		car.MaxTraversalLinks(maxTraversalLinks),
+		car.TraverseLinksOnlyOnce(),
+	)
+	preparedCar, err := selectiveCar.Prepare()
+	if err != nil {
+		return cid.Undef, 0, 0, err
+	}
+
+	writer := new(commp.Calc)
+	err = preparedCar.Dump(ctx, writer)
+	if err != nil {
+		return cid.Undef, 0, 0, err
+	}
+
+	commpc, size, err := writer.Digest()
+	if err != nil {
+		return cid.Undef, 0, 0, err
+	}
+
+	commCid, err := commcid.DataCommitmentV1ToCID(commpc)
+	if err != nil {
+		return cid.Undef, 0, 0, err
+	}
+
+	return commCid, preparedCar.Size(), abi.PaddedPieceSize(size).Unpadded(), nil
 }

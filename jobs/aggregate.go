@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/application-research/edge-ur/core"
@@ -55,8 +56,9 @@ func (r *BucketAggregator) Run() error {
 			totalSize += c.Size
 			aggContent = append(aggContent, c)
 		}
-
+		fmt.Println("Total size: ", totalSize)
 		if r.Force || totalSize > r.LightNode.Config.Common.AggregateSize && len(content) > 1 {
+			fmt.Println("Generating car file for bucket: ", bucket.Uuid)
 			bucket.Status = "processing"
 			r.LightNode.DB.Save(&bucket)
 

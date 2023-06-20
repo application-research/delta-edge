@@ -127,7 +127,8 @@ func InitializeEchoRouterConfig(ln *core.LightNode) {
 		}
 	})
 	ConfigureRetrieveRouter(apiGroup, ln)
-	ConfigurePinningRouter(apiGroup, ln)
+	ConfigureUploadRouter(apiGroup, ln)
+	ConfigureBucketsRouter(defaultOpenRoute, ln)
 	ConfigureStatusCheckRouter(apiGroup, ln)
 
 	// Start server

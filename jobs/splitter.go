@@ -3,12 +3,9 @@ package jobs
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"github.com/application-research/edge-ur/core"
 	"github.com/application-research/edge-ur/utils"
 	"github.com/google/uuid"
-	"github.com/ipfs/go-cid"
-	uio "github.com/ipfs/go-unixfs/io"
 	"io"
 	"time"
 )
@@ -78,70 +75,10 @@ func (r *SplitterProcessor) Run() error {
 		r.LightNode.DB.Create(&newContent)
 	}
 
-	r.GenerateCarForBucket(bucket.Uuid)
+	job := CreateNewDispatcher()
+	genCar := NewBucketCarGenerator(r.LightNode, bucket)
+	job.AddJob(genCar)
+	job.Start(1)
 
 	return nil
-}
-
-func (r *SplitterProcessor) GenerateCarForBucket(bucketUuid string) {
-	// [node4 > raw4, node3 > [raw3, node2 > [raw2, node1 > raw1]]]
-
-	// create node and raw per file (layer them)
-	var content []core.Content
-	r.LightNode.DB.Model(&core.Content{}).Where("bucket_uuid = ?", bucketUuid).Find(&content)
-
-	// for each content, generate a node and a raw
-	dir := uio.NewDirectory(r.LightNode.Node.DAGService)
-	dir.SetCidBuilder(GetCidBuilderDefault())
-	buf := new(bytes.Buffer)
-	for _, c := range content {
-
-		cCid, err := cid.Decode(c.Cid)
-		if err != nil {
-			panic(err)
-		}
-		cData, errCData := r.LightNode.Node.Get(context.Background(), cCid)
-		if errCData != nil {
-			panic(errCData)
-		}
-		dir.AddChild(context.Background(), c.Name, cData)
-		_, err = io.Copy(buf, bytes.NewReader(cData.RawData()))
-		if err != nil {
-			panic(err)
-		}
-
-		r.LightNode.DB.Save(&c)
-
-	}
-	dirNd, err := dir.GetNode()
-	if err != nil {
-		panic(err)
-	}
-	dirSize, err := dirNd.Size()
-	// add to the dag service
-	aggNd, err := r.LightNode.Node.AddPinFile(context.Background(), buf, nil)
-	if err != nil {
-		panic(err)
-	}
-	r.LightNode.Node.DAGService.Add(context.Background(), dirNd)
-	r.LightNode.Node.DAGService.Add(context.Background(), aggNd)
-
-	var bucket core.Bucket
-	r.LightNode.DB.Model(&core.Bucket{}).Where("uuid = ?", bucketUuid).First(&bucket)
-	bucket.Cid = dirNd.Cid().String()
-	bucket.RequestingApiKey = r.Content.RequestingApiKey
-	bucket.Name = dirNd.Cid().String()
-
-	bucket.Size = int64(dirSize)
-	r.LightNode.DB.Save(&bucket)
-
-	fmt.Println("Bucket CID: ", bucket.Cid)
-	fmt.Println("Bucket Size: ", bucket.Size)
-	fmt.Println("Bucket Piece CID: ", bucket.PieceCid)
-	fmt.Println("Bucket Piece Size: ", bucket.PieceSize)
-
-	// process the deal
-	job := CreateNewDispatcher()
-	//job.AddJob(NewUploadCarToDeltaProcessor(r.LightNode, bucket, buf, bucket.Cid))
-	job.Start(1)
 }
