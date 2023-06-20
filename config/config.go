@@ -29,6 +29,7 @@ type DeltaConfig struct {
 		AggregateSize              int64 `env:"AGGREGATE_SIZE" envDefault:"1048576000"`
 		AggregatePerApiKey         bool  `env:"AGGREGATE_PER_API_KEY" envDefault:"false"`
 		MaxSizeToSplit             int64 `env:"MAX_SIZE_TO_SPLIT" envDefault:"32000000000"`
+		SplitSize                  int64 `env:"SPLIT_SIZE" envDefault:"5048576000"`
 		DealCheck                  int   `env:"DEAL_CHECK" envDefault:"600"`
 		ReplicationFactor          int   `env:"REPLICATION_FACTOR" envDefault:"0"`
 		CapacityLimitPerKeyInBytes int64 `env:"CAPACITY_LIMIT_PER_KEY_IN_BYTES" envDefault:"0"`

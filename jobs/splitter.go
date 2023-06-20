@@ -34,7 +34,7 @@ func (r *SplitterProcessor) Run() error {
 
 	// split the file.
 	fileSplitter := new(core.FileSplitter)
-	fileSplitter.ChuckSize = r.LightNode.Config.Common.MaxSizeToSplit
+	fileSplitter.ChuckSize = r.LightNode.Config.Common.SplitSize
 	arrBts, err := fileSplitter.SplitFileFromReader(r.File) // nice split.
 	if err != nil {
 		panic(err)
