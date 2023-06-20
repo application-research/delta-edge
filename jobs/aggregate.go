@@ -39,17 +39,18 @@ func (r *BucketAggregator) Run() error {
 	var buckets []core.Bucket
 	r.LightNode.DB.Model(&core.Bucket{}).Where("status = ?", "open").Find(&buckets)
 
-	// get all open buckets and process
-	query := "bucket_uuid = ?"
-	if r.LightNode.Config.Common.AggregatePerApiKey && r.Content.RequestingApiKey != "" {
-		query += " AND requesting_api_key = ?"
-	}
-
 	// for each bucket, get all the contents and check if the total size is greater than the aggregate size limit (default 1GB)
 	// if it is, generate a car file for the bucket and update the bucket status to processing
 	for _, bucket := range buckets {
 		var content []core.Content
-		r.LightNode.DB.Model(&core.Content{}).Where(query, bucket.Uuid, r.Content.RequestingApiKey).Find(&content)
+		// get all open buckets and process
+		query := "bucket_uuid = ?"
+		if r.LightNode.Config.Common.AggregatePerApiKey && r.Content.RequestingApiKey != "" {
+			query += " AND requesting_api_key = ?"
+			r.LightNode.DB.Model(&core.Content{}).Where(query, bucket.Uuid, r.Content.RequestingApiKey).Find(&content)
+		} else {
+			r.LightNode.DB.Model(&core.Content{}).Where(query, bucket.Uuid).Find(&content)
+		}
 		var totalSize int64
 		var aggContent []core.Content
 		for _, c := range content {
