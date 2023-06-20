@@ -9,7 +9,6 @@ import (
 
 type BucketsResponse struct {
 	BucketUUID  string    `json:"bucket_uuid"`
-	BucketID    int64     `json:"bucket_id"`
 	PieceCid    string    `json:"piece_cid"`
 	PieceSize   int64     `json:"piece_size"`
 	DownloadUrl string    `json:"download_url"`
