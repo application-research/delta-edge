@@ -39,7 +39,7 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 
 		// trigger status check
 		job := jobs.CreateNewDispatcher()
-		job.AddJob(jobs.NewDealItemChecker(node, content))
+		//job.AddJob(jobs.NewDealItemChecker(node, content))
 		job.Start(1)
 
 		return c.JSON(200, map[string]interface{}{
@@ -63,7 +63,7 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 
 		// trigger status check
 		job := jobs.CreateNewDispatcher()
-		job.AddJob(jobs.NewDealItemChecker(node, content))
+		//job.AddJob(jobs.NewDealItemChecker(node, content))
 		job.Start(1)
 
 		return c.JSON(200, map[string]interface{}{
@@ -111,13 +111,13 @@ func ConfigureStatusCheckRouter(e *echo.Group, node *core.LightNode) {
 				}
 
 			}
-			job := jobs.CreateNewDispatcher()
-			job.AddJob(jobs.NewDealItemChecker(node, content))
+			//job := jobs.CreateNewDispatcher()
+			//job.AddJob(jobs.NewDealItemChecker(node, content))
 
 		}
 		// trigger status check
 		job := jobs.CreateNewDispatcher()
-		job.AddJob(jobs.NewCarDealItemChecker(node, bucket))
+		//job.AddJob(jobs.NewCarDealItemChecker(node, bucket))
 		job.Start(len(contents) + 1)
 
 		bucket.RequestingApiKey = ""

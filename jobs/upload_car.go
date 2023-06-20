@@ -168,7 +168,7 @@ func (r *UploadCarToDeltaProcessor) Run() error {
 						bucket.UpdatedAt = time.Now()
 						bucket.LastMessage = utils.STATUS_UPLOADED_TO_DELTA
 						bucket.Status = utils.STATUS_UPLOADED_TO_DELTA
-						bucket.DeltaContentId = int64(dealE2EUploadResponse.ContentID)
+						//bucket.DeltaContentId = int64(dealE2EUploadResponse.ContentID)
 						r.LightNode.DB.Save(&bucket)
 						break
 					}

@@ -60,10 +60,10 @@ func (r *SplitterProcessor) Run() error {
 			panic(err)
 		}
 		newContent := core.Content{
-			Name:             "split-" + string(i),
-			Size:             int64(len(b)),
-			Cid:              bNd.Cid().String(),
-			DeltaNodeUrl:     r.Content.DeltaNodeUrl,
+			Name: "split-" + string(i),
+			Size: int64(len(b)),
+			Cid:  bNd.Cid().String(),
+			//DeltaNodeUrl:     r.Content.DeltaNodeUrl,
 			RequestingApiKey: r.Content.RequestingApiKey,
 			Status:           utils.STATUS_PINNED,
 			Miner:            r.Content.Miner,

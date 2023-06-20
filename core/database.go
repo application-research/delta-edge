@@ -67,12 +67,9 @@ type Bucket struct {
 	Name             string    `json:"name"`
 	Size             int64     `json:"size"`
 	RequestingApiKey string    `json:"requesting_api_key,omitempty"`
-	DeltaContentId   int64     `json:"delta_content_id"`
-	DeltaNodeUrl     string    `json:"delta_node_url"`
 	Miner            string    `json:"miner"`
 	PieceCid         string    `json:"piece_cid"`
 	PieceSize        int64     `json:"piece_size"`
-	InclusionProof   string    `json:"inclusion_proof"`
 	Cid              string    `json:"cid"`
 	Status           string    `json:"status"`
 	LastMessage      string    `json:"last_message"`
@@ -98,13 +95,10 @@ type Content struct {
 	Size             int64     `json:"size"`
 	Cid              string    `json:"cid"`
 	RequestingApiKey string    `json:"requesting_api_key,omitempty"`
-	DeltaContentId   int64     `json:"delta_content_id"`
-	DeltaNodeUrl     string    `json:"delta_node_url"`
 	BucketUuid       string    `json:"bucket_uuid"`
 	Status           string    `json:"status"`
 	PieceCid         string    `json:"piece_cid"`
 	PieceSize        int64     `json:"piece_size"`
-	InclusionProof   string    `json:"inclusion_proof"`
 	LastMessage      string    `json:"last_message"`
 	Miner            string    `json:"miner"`
 	MakeDeal         bool      `json:"make_deal"`

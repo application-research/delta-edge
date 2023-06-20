@@ -235,10 +235,10 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 		//for miner := range miners {
 		if file.Size > node.Config.Common.MaxSizeToSplit {
 			newContent := core.Content{
-				Name:             file.Filename,
-				Size:             file.Size,
-				Cid:              addNode.Cid().String(),
-				DeltaNodeUrl:     DeltaUploadApi,
+				Name: file.Filename,
+				Size: file.Size,
+				Cid:  addNode.Cid().String(),
+				//DeltaNodeUrl:     DeltaUploadApi,
 				RequestingApiKey: authParts[1],
 				Status:           utils.STATUS_PINNED,
 				BucketUuid:       bucketUuidParam,
@@ -287,8 +287,8 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 					Status:           "open",
 					Name:             bucketUuid.String(),
 					RequestingApiKey: authParts[1],
-					DeltaNodeUrl:     DeltaUploadApi,
-					Uuid:             bucketUuid.String(),
+					//DeltaNodeUrl:     DeltaUploadApi,
+					Uuid: bucketUuid.String(),
 					//Miner:            miner, // blank
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),
@@ -297,10 +297,10 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 			}
 
 			newContent := core.Content{
-				Name:             file.Filename,
-				Size:             file.Size,
-				Cid:              addNode.Cid().String(),
-				DeltaNodeUrl:     DeltaUploadApi,
+				Name: file.Filename,
+				Size: file.Size,
+				Cid:  addNode.Cid().String(),
+				//DeltaNodeUrl:     DeltaUploadApi,
 				RequestingApiKey: authParts[1],
 				Status:           utils.STATUS_PINNED,
 				//Miner:            miner,

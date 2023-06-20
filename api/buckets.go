@@ -63,6 +63,12 @@ func handleGetOpenBuckets(node *core.LightNode) func(c echo.Context) error {
 			})
 		}
 
+		if len(bucketsResponse) == 0 {
+			return c.JSON(404, map[string]interface{}{
+				"message":     "No open buckets found.",
+				"description": "This means that there are no buckets that are ready for deal making.",
+			})
+		}
 		return c.JSON(200, bucketsResponse)
 	}
 }

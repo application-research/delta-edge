@@ -217,7 +217,7 @@ func (r *UploadToDeltaProcessor) Run() error {
 					} else {
 						r.Content.UpdatedAt = time.Now()
 						r.Content.Status = utils.STATUS_UPLOADED_TO_DELTA
-						r.Content.DeltaContentId = int64(dealE2EUploadResponse.ContentID)
+						//r.Content.DeltaContentId = int64(dealE2EUploadResponse.ContentID)
 						r.LightNode.DB.Save(&r.Content)
 
 						// insert each replicated content into the database
@@ -230,11 +230,11 @@ func (r *UploadToDeltaProcessor) Run() error {
 							replicatedContentModel.Size = r.Content.Size
 							replicatedContentModel.Status = replicatedContent.Status
 							replicatedContentModel.LastMessage = replicatedContent.Message
-							replicatedContentModel.DeltaNodeUrl = DELTA_UPLOAD_API
+							//replicatedContentModel.DeltaNodeUrl = DELTA_UPLOAD_API
 							replicatedContentModel.CreatedAt = time.Now()
 							replicatedContentModel.UpdatedAt = time.Now()
 							replicatedContentModel.RequestingApiKey = r.Content.RequestingApiKey
-							replicatedContentModel.DeltaContentId = int64(replicatedContent.ContentID)
+							//replicatedContentModel.DeltaContentId = int64(replicatedContent.ContentID)
 							r.LightNode.DB.Save(&replicatedContentModel)
 							//}
 						}
