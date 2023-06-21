@@ -106,21 +106,23 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) error {
 		return err
 	}
 
-	commpPayloadCid, carSize, unpaddedPieceSize, err := GeneratePieceCommitment(context.Background(), dirNode.Cid(), r.LightNode.Node.Blockstore)
+	commpPayloadCid, carSize, unpaddedPieceSize, bufFile, err := GeneratePieceCommitment(context.Background(), dirNode.Cid(), r.LightNode.Node.Blockstore)
+	bufFileN, err := r.LightNode.Node.AddPinFile(context.Background(), &bufFile, nil)
+
 	if err != nil {
 		log.Errorf("error generating piece commitment: %s", err)
 	}
 	bucket.PieceCid = commpPayloadCid.String()
 	bucket.PieceSize = int64(unpaddedPieceSize.Padded())
 	bucket.Size = int64(carSize)
-	bucket.Cid = dirNode.Cid().String()
+	bucket.Cid = bufFileN.Cid().String()
 	bucket.Status = "ready-for-deal-making"
 	r.LightNode.DB.Save(&bucket)
 
 	return nil
 }
 
-func GeneratePieceCommitment(ctx context.Context, payloadCid cid.Cid, bstore blockstore.Blockstore) (cid.Cid, uint64, abi.UnpaddedPieceSize, error) {
+func GeneratePieceCommitment(ctx context.Context, payloadCid cid.Cid, bstore blockstore.Blockstore) (cid.Cid, uint64, abi.UnpaddedPieceSize, bytes.Buffer, error) {
 	selectiveCar := car.NewSelectiveCar(
 		context.Background(),
 		bstore,
@@ -128,26 +130,43 @@ func GeneratePieceCommitment(ctx context.Context, payloadCid cid.Cid, bstore blo
 		car.MaxTraversalLinks(maxTraversalLinks),
 		car.TraverseLinksOnlyOnce(),
 	)
+
+	buf := new(bytes.Buffer)
+	blockCount := 0
+	var oneStepBlocks []car.Block
+	err := selectiveCar.Write(buf, func(block car.Block) error {
+		oneStepBlocks = append(oneStepBlocks, block)
+		blockCount++
+		return nil
+	})
+	if err != nil {
+		return cid.Undef, 0, 0, *buf, err
+	}
+
 	preparedCar, err := selectiveCar.Prepare()
 	if err != nil {
-		return cid.Undef, 0, 0, err
+		return cid.Undef, 0, 0, *buf, err
 	}
 
 	writer := new(commp.Calc)
+	carWriter := &bytes.Buffer{}
 	err = preparedCar.Dump(ctx, writer)
 	if err != nil {
-		return cid.Undef, 0, 0, err
+		return cid.Undef, 0, 0, *buf, err
 	}
-
 	commpc, size, err := writer.Digest()
 	if err != nil {
-		return cid.Undef, 0, 0, err
+		return cid.Undef, 0, 0, *buf, err
+	}
+	err = preparedCar.Dump(ctx, carWriter)
+	if err != nil {
+		return cid.Undef, 0, 0, *buf, err
 	}
 
 	commCid, err := commcid.DataCommitmentV1ToCID(commpc)
 	if err != nil {
-		return cid.Undef, 0, 0, err
+		return cid.Undef, 0, 0, *buf, err
 	}
 
-	return commCid, preparedCar.Size(), abi.PaddedPieceSize(size).Unpadded(), nil
+	return commCid, preparedCar.Size(), abi.PaddedPieceSize(size).Unpadded(), *buf, nil
 }
