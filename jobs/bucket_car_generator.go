@@ -100,7 +100,7 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) error {
 		return err
 	}
 	r.LightNode.Node.Add(context.Background(), dirNode)
-	aggNd, err := r.LightNode.Node.AddPinFile(context.Background(), buf, nil)
+	_, err = r.LightNode.Node.AddPinFile(context.Background(), buf, nil)
 	if err != nil {
 		log.Errorf("error adding file: %s", err)
 		return err
@@ -113,7 +113,7 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) error {
 	bucket.PieceCid = commpPayloadCid.String()
 	bucket.PieceSize = int64(unpaddedPieceSize.Padded())
 	bucket.Size = int64(carSize)
-	bucket.Cid = aggNd.Cid().String()
+	bucket.Cid = dirNode.Cid().String()
 	bucket.Status = "ready-for-deal-making"
 	r.LightNode.DB.Save(&bucket)
 
