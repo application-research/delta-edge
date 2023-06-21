@@ -101,8 +101,12 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) error {
 	}
 	r.LightNode.Node.Add(context.Background(), dirNode)
 	aggNd, err := r.LightNode.Node.AddPinFile(context.Background(), buf, nil)
+	if err != nil {
+		log.Errorf("error adding file: %s", err)
+		return err
+	}
 
-	commpPayloadCid, carSize, unpaddedPieceSize, err := GeneratePieceCommitment(context.Background(), aggNd.Cid(), r.LightNode.Node.Blockstore)
+	commpPayloadCid, carSize, unpaddedPieceSize, err := GeneratePieceCommitment(context.Background(), dirNode.Cid(), r.LightNode.Node.Blockstore)
 	if err != nil {
 		log.Errorf("error generating piece commitment: %s", err)
 	}
