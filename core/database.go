@@ -70,6 +70,7 @@ type Bucket struct {
 	Miner            string    `json:"miner"`
 	PieceCid         string    `json:"piece_cid"`
 	PieceSize        int64     `json:"piece_size"`
+	DirCid           string    `json:"dir_cid"`
 	Cid              string    `json:"cid"`
 	Status           string    `json:"status"`
 	LastMessage      string    `json:"last_message"`

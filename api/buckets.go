@@ -10,6 +10,8 @@ import (
 type BucketsResponse struct {
 	BucketUUID  string    `json:"bucket_uuid"`
 	PieceCid    string    `json:"piece_cid"`
+	PayloadCid  string    `json:"payload_cid"`
+	DirCid      string    `json:"dir_cid"`
 	PieceSize   int64     `json:"piece_size"`
 	DownloadUrl string    `json:"download_url"`
 	Status      string    `json:"status"`
@@ -52,9 +54,12 @@ func handleGetOpenBuckets(node *core.LightNode) func(c echo.Context) error {
 		var bucketsResponse []BucketsResponse
 		for _, bucket := range buckets {
 			bucketsResponse = append(bucketsResponse, BucketsResponse{
-				BucketUUID:  bucket.Uuid,
-				PieceCid:    bucket.PieceCid,
-				PieceSize:   bucket.PieceSize,
+				BucketUUID: bucket.Uuid,
+				PieceCid:   bucket.PieceCid,
+				PieceSize:  bucket.PieceSize,
+				PayloadCid: bucket.Cid,
+				DirCid:     bucket.DirCid,
+				//DownloadUrl: "<a href=/gw/" + bucket.Cid + ">" + bucket.PieceCid + "</a>",
 				DownloadUrl: "/gw/" + bucket.Cid,
 				Status:      bucket.Status,
 				Size:        bucket.Size,

@@ -106,14 +106,15 @@ func (r *BucketCarGenerator) GenerateCarForBucket(bucketUuid string) error {
 		return err
 	}
 
-	commpPayloadCid, carSize, unpaddedPieceSize, bufFile, err := GeneratePieceCommitment(context.Background(), dirNode.Cid(), r.LightNode.Node.Blockstore)
+	pieceCid, carSize, unpaddedPieceSize, bufFile, err := GeneratePieceCommitment(context.Background(), dirNode.Cid(), r.LightNode.Node.Blockstore)
 	bufFileN, err := r.LightNode.Node.AddPinFile(context.Background(), &bufFile, nil)
 
 	if err != nil {
 		log.Errorf("error generating piece commitment: %s", err)
 	}
-	bucket.PieceCid = commpPayloadCid.String()
+	bucket.PieceCid = pieceCid.String()
 	bucket.PieceSize = int64(unpaddedPieceSize.Padded())
+	bucket.DirCid = dirNode.Cid().String()
 	bucket.Size = int64(carSize)
 	bucket.Cid = bufFileN.Cid().String()
 	bucket.Status = "ready-for-deal-making"
