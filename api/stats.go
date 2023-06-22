@@ -25,23 +25,23 @@ func ConfigureStatsRouter(e *echo.Group, node *core.LightNode) {
 		}
 
 		var s Stats
-		err := node.DB.Raw("select count(total_content_count) from (select distinct(cid) as total_content_count from contents) as total_content_count").Scan(&s.TotalContentCount).Error
+		err := node.DB.Raw("select * from mv_total_content_count").Scan(&s.TotalContentCount).Error
 		if err != nil {
 			return c.JSON(500, err)
 		}
 
-		err = node.DB.Raw("select sum(total_size) from (select distinct(cid),size as total_size from contents) as total_size").Scan(&s.TotalSize).Error
+		err = node.DB.Raw("select * from mv_total_size").Scan(&s.TotalSize).Error
 		if err != nil {
 			return c.JSON(500, err)
 		}
 
-		err = node.DB.Raw("select count(*) from content_signature_meta").Scan(&s.TotalSignedUrls).Error
+		err = node.DB.Raw("select * from mv_content_signature_meta").Scan(&s.TotalSignedUrls).Error
 		if err != nil {
 			return c.JSON(500, err)
 		}
 
 		//select sum(total_api_keys) from (select count(*) as total_api_keys from contents group by requesting_api_key) as total_api_keys;
-		err = node.DB.Raw("select count(total_api_keys) from (select count(*) as total_api_keys from contents group by requesting_api_key) as total_api_keys").Scan(&s.TotalApiKeys).Error
+		err = node.DB.Raw("select * from mv_total_api_keys").Scan(&s.TotalApiKeys).Error
 		if err != nil {
 			return c.JSON(500, err)
 		}
