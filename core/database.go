@@ -45,7 +45,7 @@ func OpenDatabase(cfg config.DeltaConfig) (*gorm.DB, error) {
 }
 
 func ConfigureModels(db *gorm.DB) {
-	db.AutoMigrate(&Content{}, &ContentDeal{}, &Collection{}, &CollectionRef{}, &LogEvent{}, &Bucket{}, &BucketTag{}, &Tag{}, &ContentSignatureMeta{}, &ContentTag{})
+	db.AutoMigrate(&Content{}, &ContentDeal{}, &LogEvent{}, &Bucket{}, &BucketTag{}, &Tag{}, &TagPolicy{}, &ContentSignatureMeta{}, &ContentTag{})
 }
 
 type LogEvent struct {
@@ -88,10 +88,18 @@ type BucketTag struct {
 
 type Tag struct {
 	ID        int64     `gorm:"primaryKey"`
-	Uuid      string    `gorm:"index" json:"uuid"`
 	Name      string    `json:"name"`
+	Policy    TagPolicy `json:"policy"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type TagPolicy struct {
+	ID         int64     `gorm:"primaryKey"`
+	BucketSize int64     `json:"bucket_size"`
+	SplitSize  int64     `json:"split_size"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 type ContentSignatureMeta struct {
@@ -114,7 +122,6 @@ type Content struct {
 	Cid              string    `json:"cid"`
 	RequestingApiKey string    `json:"requesting_api_key,omitempty"`
 	BucketUuid       string    `json:"bucket_uuid"`
-	Tag              string    `json:"tag"`
 	Status           string    `json:"status"`
 	PieceCid         string    `json:"piece_cid"`
 	PieceSize        int64     `json:"piece_size"`
@@ -127,8 +134,8 @@ type Content struct {
 
 type ContentTag struct {
 	ID        int64     `gorm:"primaryKey"`
-	ContentId int64     `json:"content_id"`
 	TagId     int64     `json:"tag_id"`
+	ContentId int64     `json:"content_id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
