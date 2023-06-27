@@ -13,7 +13,7 @@ var (
 	defaultTestBootstrapPeers []multiaddr.Multiaddr
 )
 
-type DeltaConfig struct {
+type EdgeConfig struct {
 	Node struct {
 		Name        string `env:"NODE_NAME" envDefault:"edge-ur"`
 		Description string `env:"NODE_DESCRIPTION"`
@@ -26,7 +26,7 @@ type DeltaConfig struct {
 	}
 
 	Common struct {
-		AggregateSize              int64 `env:"AGGREGATE_SIZE" envDefault:"1048576000"`
+		BucketAggregateSize        int64 `env:"BUCKET_AGGREGATE_SIZE" envDefault:"1048576000"`
 		AggregatePerApiKey         bool  `env:"AGGREGATE_PER_API_KEY" envDefault:"false"`
 		MaxSizeToSplit             int64 `env:"MAX_SIZE_TO_SPLIT" envDefault:"32000000000"`
 		SplitSize                  int64 `env:"SPLIT_SIZE" envDefault:"5048576000"`
@@ -43,9 +43,9 @@ type DeltaConfig struct {
 	}
 }
 
-func InitConfig() DeltaConfig {
+func InitConfig() EdgeConfig {
 	godotenv.Load() // load from environment OR .env file if it exists
-	var cfg DeltaConfig
+	var cfg EdgeConfig
 
 	if err := env.Parse(&cfg); err != nil {
 		log.Fatal("error parsing config: %+v\n", err)

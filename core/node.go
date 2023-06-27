@@ -40,7 +40,7 @@ type LightNode struct {
 	Api    url.URL
 	DB     *gorm.DB
 	Gw     *GatewayHandler
-	Config *config.DeltaConfig
+	Config *config.EdgeConfig
 }
 
 type LocalWallet struct {
@@ -59,7 +59,7 @@ type GatewayHandler struct {
 
 // NewEdgeNode Add a config to enable gateway or not.
 // Add a config to enable content, bucket, commp, replication verifier processor
-func NewEdgeNode(ctx context.Context, cfg config.DeltaConfig) (*LightNode, error) {
+func NewEdgeNode(ctx context.Context, cfg config.EdgeConfig) (*LightNode, error) {
 
 	db, err := OpenDatabase(cfg)
 	// node

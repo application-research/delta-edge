@@ -197,8 +197,6 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 		authorizationString := c.Request().Header.Get("Authorization")
 		authParts := strings.Split(authorizationString, " ")
 		tagName := c.Param("tag_name")
-		//minersString := c.FormValue("miners") // comma-separated list of miners to pin to
-		//makeDeal := c.FormValue("make_deal")  // whether to make a deal with the miners or not
 
 		// Check capacity if needed
 		if node.Config.Common.CapacityLimitPerKeyInBytes > 0 {
@@ -212,6 +210,9 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 
 		// check if tag exists, if it does, get the ID
 		fmt.Println(tagName)
+		if tagName == "" {
+			tagName = "default"
+		}
 
 		file, err := c.FormFile("data")
 		if err != nil {
@@ -223,7 +224,6 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 			return err
 		}
 
-		fmt.Println("file.Size", file.Size)
 		addNode, err := node.Node.AddPinFile(c.Request().Context(), src, nil)
 		if err != nil {
 			return c.JSON(500, UploadResponse{
@@ -236,12 +236,15 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 		var contentList []core.Content
 
 		//for miner := range miners {
+		fmt.Println("file.Size", file.Size)
+		fmt.Println("node.Config.Common.MaxSizeToSplit", node.Config.Common.MaxSizeToSplit)
+
 		if file.Size > node.Config.Common.MaxSizeToSplit {
 			newContent := core.Content{
-				Name: file.Filename,
-				Size: file.Size,
-				Cid:  addNode.Cid().String(),
-				//DeltaNodeUrl:     DeltaUploadApi,
+				Name:             file.Filename,
+				Size:             file.Size,
+				Cid:              addNode.Cid().String(),
+				TagName:          tagName,
 				RequestingApiKey: authParts[1],
 				Status:           utils.STATUS_PINNED,
 				MakeDeal:         true,
@@ -251,11 +254,10 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 
 			node.DB.Create(&newContent)
 
-			//if makeDeal == "true" {
+			// split the file and use the same tag policies
 			job := jobs.CreateNewDispatcher()
 			job.AddJob(jobs.NewSplitterProcessor(node, newContent, srcR))
 			job.Start(1)
-			//}
 
 			if err != nil {
 				c.JSON(500, UploadResponse{
@@ -269,11 +271,11 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 			var bucket core.Bucket
 
 			if node.Config.Common.AggregatePerApiKey {
-				rawQuery := "SELECT * FROM buckets WHERE status = ? and requesting_api_key = ?"
-				node.DB.Raw(rawQuery, "open", authParts[1]).First(&bucket)
+				rawQuery := "SELECT * FROM buckets WHERE status = ? and name = ? and requesting_api_key = ?"
+				node.DB.Raw(rawQuery, "open", tagName, authParts[1]).First(&bucket)
 			} else {
-				rawQuery := "SELECT * FROM buckets WHERE status = ?"
-				node.DB.Raw(rawQuery, "open").First(&bucket)
+				rawQuery := "SELECT * FROM buckets WHERE status = ? and name = ?"
+				node.DB.Raw(rawQuery, "open", tagName).First(&bucket)
 			}
 
 			if bucket.ID == 0 {
@@ -287,11 +289,12 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 				}
 				bucket = core.Bucket{
 					Status:           "open",
-					Name:             bucketUuid.String(),
+					Name:             tagName,
 					RequestingApiKey: authParts[1],
 					//DeltaNodeUrl:     DeltaUploadApi,
 					Uuid: bucketUuid.String(),
 					//Miner:            miner, // blank
+					//Tag:       tag,
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),
 				}
@@ -306,6 +309,8 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 				RequestingApiKey: authParts[1],
 				Status:           utils.STATUS_PINNED,
 				//Miner:            miner,
+				//Tag:        tag,
+				TagName:    tagName,
 				BucketUuid: bucket.Uuid,
 				MakeDeal:   true,
 				CreatedAt:  time.Now(),

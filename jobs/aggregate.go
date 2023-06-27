@@ -57,8 +57,12 @@ func (r *BucketAggregator) Run() error {
 			totalSize += c.Size
 			aggContent = append(aggContent, c)
 		}
-		fmt.Println("Total size: ", totalSize)
-		if r.Force || totalSize > r.LightNode.Config.Common.AggregateSize && len(content) > 1 {
+
+		// get bucket policy
+		var policy core.Policy
+		r.LightNode.DB.Model(&core.Policy{}).Where("id = ?", bucket.PolicyId).First(&policy)
+
+		if totalSize > policy.BucketSize && len(content) > 1 {
 			fmt.Println("Generating car file for bucket: ", bucket.Uuid)
 			bucket.Status = "processing"
 			r.LightNode.DB.Save(&bucket)

@@ -12,7 +12,7 @@ import (
 	"strconv"
 )
 
-func DaemonCmd(cfg *config.DeltaConfig) []*cli.Command {
+func DaemonCmd(cfg *config.EdgeConfig) []*cli.Command {
 	// add a command to run API node
 	var daemonCommands []*cli.Command
 
@@ -78,6 +78,9 @@ func DaemonCmd(cfg *config.DeltaConfig) []*cli.Command {
    \ \_______\\ \_______\\ \_______\\ \_______\                \ \_______\\ \__\\ _\ 
     \|_______| \|_______| \|_______| \|_______|                 \|_______| \|__|\|__|
 `)
+
+			// default tagging.
+			api.GetDefaultTagPolicy(ln)
 			fmt.Println("Starting API server")
 			api.InitializeEchoRouterConfig(ln)
 			api.LoopForever()

@@ -44,7 +44,7 @@ func (r *SplitterProcessor) Run() error {
 	bucketUuid, err := uuid.NewUUID()
 	bucket := core.Bucket{
 		Status:           "open",
-		Name:             bucketUuid.String(),
+		Name:             r.Content.TagName,
 		RequestingApiKey: r.Content.RequestingApiKey,
 		Uuid:             bucketUuid.String(),
 		Miner:            r.Content.Miner,
@@ -54,25 +54,28 @@ func (r *SplitterProcessor) Run() error {
 	r.LightNode.DB.Create(&bucket)
 
 	// create a content for each split
-	for i, b := range arrBts {
+	var i int
+	for _, b := range arrBts {
 		bNd, err := r.LightNode.Node.AddPinFile(context.Background(), bytes.NewReader(b), nil)
 		if err != nil {
 			panic(err)
 		}
 		newContent := core.Content{
-			Name: "split-" + string(i),
+			Name: string(i) + "split-" + bNd.Cid().String(),
 			Size: int64(len(b)),
 			Cid:  bNd.Cid().String(),
 			//DeltaNodeUrl:     r.Content.DeltaNodeUrl,
 			RequestingApiKey: r.Content.RequestingApiKey,
 			Status:           utils.STATUS_PINNED,
 			Miner:            r.Content.Miner,
+			TagName:          r.Content.TagName,
 			BucketUuid:       bucket.Uuid,
 			MakeDeal:         true,
 			CreatedAt:        time.Now(),
 			UpdatedAt:        time.Now(),
 		}
 		r.LightNode.DB.Create(&newContent)
+		i++
 	}
 
 	job := CreateNewDispatcher()

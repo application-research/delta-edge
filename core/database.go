@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func OpenDatabase(cfg config.DeltaConfig) (*gorm.DB, error) {
+func OpenDatabase(cfg config.EdgeConfig) (*gorm.DB, error) {
 
 	// use postgres
 	var DB *gorm.DB
@@ -45,7 +45,7 @@ func OpenDatabase(cfg config.DeltaConfig) (*gorm.DB, error) {
 }
 
 func ConfigureModels(db *gorm.DB) {
-	db.AutoMigrate(&Content{}, &ContentDeal{}, &LogEvent{}, &Bucket{}, &BucketTag{}, &Tag{}, &TagPolicy{}, &ContentSignatureMeta{}, &ContentTag{})
+	db.AutoMigrate(&Content{}, &ContentDeal{}, &LogEvent{}, &Bucket{}, &Policy{}, &ContentSignatureMeta{})
 }
 
 type LogEvent struct {
@@ -61,7 +61,18 @@ type LogEvent struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
+type Policy struct {
+	gorm.Model
+	ID         int64     `gorm:"primaryKey"`
+	Name       string    `json:"name"`
+	BucketSize int64     `json:"bucket_size"`
+	SplitSize  int64     `json:"split_size"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
 type Bucket struct {
+	gorm.Model
 	ID               int64     `gorm:"primaryKey"`
 	Uuid             string    `gorm:"index" json:"uuid"`
 	Name             string    `json:"name"`
@@ -73,33 +84,10 @@ type Bucket struct {
 	DirCid           string    `json:"dir_cid"`
 	Cid              string    `json:"cid"`
 	Status           string    `json:"status"`
+	PolicyId         int64     `json:"policy_id"`
 	LastMessage      string    `json:"last_message"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
-}
-
-type BucketTag struct {
-	ID        int64     `gorm:"primaryKey"`
-	BucketId  int64     `json:"bucket_id"`
-	TagId     int64     `json:"tag_id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-type Tag struct {
-	ID        int64     `gorm:"primaryKey"`
-	Name      string    `json:"name"`
-	Policy    TagPolicy `json:"policy"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-type TagPolicy struct {
-	ID         int64     `gorm:"primaryKey"`
-	BucketSize int64     `json:"bucket_size"`
-	SplitSize  int64     `json:"split_size"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 type ContentSignatureMeta struct {
@@ -116,6 +104,7 @@ type ContentSignatureMeta struct {
 
 // main content record
 type Content struct {
+	gorm.Model
 	ID               int64     `gorm:"primaryKey"`
 	Name             string    `json:"name"`
 	Size             int64     `json:"size"`
@@ -128,14 +117,15 @@ type Content struct {
 	LastMessage      string    `json:"last_message"`
 	Miner            string    `json:"miner"`
 	MakeDeal         bool      `json:"make_deal"`
+	TagName          string    `json:"tag_name"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
 }
 
 type ContentTag struct {
 	ID        int64     `gorm:"primaryKey"`
-	TagId     int64     `json:"tag_id"`
 	ContentId int64     `json:"content_id"`
+	TagId     int64     `json:"tag_id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

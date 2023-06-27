@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/application-research/edge-ur/core"
 	logging "github.com/ipfs/go-log/v2"
@@ -43,6 +44,27 @@ type AuthResponse struct {
 		Validated bool   `json:"validated"`
 		Details   string `json:"details"`
 	} `json:"result"`
+}
+
+func GetDefaultTagPolicy(ln *core.LightNode) error {
+
+	// remove the current default tag policy
+	if err := ln.DB.Where("name = ?", "default").Delete(&core.Policy{}).Error; err != nil {
+		return xerrors.Errorf("failed to remove default tag policy: %w", err)
+	}
+
+	// create a new default tag policy
+	newTagPolicy := core.Policy{
+		Name:       "default",
+		BucketSize: ln.Config.Common.BucketAggregateSize,
+		SplitSize:  ln.Config.Common.SplitSize,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+	}
+
+	ln.DB.Model(&core.Policy{}).Create(&newTagPolicy)
+
+	return nil
 }
 
 // RouterConfig configures the API node
