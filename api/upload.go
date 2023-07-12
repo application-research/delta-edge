@@ -167,7 +167,7 @@ func handleUploadToCarBucketAndMiners(node *core.LightNode, DeltaUploadApi strin
 			}
 
 			if err != nil {
-				c.JSON(500, UploadResponse{
+				return c.JSON(500, UploadResponse{
 					Status:  "error",
 					Message: "Error pinning the file" + err.Error(),
 				})
@@ -394,7 +394,7 @@ func handlePinAddCarToNodeToMiners(node *core.LightNode, DeltaUploadApi string) 
 			miners[miner] = true
 		}
 		if err != nil {
-			c.JSON(500, UploadResponse{
+			return c.JSON(500, UploadResponse{
 				Status:  "error",
 				Message: "Error pinning the car file:" + err.Error(),
 			})
@@ -404,7 +404,7 @@ func handlePinAddCarToNodeToMiners(node *core.LightNode, DeltaUploadApi string) 
 		srcR := src
 
 		if err != nil {
-			c.JSON(500, UploadResponse{
+			return c.JSON(500, UploadResponse{
 				Status:  "error",
 				Message: "Error pinning the car file:" + err.Error(),
 			})
@@ -412,7 +412,7 @@ func handlePinAddCarToNodeToMiners(node *core.LightNode, DeltaUploadApi string) 
 
 		carHeader, err := car.LoadCar(context.Background(), node.Node.Blockstore, src)
 		if err != nil {
-			c.JSON(500, UploadResponse{
+			return c.JSON(500, UploadResponse{
 				Status:  "error",
 				Message: "Error loading car file: " + err.Error(),
 			})
@@ -445,7 +445,7 @@ func handlePinAddCarToNodeToMiners(node *core.LightNode, DeltaUploadApi string) 
 			}
 
 			if err != nil {
-				c.JSON(500, UploadResponse{
+				return c.JSON(500, UploadResponse{
 					Status:  "error",
 					Message: "Error pinning the file" + err.Error(),
 				})
