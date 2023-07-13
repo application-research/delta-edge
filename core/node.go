@@ -91,8 +91,6 @@ func NewEdgeNode(ctx context.Context, cfg config.DeltaConfig) (*LightNode, error
 		
 	}
 
-	fmt.Printf("IPFS config: %v", newConfig)
-
 	params := whypfs.NewNodeParams{
 		Ctx:       ctx,
 		Datastore: datastore.NewMapDatastore(),
