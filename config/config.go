@@ -22,6 +22,8 @@ type DeltaConfig struct {
 		Repo        string `env:"REPO" envDefault:"./whypfs"`
 		DsRepo      string `env:"DS_REPO" envDefault:"./whypfs"`
 		Port        int    `env:"PORT" envDefault:"1414"`
+		IpfsPort	int    `env:"IPFS_PORT" envDefault:"6745"`
+		PublicIp	string `env:"PUBLIC_IP"`
 	}
 
 	Delta struct {

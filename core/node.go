@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -64,16 +65,30 @@ func NewEdgeNode(ctx context.Context, cfg config.DeltaConfig) (*LightNode, error
 
 	db, err := OpenDatabase(cfg)
 	// node
-	publicIp, err := GetPublicIP()
+	// If we don't have an explicit Public IP set as an env var, fetch one
+	var publicIp string
+
+	if cfg.Node.PublicIp == "" {
+		publicIp, err = GetPublicIP()
+		if err != nil {
+			fmt.Printf("Error getting public IP: %v", err)
+		}
+	} else {
+		publicIp = cfg.Node.PublicIp
+	}
+	// Fetch the IpfsPort from DeltaConfig
+	IpfsPort := strconv.Itoa(cfg.Node.IpfsPort)
+
 	newConfig := &whypfs.Config{
 		ListenAddrs: []string{
-			"/ip4/0.0.0.0/tcp/6745",
-			"/ip4/" + publicIp + "/tcp/6745",
+			"/ip4/0.0.0.0/tcp/" + IpfsPort,
+			"/ip4/" + publicIp + "/tcp/" + IpfsPort,
 		},
 		AnnounceAddrs: []string{
-			"/ip4/0.0.0.0/tcp/6745",
-			"/ip4/" + publicIp + "/tcp/6745",
+			"/ip4/0.0.0.0/tcp/" + IpfsPort,
+			"/ip4/" + publicIp + "/tcp/" + IpfsPort,
 		},
+		
 	}
 
 	params := whypfs.NewNodeParams{
